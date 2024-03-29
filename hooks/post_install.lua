@@ -1,12 +1,25 @@
---- Extension point, called after PreInstall, can perform additional operations,
---- such as file operations for the SDK installation directory or compile source code
---- Currently can be left unimplemented!
 function PLUGIN:PostInstall(ctx)
-    --- ctx.rootPath SDK installation directory
-    local rootPath = ctx.rootPath
-    local runtimeVersion = ctx.runtimeVersion
-    local sdkInfo = ctx.sdkInfo['sdk-name']
+    if RUNTIME.osType ~= "darwin" then
+        return
+    end
+    local sdkInfo = ctx.sdkInfo['java']
     local path = sdkInfo.path
-    local version = sdkInfo.version
-    local name = sdkInfo.name
+    local majorVersion = sdkInfo.note
+    local needRemoveDir = {
+        '/jdk-' .. majorVersion .. '.jdk',
+        '/Contents/Home'
+    }
+    print("Checking if need to rename jdk files...")
+    for _, dir in ipairs(needRemoveDir) do
+        if checkDir(path .. dir) then
+            print("Renaming jdk files: " .. path .. dir .. '/*')
+            if os.execute('mv ' .. path .. dir .. '/*' .. ' ' .. path) == 1 then
+                error('Failed to rename jdk files')
+            end
+        end
+    end
+end
+
+function checkDir(path)
+    return os.execute('[ -d "' .. path .. '" ]') == 0
 end
