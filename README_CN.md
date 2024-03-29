@@ -1,5 +1,7 @@
 # vfox-java
 
+[中文](README_CN.md) | [English](README.md)
+
 > Java plugin for [vfox](https://github.com/version-fox/vfox)
 
 支持多种JDK发行版，如：Oracle、Graalvm、Eclipse等。

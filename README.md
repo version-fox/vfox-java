@@ -1,5 +1,7 @@
 # vfox-java
 
+[中文](README_CN.md) | [English](README.md)
+
 > Java plugin for [vfox](https://github.com/version-fox/vfox)
 
 Support for multiple JDK distributions, such as: Oracle, Graalvm, Eclipse & more.
