@@ -21,7 +21,7 @@ NOTE:
     If the plugin is not compatible with the current vfox version,
     vfox will not load the plugin and prompt the user to upgrade vfox.
  --]]
-PLUGIN.minRuntimeVersion = "0.2.6"
+PLUGIN.minRuntimeVersion = "0.3.0"
 -- Some things that need user to be attention!
 PLUGIN.notes = {
     "Listed below are the supported distributions and their short names.",
