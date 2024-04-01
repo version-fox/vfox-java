@@ -4,6 +4,9 @@ on:
   push:
     tags: [ 'v*' ]
 
+permissions:
+  contents: write
+
 jobs:
   generate-manifest-json:
     runs-on: ubuntu-latest
@@ -29,7 +32,7 @@ jobs:
           sudo lua -e '
           require("metadata"); 
           local dkjson = require("dkjson"); 
-          PLUGIN.downloadUrl = "https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}/${{ env.REPO_NAME }}_${{ env.VERSION }}.zip"; 
+          PLUGIN.downloadUrl = "https://github.com/${{ github.repository }}/releases/download/v${{ env.VERSION }}/${{ env.REPO_NAME }}-${{ env.VERSION }}.zip"; 
           local str = dkjson.encode(PLUGIN); 
           print(str)' > manifest.json
           cat manifest.json
@@ -39,9 +42,9 @@ jobs:
           name: manifest
           path: manifest.json
   release-plugin-and-manifest:
-      needs: generate-manifest-json
-      runs-on: ubuntu-latest
-      steps:
+    needs: generate-manifest-json
+    runs-on: ubuntu-latest
+    steps:
       - name: Set repo name
         run: |
           echo "REPO_NAME=$(echo ${{ github.repository }} | cut -d'/' -f2)" >> $GITHUB_ENV
@@ -57,13 +60,13 @@ jobs:
         with:
           type: "zip"
           directory: "./"
-          filename: "${{ env.REPO_NAME }}_${{ env.VERSION }}.zip"
+          filename: "${{ env.REPO_NAME }}-${{ env.VERSION }}.zip"
           exclusions: "*.git* manifest.json"
       - name: Publish release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: ./${{ env.REPO_NAME }}_${{ env.VERSION }}.zip
+          file: ./${{ env.REPO_NAME }}-${{ env.VERSION }}.zip
           tag: v${{ env.VERSION }}
           file_glob: true
       - name: Publish manifest
