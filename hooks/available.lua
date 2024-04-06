@@ -5,26 +5,39 @@ local shortname = require("shortname")
 --- @param ctx table Empty table used as context, for future extension
 --- @return table Descriptions of available versions and accompanying tool descriptions
 function PLUGIN:Available(ctx)
-    local distribution = ctx.args[1] or "open"
-    if not shortname[distribution] then
-        error("Unsupport distribution: " .. distribution)
+    local distribution = ctx.args[1]
+    local jdks = {}
+
+    if distribution and distribution == "all" then
+        for short, dist in pairs(shortname) do
+            local tempJdks = foojay.fetchtJdkList(dist, "")
+            for _, jdk in ipairs(tempJdks) do
+                jdk.short = short
+                table.insert(jdks, jdk)
+            end
+        end
+    else
+        jdks = foojay.fetchtJdkList(shortname[distribution] or error("Unsupported distribution: " .. distribution), "")
     end
-    local jdks = foojay.fetchtJdkList(shortname[distribution], "")
 
     local result = {}
+    local seen = {}
     for _, jdk in ipairs(jdks) do
         local v = jdk.java_version
-        if distribution ~= "open" then
-            v = v .. "-" .. distribution
+        local short = jdk.short
+        if short and short ~= "open" then
+            v = v .. "-" .. short
         end
-        local note = ""
-        if jdk.term_of_support == "lts" then
-            note = "LTS"
+
+        if not seen[v] then
+            seen[v] = true
+            -- check if version exists
+            table.insert(result, {
+                version = v,
+                note = jdk.term_of_support == "lts" and "LTS" or ""
+            })
         end
-        table.insert(result, {
-            version = v,
-            note = note,
-        })
+
     end
     return result
 end
