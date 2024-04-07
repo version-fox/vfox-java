@@ -19,6 +19,7 @@ vfox install java@x.y.z  # 默认使用openjdk
 vfox install java@x.y.z-graal # 使用graalvm
 
 # 查看所有可用版本
+vfox search java all # 查看所有sdk版本
 vfox search java # 查看所有openjdk版本
 vfox search java graal # 查看所有graalvm版本
 ```
