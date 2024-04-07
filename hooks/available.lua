@@ -5,10 +5,10 @@ local shortname = require("shortname")
 --- @param ctx table Empty table used as context, for future extension
 --- @return table Descriptions of available versions and accompanying tool descriptions
 function PLUGIN:Available(ctx)
-    local distribution = ctx.args[1]
+    local distribution = ctx.args[1] or "open"
     local jdks = {}
 
-    if distribution and distribution == "all" then
+    if distribution == "all" then
         for short, dist in pairs(shortname) do
             local tempJdks = foojay.fetchtJdkList(dist, "")
             for _, jdk in ipairs(tempJdks) do
