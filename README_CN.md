@@ -108,8 +108,8 @@ Liberica 是 100% 的开源 Java 实现。它由 BellSoft 参与开发的 OpenJD
 JCK。Liberica 的所有支持版本还包含 JavaFX。
 
 ```shell
-$ vfox install java x.y.z-librce
-$ vfox search java librce
+$ vfox install java x.y.z-librca
+$ vfox search java librca
 ```
 
 ## Liberica NIK (Bellsoft)

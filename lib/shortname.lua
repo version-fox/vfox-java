@@ -8,6 +8,7 @@ local short_name = {
     ["oracle"] = "oracle",
     ["kona"] = "kona",
     ["librca"] = "liberica",
+    ["nik"] = "liberica_native",
     ["mandrel"] = "mandrel",
     ["ms"] = "microsoft",
     ["sapmchn"] = "sap_machine",

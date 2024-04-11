@@ -91,8 +91,8 @@ Liberica is a 100% open-source Java implementation. It is built from OpenJDK whi
 
 
 ```shell
-$ vfox install java x.y.z-librce
-$ vfox search java librce
+$ vfox install java x.y.z-librca
+$ vfox search java librca
 ```
 
 ## Liberica NIK (Bellsoft)
