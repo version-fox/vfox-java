@@ -25,8 +25,12 @@ function PLUGIN:Available(ctx)
     for _, jdk in ipairs(jdks) do
         local v = jdk.java_version
         local short = jdk.short
-        if short and short ~= "open" then
+        if distribution == "all" then
             v = v .. "-" .. short
+        elseif distribution == "open" then
+            v = v
+        else
+            v = v .. "-" .. distribution
         end
 
         if not seen[v] then
