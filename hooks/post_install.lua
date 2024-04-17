@@ -9,12 +9,12 @@ function PLUGIN:PostInstall(ctx)
     local majorVersion = sdkInfo.note
     local v = strings.split(sdkInfo.version, "+")[1]
     local needRemoveDir = {
-        '/jdk-' .. v .. '.jdk',
-        '/jdk-' .. majorVersion .. '.jdk',
-        '/Contents/Home'
+        ['/jdk-' .. v .. '.jdk'] = true,
+        ['/jdk-' .. majorVersion .. '.jdk'] = true,
+        ['/Contents/Home'] = true,
     }
     print("Checking if need to rename jdk files...")
-    for _, dir in ipairs(needRemoveDir) do
+    for dir, _ in pairs(needRemoveDir) do
         print("Checking path: " .. path .. dir)
         if checkDir(path .. dir) then
             print("Renaming jdk files: " .. path .. dir .. '/*')
