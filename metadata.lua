@@ -22,6 +22,10 @@ NOTE:
     vfox will not load the plugin and prompt the user to upgrade vfox.
  --]]
 PLUGIN.minRuntimeVersion = "0.3.0"
+
+PLUGIN.legacyFilenames = {
+    '.sdkmanrc',
+}
 -- Some things that need user to be attention!
 PLUGIN.notes = {
     "Listed below are the supported distributions and their short names.",
