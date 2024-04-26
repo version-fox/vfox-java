@@ -4,7 +4,7 @@ local json = require("json")
 local foojay = {}
 
 local URL =
-"https://api.foojay.io/disco/v3.0/packages/jdks?version=%s&distribution=%s&architecture=%s&archive_type=%s&operating_system=%s&release_status=ga&directly_downloadable=true&latest=available"
+"https://api.foojay.io/disco/v3.0/packages/jdks?version=%s&distribution=%s&architecture=%s&archive_type=%s&operating_system=%s&lib_c_type=%s&release_status=ga&directly_downloadable=true&latest=available"
 
 foojay.fetchtJdkList= function (distribution, version)
 
@@ -17,7 +17,13 @@ foojay.fetchtJdkList= function (distribution, version)
     if os == "windows" then
         archive_type = "zip"
     end
-    local reqUrl = URL:format(version,distribution,RUNTIME.archType, archive_type, os)
+
+    local lib_c_type = ""
+    if os == "linux" then
+        lib_c_type = "glibc"
+    end
+
+    local reqUrl = URL:format(version, distribution, RUNTIME.archType, archive_type, os, lib_c_type)
 
     local resp, err = http.get({
         url = reqUrl
@@ -34,5 +40,3 @@ foojay.fetchtJdkList= function (distribution, version)
 end
 
 return foojay
-
-
