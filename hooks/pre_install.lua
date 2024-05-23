@@ -1,22 +1,19 @@
-local strings = require("vfox.strings")
 local http = require("http")
 local json = require("json")
 
 local foojay = require("foojay")
-local shortname = require("shortname")
+local distribution_version_parser = require("distribution_version")
 --- Returns some pre-installed information, such as version number, download address, local files, etc.
 --- If checksum is provided, vfox will automatically check it for you.
 --- @param ctx table
 --- @field ctx.version string User-input version
 --- @return table Version information
 function PLUGIN:PreInstall(ctx)
-    local version_parts = strings.split(ctx.version, "-")
-    local version = version_parts[1]
-    local distribution = version_parts[2] or "open"
-    if not shortname[distribution] then
-        error("Unsupport distribution: " .. distribution)
+    local distribution_version = distribution_version_parser.parse_version(ctx.version)
+    if not distribution_version then
+        error("Could not extract a valid distribution: " .. ctx.version)
     end
-    local jdks = foojay.fetchtJdkList(shortname[distribution], version)
+    local jdks = foojay.fetchtJdkList(distribution_version.distribution.name, distribution_version.version)
     if not #jdks then
         return {}
     end
@@ -27,7 +24,7 @@ function PLUGIN:PreInstall(ctx)
     -- if checksum == "" and info.checksum_uri ~= "" then
     --     checksum = httpGet(info.checksum_uri, "Failed to fetch checksum")
     -- end
-    local finalV = distribution == "open" and jdk.java_version or jdk.java_version .. "-" .. distribution
+    local finalV = distribution_version.distribution.short_name == "open" and jdk.java_version or jdk.java_version .. "-" .. distribution_version.distribution.short_name
     return {
         -- [info.checksum_type] = checksum,
         url = info.direct_download_uri,

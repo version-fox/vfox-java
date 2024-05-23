@@ -1,6 +1,6 @@
 local strings = require("vfox.strings")
 
-local shortname = require("shortname")
+local distribution_version_parser = require("distribution_version")
 
 function PLUGIN:ParseLegacyFile(ctx)
     local filepath = ctx.filepath
@@ -20,9 +20,10 @@ function PLUGIN:ParseLegacyFile(ctx)
         return {}
     end
 
-
-    local fullVersion, vendor = unpack(strings.split(javaVersion, "-"))
-    if not vendor or not shortname[vendor] then
+    local distributionVersion = distribution_version_parser.parse_version(javaVersion)
+    local fullVersion = distributionVersion.version
+    local vendor = distributionVersion.distribution.short_name
+    if not vendor then
         return {}
     end
 
