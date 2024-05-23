@@ -1,23 +1,23 @@
 local foojay = require("foojay")
-local shortname = require("shortname")
+local distribution_version_parser = require("distribution_version")
 
 --- Return all available versions provided by this plugin
 --- @param ctx table Empty table used as context, for future extension
 --- @return table Descriptions of available versions and accompanying tool descriptions
 function PLUGIN:Available(ctx)
-    local distribution = ctx.args[1] or "open"
+    local query = ctx.args[1] or "open"
     local jdks = {}
 
-    if distribution == "all" then
-        for short, dist in pairs(shortname) do
-            local tempJdks = foojay.fetchtJdkList(dist, "")
+    if query == "all" then
+        for _, distribution in ipairs(distribution_version_parser.distributions) do
+            local tempJdks = foojay.fetchtJdkList(distribution.name, "")
             for _, jdk in ipairs(tempJdks) do
-                jdk.short = short
+                jdk.short = distribution.short_name
                 table.insert(jdks, jdk)
             end
         end
     else
-        jdks = foojay.fetchtJdkList(shortname[distribution] or error("Unsupported distribution: " .. distribution), "")
+        jdks = foojay.fetchtJdkList(distribution_version_parser.parse_distribution(query).name or error("Unsupported distribution: " .. query), "")
     end
 
     local result = {}
@@ -25,12 +25,12 @@ function PLUGIN:Available(ctx)
     for _, jdk in ipairs(jdks) do
         local v = jdk.java_version
         local short = jdk.short
-        if distribution == "all" then
+        if query == "all" then
             v = v .. "-" .. short
-        elseif distribution == "open" then
+        elseif query == "open" then
             v = v
         else
-            v = v .. "-" .. distribution
+            v = v .. "-" .. distribution_version_parser.parse_distribution(query).short_name
         end
 
         if not seen[v] then
