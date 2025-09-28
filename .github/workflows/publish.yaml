@@ -52,7 +52,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - name: Download JSON file
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v5
         with:
           name: manifest
       - name: Compress build files
