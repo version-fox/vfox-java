@@ -37,7 +37,7 @@ jobs:
           print(str)' > manifest.json
           cat manifest.json
       - name: Upload JSON file
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: manifest
           path: manifest.json
