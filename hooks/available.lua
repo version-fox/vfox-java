@@ -17,7 +17,11 @@ function PLUGIN:Available(ctx)
             end
         end
     else
-        jdks = foojay.fetchtJdkList(distribution_version_parser.parse_distribution(query).name or error("Unsupported distribution: " .. query), "")
+        local distribution = distribution_version_parser.parse_distribution(query)
+        if not distribution then
+            error("Unsupported distribution: " .. query)
+        end
+        jdks = foojay.fetchtJdkList(distribution.name, "")
     end
 
     local result = {}
