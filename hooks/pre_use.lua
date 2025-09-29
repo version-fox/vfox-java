@@ -8,7 +8,7 @@ function PLUGIN:PreUse(ctx)
         }
     else
         return {
-            version = version,
+            version = ctx.version,
         }
     end
 end
