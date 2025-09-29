@@ -16,7 +16,7 @@ jobs:
     if: github.event_name == 'push' || (github.event.pull_request.merged == true && startsWith(github.event.pull_request.title, 'Release v'))
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Extract version from tag
         if: github.event_name == 'push'
