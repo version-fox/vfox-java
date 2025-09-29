@@ -30,7 +30,11 @@ function PLUGIN:Available(ctx)
         elseif query == "open" then
             v = v
         else
-            v = v .. "-" .. distribution_version_parser.parse_distribution(query).short_name
+            local distribution = distribution_version_parser.parse_distribution(query)
+            if not distribution then
+                error("Unsupported distribution: " .. query)
+            end
+            v = v .. "-" .. distribution.short_name
         end
 
         if not seen[v] then
