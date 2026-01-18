@@ -59,6 +59,13 @@ function distribution_version.parse_version (arg)
     local version_parts = strings.split(arg, "-")
     local version
     local distribution
+    local javafx_bundled = false
+
+    -- Check if the last part is "fx" and remove it, setting javafx_bundled flag
+    if version_parts[#version_parts] == "fx" then
+        javafx_bundled = true
+        table.remove(version_parts)
+    end
 
     if not version_parts[2] then
         -- no parts, check if we got a distribution name without version
@@ -90,6 +97,7 @@ function distribution_version.parse_version (arg)
     return {
         version = version,
         distribution = distribution,
+        javafx_bundled = javafx_bundled,
     }
 end
 
