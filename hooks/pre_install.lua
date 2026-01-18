@@ -40,7 +40,7 @@ function PLUGIN:PreInstall(ctx)
     --     checksum = httpGet(info.checksum_uri, "Failed to fetch checksum")
     -- end
     
-    -- Build final version string with fx suffix if needed
+    -- Build final version string with fx suffix if needed (after distribution name)
     local fx_suffix = ""
     if jdk.javafx_bundled == true then
         fx_suffix = "-fx"
@@ -50,7 +50,7 @@ function PLUGIN:PreInstall(ctx)
     if distribution_version.distribution.short_name == "open" then
         finalV = jdk.java_version .. fx_suffix
     else
-        finalV = jdk.java_version .. fx_suffix .. "-" .. distribution_version.distribution.short_name
+        finalV = jdk.java_version .. "-" .. distribution_version.distribution.short_name .. fx_suffix
     end
     return {
         -- [info.checksum_type] = checksum,

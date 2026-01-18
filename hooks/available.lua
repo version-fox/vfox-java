@@ -31,18 +31,18 @@ function PLUGIN:Available(ctx)
         local v = jdk.java_version
         local short = jdk.short
         
-        -- Add -fx suffix for JavaFX bundled versions
+        -- Add -fx suffix for JavaFX bundled versions (after distribution name)
         local fx_suffix = ""
         if jdk.javafx_bundled == true then
             fx_suffix = "-fx"
         end
         
         if query == "all" then
-            v = v .. fx_suffix .. "-" .. short
+            v = v .. "-" .. short .. fx_suffix
         elseif query == "open" then
             v = v .. fx_suffix
         else
-            v = v .. fx_suffix .. "-" .. distribution.short_name
+            v = v .. "-" .. distribution.short_name .. fx_suffix
         end
 
         if not seen[v] then

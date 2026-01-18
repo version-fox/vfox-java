@@ -8,7 +8,7 @@
 
 # 使用
 
-**参数格式**:  `x.y.z-distribution` 或 `x.y.z-fx-distribution` (带 JavaFX 的版本)
+**参数格式**:  `x.y.z-distribution` 或 `x.y.z-distribution-fx` (带 JavaFX 的版本)
 
 ```shell
 # 添加插件
@@ -18,9 +18,9 @@ vfox add java
 vfox install java@x.y.z  # 默认使用openjdk
 vfox install java@x.y.z-graal # 使用graalvm
 
-# 安装带 JavaFX 的版本 (使用 -fx 后缀)
-vfox install java@21.0.5-fx-zulu   # 带 JavaFX 的 Zulu
-vfox install java@21.0.5-fx-librca # 带 JavaFX 的 Liberica
+# 安装带 JavaFX 的版本 (在发行版名称后添加 -fx 后缀)
+vfox install java@21.0.5-zulu-fx   # 带 JavaFX 的 Zulu
+vfox install java@21.0.5-librca-fx # 带 JavaFX 的 Liberica
 
 # 查看所有可用版本
 vfox search java all # 查看所有sdk版本
@@ -30,19 +30,19 @@ vfox search java graal # 查看所有graalvm版本
 
 ## JavaFX 支持
 
-部分发行版提供了捆绑 JavaFX 的 JDK 版本。这些版本在版本列表中会显示 `-fx` 后缀，并在备注中标注 "JavaFX"。安装带 JavaFX 的版本时，需要在版本字符串中添加 `-fx`：
+部分发行版提供了捆绑 JavaFX 的 JDK 版本。这些版本在版本列表中会在发行版名称后显示 `-fx` 后缀，并在备注中标注 "JavaFX"。安装带 JavaFX 的版本时，需要在发行版名称后添加 `-fx`：
 
 ```shell
 # 查看版本列表 (带 JavaFX 的版本会显示 -fx 后缀)
 vfox search java zulu
 # 示例输出:
 # 21.0.5-zulu
-# 21.0.5-fx-zulu    # JavaFX
+# 21.0.5-zulu-fx    # JavaFX
 # 17.0.13-zulu
-# 17.0.13-fx-zulu   # JavaFX
+# 17.0.13-zulu-fx   # JavaFX
 
 # 安装带 JavaFX 的版本
-vfox install java@21.0.5-fx-zulu
+vfox install java@21.0.5-zulu-fx
 ```
 
 # 支持的JDK发行版
