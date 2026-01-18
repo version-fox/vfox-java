@@ -9,6 +9,7 @@ local URL =
 foojay.fetchtJdkList= function (distribution, version)
 
     local os = RUNTIME.osType
+    local arch = RUNTIME.archType
     if os == "darwin" then
         os = "macos"
     end
@@ -16,6 +17,9 @@ foojay.fetchtJdkList= function (distribution, version)
     local archive_type = "tar.gz"
     if os == "windows" then
         archive_type = "zip"
+        if (arch == "amd64") then
+            arch = "x64"
+        end
     end
 
     local lib_c_type = ""
@@ -23,7 +27,7 @@ foojay.fetchtJdkList= function (distribution, version)
         lib_c_type = "glibc"
     end
 
-    local reqUrl = URL:format(version, distribution, RUNTIME.archType, archive_type, os, lib_c_type)
+    local reqUrl = URL:format(version, distribution, arch, archive_type, os, lib_c_type)
 
     local resp, err = http.get({
         url = reqUrl
