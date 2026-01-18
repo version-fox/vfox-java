@@ -180,8 +180,17 @@ $ vfox install java@x.y.z-jb
 $ vfox search java jb
 ```
 
+## Loongson (Loongnix)
+Loongson JDK is the OpenJDK distribution optimized for LoongArch (loong64) architecture from Loongnix. It supports JDK 8, 11, 17, and 21 LTS versions on Linux systems with LoongArch64 processors. This distribution is automatically used when running on LoongArch architecture.
+
+```shell
+$ vfox install java@x.y.z-loong
+$ vfox search java loong
+```
+
 
 # Thanks
 
 - [SDKMAN](https://github.com/sdkman/)
 - [foojayio](https://github.com/foojayio/discoapi)
+- [Loongnix](https://www.loongnix.cn/)
