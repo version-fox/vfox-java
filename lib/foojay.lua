@@ -24,6 +24,11 @@ foojay.fetchtJdkList= function (distribution, version)
 
     local os = RUNTIME.osType
     local arch = RUNTIME.archType
+    -- Convert arm64 to aarch64 for foojay API compatibility
+    if arch == "arm64" then
+        arch = "aarch64"
+    end
+
     if os == "darwin" then
         os = "macos"
     end
@@ -39,12 +44,6 @@ foojay.fetchtJdkList= function (distribution, version)
     local lib_c_type = ""
     if os == "linux" then
         lib_c_type = detect_lib_c_type()
-    end
-
-    -- Convert arm64 to aarch64 for foojay API compatibility
-    local arch = RUNTIME.archType
-    if arch == "arm64" then
-        arch = "aarch64"
     end
 
     local reqUrl = URL:format(version, distribution, arch, archive_type, os, lib_c_type)
