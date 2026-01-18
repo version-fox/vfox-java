@@ -6,6 +6,20 @@ local foojay = {}
 local URL =
 "https://api.foojay.io/disco/v3.0/packages/jdks?version=%s&distribution=%s&architecture=%s&archive_type=%s&operating_system=%s&lib_c_type=%s&release_status=ga&directly_downloadable=true"
 
+--- Detects the libc type on Linux systems (glibc or musl)
+--- @return string "glibc" or "musl"
+local function detect_lib_c_type()
+    local handle = io.popen("ldd --version 2>&1")
+    if handle then
+        local result = handle:read("*a")
+        handle:close()
+        if result and result:lower():find("musl") then
+            return "musl"
+        end
+    end
+    return "glibc"
+end
+
 foojay.fetchtJdkList= function (distribution, version)
 
     local os = RUNTIME.osType
@@ -24,7 +38,7 @@ foojay.fetchtJdkList= function (distribution, version)
 
     local lib_c_type = ""
     if os == "linux" then
-        lib_c_type = "glibc"
+        lib_c_type = detect_lib_c_type()
     end
 
     -- Convert arm64 to aarch64 for foojay API compatibility
