@@ -19,6 +19,7 @@ local short_name = {
     ["trava"] = "trava",
     ["zulu"] = "zulu",
     ["jb"] = "jetbrains",
+    ["loong"] = "loongson",
 }
 
 local long_name={}

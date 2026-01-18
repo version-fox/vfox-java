@@ -34,6 +34,7 @@ PLUGIN.notes = {
     " - GraalVM:    x.y.z-graal",
     " - Temurin:    x.y.z-tem",
     " - Zulu:       x.y.z-zulu",
+    " - Loongson:   x.y.z-loong (LoongArch/loong64 only)",
     "Others please see: https://github.com/version-fox/vfox-java"
 
 }

@@ -18,6 +18,17 @@ function PLUGIN:PreInstall(ctx)
         error("No JDK found for " .. ctx.version .. " on " .. RUNTIME.osType .. "/" .. RUNTIME.archType .. ". Please check available versions with 'vfox search java'")
     end
     local jdk = jdks[1]
+    
+    -- Check if this is a Loongson JDK (from Loongnix)
+    if jdk.distribution == "loongson" or distribution_version.distribution.name == "loongson" then
+        local finalV = jdk.java_version .. "-" .. distribution_version.distribution.short_name
+        return {
+            url = jdk.download_url,
+            version = finalV,
+            note = jdk.major_version
+        }
+    end
+    
     local info = json.decode(httpGet(jdk.links.pkg_info_uri, "Failed to fetch jdk info")).result[1]
     -- TODO: checksum
     -- local checksum = info.checksum

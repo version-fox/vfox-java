@@ -211,7 +211,17 @@ $ vfox install java x.y.z-jb
 $ vfox search java jb
 ```
 
+## Loongson (龙芯/Loongnix)
+
+龙芯 JDK 是针对 LoongArch（loong64/龙架构）架构优化的 OpenJDK 发行版，来自 Loongnix 龙芯开源社区。支持 Linux 系统上的 JDK 8、11、17 和 21 LTS 版本。在 LoongArch 架构上运行时会自动使用此发行版。
+
+```shell
+$ vfox install java x.y.z-loong
+$ vfox search java loong
+```
+
 # 感谢
 
 - [SDKMAN](https://github.com/sdkman/)
 - [foojayio](https://github.com/foojayio/discoapi)
+- [Loongnix 龙芯开源社区](https://www.loongnix.cn/)

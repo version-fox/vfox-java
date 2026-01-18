@@ -1,5 +1,6 @@
 local http = require("http")
 local json = require("json")
+local loongnix = require("loongnix")
 
 local foojay = {}
 
@@ -7,6 +8,10 @@ local URL =
 "https://api.foojay.io/disco/v3.0/packages/jdks?version=%s&distribution=%s&architecture=%s&archive_type=%s&operating_system=%s&lib_c_type=%s&release_status=ga&directly_downloadable=true"
 
 foojay.fetchtJdkList= function (distribution, version)
+    -- If on LoongArch architecture or loongson distribution is requested, use Loongnix
+    if loongnix.isLoongArch() or distribution == "loongson" then
+        return loongnix.fetchJdkList(version)
+    end
 
     local os = RUNTIME.osType
     local arch = RUNTIME.archType
