@@ -1,0 +1,27 @@
+name: End-to-End Test
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Install vfox
+        uses: version-fox/install-vfox-action@v1
+      - name: Add java plugin from repo
+        run: vfox add --source "${GITHUB_WORKSPACE}" java
+      - name: Search java versions
+        run: vfox search java tem
+      - name: Install Java
+        run: vfox install java@17.0.17-tem
+      - name: Verify Java install
+        run: vfox list java
