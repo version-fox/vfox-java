@@ -45,7 +45,13 @@ function PLUGIN:PreInstall(ctx)
     if jdk.javafx_bundled == true then
         fx_suffix = "-fx"
     end
-    local finalV = distribution_version.distribution.short_name == "open" and jdk.java_version .. fx_suffix or jdk.java_version .. fx_suffix .. "-" .. distribution_version.distribution.short_name
+    
+    local finalV
+    if distribution_version.distribution.short_name == "open" then
+        finalV = jdk.java_version .. fx_suffix
+    else
+        finalV = jdk.java_version .. fx_suffix .. "-" .. distribution_version.distribution.short_name
+    end
     return {
         -- [info.checksum_type] = checksum,
         url = info.direct_download_uri,

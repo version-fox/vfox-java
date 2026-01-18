@@ -7,17 +7,18 @@ local distribution_version_parser = require("distribution_version")
 function PLUGIN:Available(ctx)
     local query = ctx.args[1] or "open"
     local jdks = {}
+    local distribution = nil
 
     if query == "all" then
-        for _, distribution in ipairs(distribution_version_parser.distributions) do
-            local tempJdks = foojay.fetchtJdkList(distribution.name, "")
+        for _, dist in ipairs(distribution_version_parser.distributions) do
+            local tempJdks = foojay.fetchtJdkList(dist.name, "")
             for _, jdk in ipairs(tempJdks) do
-                jdk.short = distribution.short_name
+                jdk.short = dist.short_name
                 table.insert(jdks, jdk)
             end
         end
     else
-        local distribution = distribution_version_parser.parse_distribution(query)
+        distribution = distribution_version_parser.parse_distribution(query)
         if not distribution then
             error("Unsupported distribution: " .. query)
         end
@@ -41,10 +42,6 @@ function PLUGIN:Available(ctx)
         elseif query == "open" then
             v = v .. fx_suffix
         else
-            local distribution = distribution_version_parser.parse_distribution(query)
-            if not distribution then
-                error("Unsupported distribution: " .. query)
-            end
             v = v .. fx_suffix .. "-" .. distribution.short_name
         end
 
