@@ -14,8 +14,8 @@ function PLUGIN:PreInstall(ctx)
         error("Could not extract a valid distribution: " .. ctx.version)
     end
     local jdks = foojay.fetchtJdkList(distribution_version.distribution.name, distribution_version.version)
-    if not #jdks then
-        return {}
+    if not jdks or #jdks == 0 then
+        error("No JDK found for " .. ctx.version .. " on " .. RUNTIME.osType .. "/" .. RUNTIME.archType .. ". Please check available versions with 'vfox search java'")
     end
     local jdk = jdks[1]
     local info = json.decode(httpGet(jdk.links.pkg_info_uri, "Failed to fetch jdk info")).result[1]

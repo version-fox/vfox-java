@@ -4,7 +4,7 @@ local json = require("json")
 local foojay = {}
 
 local URL =
-"https://api.foojay.io/disco/v3.0/packages/jdks?version=%s&distribution=%s&architecture=%s&archive_type=%s&operating_system=%s&lib_c_type=%s&release_status=ga&directly_downloadable=true&latest=available"
+"https://api.foojay.io/disco/v3.0/packages/jdks?version=%s&distribution=%s&architecture=%s&archive_type=%s&operating_system=%s&lib_c_type=%s&release_status=ga&directly_downloadable=true"
 
 foojay.fetchtJdkList= function (distribution, version)
 
@@ -25,6 +25,12 @@ foojay.fetchtJdkList= function (distribution, version)
     local lib_c_type = ""
     if os == "linux" then
         lib_c_type = "glibc"
+    end
+
+    -- Convert arm64 to aarch64 for foojay API compatibility
+    local arch = RUNTIME.archType
+    if arch == "arm64" then
+        arch = "aarch64"
     end
 
     local reqUrl = URL:format(version, distribution, arch, archive_type, os, lib_c_type)
