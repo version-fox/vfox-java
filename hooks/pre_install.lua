@@ -20,7 +20,7 @@ function PLUGIN:PreInstall(ctx)
     local jdk = jdks[1]
     
     -- Check if this is a Loongson JDK (from Loongnix)
-    if jdk.distribution == "loongson" or distribution_version.distribution.name == "loongson" then
+    if jdk.distribution == "loongson" then
         local finalV = jdk.java_version .. "-" .. distribution_version.distribution.short_name
         return {
             url = jdk.download_url,

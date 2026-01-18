@@ -33,7 +33,6 @@ foojay.fetchtJdkList= function (distribution, version)
     end
 
     -- Convert arm64 to aarch64 for foojay API compatibility
-    local arch = RUNTIME.archType
     if arch == "arm64" then
         arch = "aarch64"
     end
