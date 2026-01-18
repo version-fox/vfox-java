@@ -9,6 +9,7 @@ local URL =
 foojay.fetchtJdkList= function (distribution, version)
 
     local os = RUNTIME.osType
+    local arch = RUNTIME.archType
     if os == "darwin" then
         os = "macos"
     end
@@ -16,6 +17,9 @@ foojay.fetchtJdkList= function (distribution, version)
     local archive_type = "tar.gz"
     if os == "windows" then
         archive_type = "zip"
+        if (arch == "amd64") then
+            arch = "x64"
+        end
     end
 
     local lib_c_type = ""
