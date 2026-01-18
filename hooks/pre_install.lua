@@ -17,14 +17,35 @@ function PLUGIN:PreInstall(ctx)
     if not jdks or #jdks == 0 then
         error("No JDK found for " .. ctx.version .. " on " .. RUNTIME.osType .. "/" .. RUNTIME.archType .. ". Please check available versions with 'vfox search java'")
     end
-    local jdk = jdks[1]
+    
+    -- Filter JDKs based on JavaFX requirement
+    local filtered_jdks = {}
+    for _, jdk in ipairs(jdks) do
+        local jdk_has_fx = jdk.javafx_bundled == true
+        if distribution_version.javafx_bundled == jdk_has_fx then
+            table.insert(filtered_jdks, jdk)
+        end
+    end
+    
+    if #filtered_jdks == 0 then
+        local fx_msg = distribution_version.javafx_bundled and " with JavaFX" or " without JavaFX"
+        error("No JDK found for " .. ctx.version .. fx_msg .. " on " .. RUNTIME.osType .. "/" .. RUNTIME.archType .. ". Please check available versions with 'vfox search java'")
+    end
+    
+    local jdk = filtered_jdks[1]
     local info = json.decode(httpGet(jdk.links.pkg_info_uri, "Failed to fetch jdk info")).result[1]
     -- TODO: checksum
     -- local checksum = info.checksum
     -- if checksum == "" and info.checksum_uri ~= "" then
     --     checksum = httpGet(info.checksum_uri, "Failed to fetch checksum")
     -- end
-    local finalV = distribution_version.distribution.short_name == "open" and jdk.java_version or jdk.java_version .. "-" .. distribution_version.distribution.short_name
+    
+    -- Build final version string with fx suffix if needed
+    local fx_suffix = ""
+    if jdk.javafx_bundled == true then
+        fx_suffix = "-fx"
+    end
+    local finalV = distribution_version.distribution.short_name == "open" and jdk.java_version .. fx_suffix or jdk.java_version .. fx_suffix .. "-" .. distribution_version.distribution.short_name
     return {
         -- [info.checksum_type] = checksum,
         url = info.direct_download_uri,

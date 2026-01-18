@@ -29,24 +29,35 @@ function PLUGIN:Available(ctx)
     for _, jdk in ipairs(jdks) do
         local v = jdk.java_version
         local short = jdk.short
+        
+        -- Add -fx suffix for JavaFX bundled versions
+        local fx_suffix = ""
+        if jdk.javafx_bundled == true then
+            fx_suffix = "-fx"
+        end
+        
         if query == "all" then
-            v = v .. "-" .. short
+            v = v .. fx_suffix .. "-" .. short
         elseif query == "open" then
-            v = v
+            v = v .. fx_suffix
         else
             local distribution = distribution_version_parser.parse_distribution(query)
             if not distribution then
                 error("Unsupported distribution: " .. query)
             end
-            v = v .. "-" .. distribution.short_name
+            v = v .. fx_suffix .. "-" .. distribution.short_name
         end
 
         if not seen[v] then
             seen[v] = true
             -- check if version exists
+            local note = jdk.term_of_support == "lts" and "LTS" or ""
+            if jdk.javafx_bundled == true then
+                note = note == "" and "JavaFX" or note .. ", JavaFX"
+            end
             table.insert(result, {
                 version = v,
-                note = jdk.term_of_support == "lts" and "LTS" or ""
+                note = note
             })
         end
 

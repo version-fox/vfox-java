@@ -9,7 +9,7 @@ Support for multiple JDK distributions, such as: Oracle, Graalvm, Eclipse & more
 
 # Usage
 
-**Parameter Format**: `x.y.z-distribution`
+**Parameter Format**: `x.y.z-distribution` or `x.y.z-fx-distribution` (for JavaFX bundled versions)
 
 ```shell
 # add plugin for vfox
@@ -21,11 +21,32 @@ vfox install java@17.0.17-tem      # Temurin
 vfox install java@17.0.17-zulu     # Zulu
 vfox install java@17-graal         # GraalVM (latest 17.x)
 
+# install JavaFX bundled versions (use -fx suffix)
+vfox install java@21.0.5-fx-zulu   # Zulu with JavaFX
+vfox install java@21.0.5-fx-librca # Liberica with JavaFX
+
 # view all available versions
 vfox search java           # view all openjdk versions
 vfox search java tem       # view all temurin versions
 vfox search java zulu      # view all zulu versions
 vfox search java graal     # view all graalvm versions
+```
+
+## JavaFX Support
+
+Some distributions provide JDK versions bundled with JavaFX. These versions are displayed with the `-fx` suffix in the version list and marked with "JavaFX" in the notes. To install a JavaFX bundled version, add `-fx` to the version string:
+
+```shell
+# List versions (JavaFX versions will show -fx suffix)
+vfox search java zulu
+# Example output:
+# 21.0.5-zulu
+# 21.0.5-fx-zulu    # JavaFX
+# 17.0.13-zulu
+# 17.0.13-fx-zulu   # JavaFX
+
+# Install JavaFX bundled version
+vfox install java@21.0.5-fx-zulu
 ```
 
 # Supported JDK Distributions
