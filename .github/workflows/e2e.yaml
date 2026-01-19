@@ -1,0 +1,66 @@
+name: End-to-End Test
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Compress build files
+        uses: thedoctor0/zip-release@0.7.6
+        with:
+          type: "zip"
+          directory: "./"
+          filename: "release.zip"
+          exclusions: ".git/** .gitignore .github/** README.*"
+      - name: Install vfox
+        shell: bash
+        run: |
+          set -euo pipefail
+          install_script="$(mktemp)"
+          # Pinned install.sh from the v1.0.3 tag (commit below); verify with:
+          # git ls-remote https://github.com/version-fox/vfox.git refs/tags/v1.0.3^{}
+          install_commit="0006386f97ed08d4eca5917ba6ace2736f31fb5f"
+          # SHA256 from: curl -sS https://raw.githubusercontent.com/version-fox/vfox/${install_commit}/install.sh | sha256sum
+          # Recalculate this hash when updating or auditing the pinned script.
+          install_sha="7b11beb7b826ab50e46c85a09e26f1c9b8a7ee7e71d3ea4c2588fe413ed0e210"
+          curl -sSLo "$install_script" "https://raw.githubusercontent.com/version-fox/vfox/${install_commit}/install.sh"
+          echo "${install_sha}  ${install_script}" | sha256sum -c -
+          max_retries=10
+          retry_delay=5
+          # Retry install for up to 10 attempts (5s delay) to handle transient network issues (up to 45s delay).
+          installed=false
+          for attempt in $(seq 1 "$max_retries"); do
+            if bash "$install_script"; then
+              installed=true
+              break
+            fi
+            if [ "$attempt" -lt "$max_retries" ]; then
+              sleep "$retry_delay"
+            fi
+          done
+          rm -f "$install_script"
+          if [ "$installed" != "true" ]; then
+            echo "Failed to install vfox"
+            exit 1
+          fi
+          vfox --version
+      - name: Install plugin
+        run: vfox add --source "${GITHUB_WORKSPACE}/release.zip" java
+      - name: Install Java 17.0.17-tem
+        run: |
+          set -euo pipefail
+          eval "$(vfox activate bash)"
+          vfox search java tem
+          vfox install java@17.0.17-tem
+          vfox use -g java@17.0.17-tem
+          vfox current
