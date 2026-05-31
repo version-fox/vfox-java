@@ -55,6 +55,27 @@ function distribution_version.parse_distribution (name)
 end
 
 
+--- Converts user-input version format to Foojay API format
+--- Examples: "26.ea.1" -> "26-ea+1", "26.ea" -> "26-ea", "25.0.3" -> "25.0.3"
+--- @param version string User-input version
+--- @return string Converted version for Foojay API
+function distribution_version.convert_version_for_api(version)
+    -- Handle EA version format: "X.ea.Y" -> "X-ea+Y"
+    local ea_version, ea_build = version:match("^(%d+)%.ea%.(%d+)$")
+    if ea_version and ea_build then
+        return ea_version .. "-ea+" .. ea_build
+    end
+    
+    -- Handle EA version format without build number: "X.ea" -> "X-ea"
+    local ea_version_only = version:match("^(%d+)%.ea$")
+    if ea_version_only then
+        return ea_version_only .. "-ea"
+    end
+    
+    -- Return as-is for normal versions
+    return version
+end
+
 function distribution_version.parse_version (arg)
     local version_parts = strings.split(arg, "-")
     local version
@@ -93,6 +114,9 @@ function distribution_version.parse_version (arg)
             end
         end
     end
+
+    -- Convert version format for Foojay API
+    version = distribution_version.convert_version_for_api(version)
 
     return {
         version = version,
