@@ -4,7 +4,7 @@ local json = require("json")
 local foojay = {}
 
 local URL =
-"https://api.foojay.io/disco/v3.0/packages/jdks?version=%s&distribution=%s&architecture=%s&archive_type=%s&operating_system=%s&lib_c_type=%s&release_status=ga&directly_downloadable=true"
+"https://api.foojay.io/disco/v3.0/packages/jdks?version=%s&distribution=%s&architecture=%s&archive_type=%s&operating_system=%s&lib_c_type=%s&directly_downloadable=true"
 
 --- Detects the libc type on Linux systems (glibc or musl)
 --- @return string "glibc" or "musl"

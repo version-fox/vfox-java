@@ -33,6 +33,9 @@ function PLUGIN:PreInstall(ctx)
     end
     
     local jdk = filtered_jdks[1]
+    if not jdk.links or not jdk.links.pkg_info_uri then
+        error("Invalid JDK package info: missing download links for " .. ctx.version)
+    end
     local info = json.decode(httpGet(jdk.links.pkg_info_uri, "Failed to fetch jdk info")).result[1]
     -- TODO: checksum
     -- local checksum = info.checksum
