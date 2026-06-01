@@ -59,7 +59,26 @@ foojay.fetchtJdkList= function (distribution, version)
     end
 
     local respBody = json.decode(resp.body)
-    return respBody.result
+    local result = respBody.result
+
+    -- Fallback to tar.gz on Windows if no zip packages found (e.g. JetBrains JDK)
+    if os == "windows" and (not result or #result == 0) then
+        archive_type = "tar.gz"
+        reqUrl = URL:format(version, distribution, arch, archive_type, os, lib_c_type)
+        resp, err = http.get({
+            url = reqUrl
+        })
+        if err ~= nil then
+            error("Failed to fetch jdk info from foojay: " .. err)
+        end
+        if resp.status_code ~= 200 then
+            error("Failed to fetch jdk info from foojay: status_code =>" .. resp.status_code)
+        end
+        respBody = json.decode(resp.body)
+        result = respBody.result
+    end
+
+    return result
 end
 
 return foojay
