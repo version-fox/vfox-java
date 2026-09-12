@@ -1,6 +1,7 @@
 name: Test Plugin
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
     branches: [main]
@@ -23,3 +24,17 @@ jobs:
         run: |
           go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_use_test.lua
           go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/loongnix_test.lua
+      - name: Test macOS Java home normalization
+        run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
+  macos-layout:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version: '1.24.0'
+          cache: false
+      - name: Test actual macOS filesystem layouts
+        run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
