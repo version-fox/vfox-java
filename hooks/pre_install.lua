@@ -2,6 +2,7 @@ local http = require("http")
 local json = require("json")
 
 local foojay = require("foojay")
+local loongnix = require("loongnix")
 local distribution_version_parser = require("distribution_version")
 --- Returns some pre-installed information, such as version number, download address, local files, etc.
 --- If checksum is provided, vfox will automatically check it for you.
@@ -12,6 +13,9 @@ function PLUGIN:PreInstall(ctx)
     local distribution_version = distribution_version_parser.parse_version(ctx.version)
     if not distribution_version then
         error("Could not extract a valid distribution: " .. ctx.version)
+    end
+    if loongnix.supported() or loongnix.is_distribution(distribution_version.distribution.name) then
+        return loongnix.pre_install(distribution_version)
     end
     local jdks = foojay.fetchtJdkList(distribution_version.distribution.name, distribution_version.version)
     if not jdks or #jdks == 0 then
