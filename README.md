@@ -32,6 +32,12 @@ vfox search java zulu      # view all zulu versions
 vfox search java graal     # view all graalvm versions
 ```
 
+## Select and install a distribution
+
+In an interactive terminal, run `vfox search java tem` to select and install a version from the Temurin list. In a non-interactive terminal, this command only prints the versions. Replace `tem` with another distribution identifier, such as `zulu`, as needed.
+
+For a known version, use `vfox install java@17.0.17-tem`. Space-separated arguments to `install` identify multiple SDKs, so `vfox install java tem` does not pass `tem` as a Java distribution filter.
+
 ## JavaFX Support
 
 Some distributions provide JDK versions bundled with JavaFX. These versions are displayed with the `-fx` suffix after the distribution name in the version list and marked with "JavaFX" in the notes. To install a JavaFX bundled version, add `-fx` after the distribution name:
