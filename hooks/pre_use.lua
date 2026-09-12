@@ -15,6 +15,7 @@ function PLUGIN:PreUse(ctx)
     if distribution_version and distribution_version.distribution.short_name ~= "open" then
         return {
             version = distribution_version.version .. "-" .. distribution_version.distribution.short_name
+                .. (distribution_version.javafx_bundled and "-fx" or "")
         }
     else
         return {
