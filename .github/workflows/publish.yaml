@@ -1,46 +1,27 @@
-name: Generate and Publish Manifest
+name: Plugin
 
 on:
-  push:
-    tags: [ 'v*' ]
   pull_request:
-    types: [closed]
-    branches: [main, master]
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Plugin version, for example 0.5.5 (without v)'
+        required: true
+        type: string
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  publish:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' || (github.event.pull_request.merged == true && startsWith(github.event.pull_request.title, 'Release v'))
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Extract version from tag
-        if: github.event_name == 'push'
-        run: |
-          VERSION=$(echo ${{ github.ref }} | cut -d'/' -f3 | cut -c2-)
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      - name: Extract version from PR title
-        if: github.event_name == 'pull_request'
-        run: |
-          PR_TITLE="${{ github.event.pull_request.title }}"
-          VERSION=$(echo "$PR_TITLE" | grep -oP 'Release v\K[0-9]+\.[0-9]+\.[0-9]+')
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-
-      - name: Validate version
-        run: |
-          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Invalid version format: $VERSION"
-            exit 1
-          fi
-          echo "Publishing version: $VERSION"
-
-      - name: Publish manifest and release
-        uses: version-fox/plugin-manifest-action@main
-        with:
-          version: ${{ env.VERSION }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+  check:
+    if: github.event_name == 'pull_request'
+    uses: version-fox/plugin-manifest-action/.github/workflows/check-plugin.yml@v1
+  release:
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: write
+    uses: version-fox/plugin-manifest-action/.github/workflows/release-plugin.yml@v1
+    with:
+      version: ${{ inputs.version || '' }}
