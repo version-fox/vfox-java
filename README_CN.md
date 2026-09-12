@@ -28,6 +28,12 @@ vfox search java # 查看所有openjdk版本
 vfox search java graal # 查看所有graalvm版本
 ```
 
+## 按发行版选择并安装
+
+在交互终端中运行 `vfox search java tem`，即可从 Temurin 版本列表中选择一个版本并安装；在非交互终端中，该命令只输出版本列表。也可以将 `tem` 替换为 `zulu` 等发行版标识。
+
+已知版本时，使用 `vfox install java@17.0.17-tem`。`install` 的空格分隔参数用于指定多个 SDK，因此 `vfox install java tem` 不会将 `tem` 作为 Java 发行版筛选条件。
+
 ## JavaFX 支持
 
 部分发行版提供了捆绑 JavaFX 的 JDK 版本。这些版本在版本列表中会在发行版名称后显示 `-fx` 后缀，并在备注中标注 "JavaFX"。安装带 JavaFX 的版本时，需要在发行版名称后添加 `-fx`：
@@ -56,7 +62,7 @@ OpenJDK 的下游产品，它是面向生产环境的高性能发行版，专门
 Java 开发人员提供一个稳定、高性能的 JDK，尤其是在 ARM 架构上表现出色。
 
 ```shell
-$ vfox install java x.y.z-bsg
+$ vfox install java@x.y.z-bsg
 $ vfox search java bsg
 ```
 
@@ -67,7 +73,7 @@ $ vfox search java bsg
 Corretto，您可以在 Linux、Windows 和 macOS 等流行的操作系统上开发和运行 Java 应用程序。
 
 ```shell
-$ vfox install java x.y.z-amzn
+$ vfox install java@x.y.z-amzn
 $ vfox search java amzn
 ```
 
@@ -77,7 +83,7 @@ $ vfox search java amzn
 Dragonwell 是在极端扩展条件下运行这些分布式 Java 应用程序的引擎。
 
 ```shell
-$ vfox install java x.y.z-albba
+$ vfox install java@x.y.z-albba
 $ vfox search java albba
 ```
 
@@ -88,7 +94,7 @@ Oracle GraalVM 是 Oracle 推出的免费 GraalVM 发行版，基于 Oracle JDK�
 提供的高级功能包括 G1 GC、SBOM 以及性能和大小优化。它还使在 Java 应用程序中嵌入 Python、JavaScript、Ruby 和其他语言成为可能。
 
 ```shell
-$ vfox install java x.y.z-graal
+$ vfox install java@x.y.z-graal
 $ vfox search java graal
 ```
 
@@ -99,7 +105,7 @@ GraalVM CE 是 GraalVM 的开源发行版，基于 OpenJDK，包含高性能 Gra
 Python、JavaScript、Ruby 和其他语言嵌入 Java 应用程序。
 
 ```shell
-$ vfox install java x.y.z-graalce
+$ vfox install java@x.y.z-graalce
 $ vfox search java graalce
 ```
 
@@ -109,7 +115,7 @@ $ vfox search java graalce
 Java 开发人员。JDK 包括一个私有 JVM 和其他一些资源，用于完成 Java 应用程序的开发。它根据 Oracle 免收费条款和条件许可证发布。
 
 ```shell
-$ vfox install java x.y.z-oracle
+$ vfox install java@x.y.z-oracle
 $ vfox search java oracle
 ```
 
@@ -119,7 +125,7 @@ Tencent Kona 是 OpenJDK 的免费、多平台和生产就绪发行版，提供�
 Java 应用程序。
 
 ```shell
-$ vfox install java x.y.z-kona
+$ vfox install java@x.y.z-kona
 $ vfox search java kona
 ```
 
@@ -129,7 +135,7 @@ Liberica 是 100% 的开源 Java 实现。它由 BellSoft 参与开发的 OpenJD
 JCK。Liberica 的所有支持版本还包含 JavaFX。
 
 ```shell
-$ vfox install java x.y.z-librca
+$ vfox install java@x.y.z-librca
 $ vfox search java librca
 ```
 
@@ -139,7 +145,7 @@ Liberica Native Image Kit 是一款实用工具，可在封闭世界假设下将
 musl 的 Alpine Linux，可优化资源消耗并最大限度地减少静态占用空间。
 
 ```shell
-$ vfox install java x.y.z-nik
+$ vfox install java@x.y.z-nik
 $ vfox search java nik
 ```
 
@@ -149,7 +155,7 @@ Mandrel 专注于 GraalVM 的本地镜像组件，目的是为 Quarkus 用户提
 的开发人员应该能够从 Java 源代码一路开发到在 Linux 上运行的精益、原生、依赖平台的应用程序。这种能力对于在云原生应用程序开发模型中部署到容器中至关重要。
 
 ```shell
-$ vfox install java x.y.z-mandrel
+$ vfox install java@x.y.z-mandrel
 $ vfox search java mandrel
 ```
 
@@ -160,7 +166,7 @@ GNU 通用公共许可证（GNU GPL）第 2 版许可，但有一个链接例外
 许可证条款的约束。OpenJDK 是 Java SE 自第 7 版起的官方参考实现。
 
 ```shell
-$ vfox install java x.y.z-open
+$ vfox install java@x.y.z-open
 $ vfox search java open
 ```
 
@@ -171,7 +177,7 @@ Windows x64 服务器和桌面环境上 Java 11 的长期支持 (LTS) 二进制�
 AArch64/ARM64。微软还发布了适用于所有三大操作系统以及 x64 和 AArch64 (M1/ARM64) 体系结构的 Java 16 二进制文件。
 
 ```shell
-$ vfox install java x.y.z-ms
+$ vfox install java@x.y.z-ms
 $ vfox search java ms
 ```
 
@@ -181,7 +187,7 @@ SapMachine 是 OpenJDK 项目的下游版本。它用于为希望使用 OpenJDK 
 OpenJDK。SAP 致力于确保 Java 平台的持续成功。
 
 ```shell
-$ vfox install java x.y.z-sapmchn
+$ vfox install java@x.y.z-sapmchn
 $ vfox search java sapmchn
 ```
 
@@ -191,7 +197,7 @@ Semeru Runtimes 使用 OpenJDK 的类库和 Eclipse OpenJ9 Java 虚拟机，使�
 应用程序，这些应用程序启动迅速，性能卓越，同时占用内存较少。
 
 ```shell
-$ vfox install java x.y.z-sem
+$ vfox install java@x.y.z-sem
 $ vfox search java sem
 ```
 
@@ -201,7 +207,7 @@ Eclipse Adoptium Temurin™ 项目的前身是 AdoptOpenJDK，该项目提供代
 Java SE TCK 测试，可在整个 Java 生态系统中普遍使用。
 
 ```shell
-$ vfox install java x.y.z-tem
+$ vfox install java@x.y.z-tem
 $ vfox search java tem
 ```
 
@@ -210,7 +216,7 @@ $ vfox search java tem
 TravaOpenJDK 是专为开发人员设计的 OpenJDK。它基于 dcevm 并使用集成的 HotswapAgent，因此允许在运行时通过方法和字段的添加或更新对类进行高级热交换。
 
 ```shell
-$ vfox install java x.y.z-trava
+$ vfox install java@x.y.z-trava
 $ vfox search java trava
 ```
 
@@ -221,14 +227,14 @@ JRE 和构建，包括 OpenJFX 和 Coordinated Restore at Checkpoint (CRaC)。�
 Platform Core 可提供稳定的安全更新，以便快速、可靠地部署到生产中，并提供以解决方案为导向的工程协助。
 
 ```shell
-$ vfox install java x.y.z-zulu
+$ vfox install java@x.y.z-zulu
 $ vfox search java zulu
 ```
 
 ## Jetbrains
 
 ```shell
-$ vfox install java x.y.z-jb
+$ vfox install java@x.y.z-jb
 $ vfox search java jb
 ```
 
