@@ -38,6 +38,25 @@ In an interactive terminal, run `vfox search java tem` to select and install a v
 
 For a known version, use `vfox install java@17.0.17-tem`. Space-separated arguments to `install` identify multiple SDKs, so `vfox install java tem` does not pass `tem` as a Java distribution filter.
 
+## LoongArch (Linux)
+
+On Linux `loong64`, `vfox search java` (or `vfox search java loongnix`) lists JDKs from the [Loongnix official archive](https://ftp.loongnix.cn/Java/). Other architectures continue to use Foojay.
+
+Choose the ABI matching your operating system; the plugin does not guess it:
+
+- `lnxabi1` / `loongnix_abi1`: Linux 4.19 UAPI builds, intended for systems such as Loongnix 20 and Loongnix Server 8.4.
+- `lnxabi2` / `loongnix_abi2`: Linux 5.10 UAPI builds, named `glibc2.34` upstream, intended for systems such as Debian 12 and openEuler.
+
+See the [upstream compatibility notes](https://www.loongnix.cn/zh/api/java/) for your system. Do not choose solely from the running kernel version. This source provides glibc builds, not musl builds.
+
+```shell
+vfox search java lnxabi2
+vfox install java@21-lnxabi2-fx  # latest matching Java 21 with JavaFX, ABI2
+vfox install java@21.0.12+8-lnxabi2-fx
+```
+
+Versions use the Java version and build number, not the Loongson release number. ABI and JavaFX suffixes are preserved when switching versions. Only GA LoongArch tarballs listed in the archive are supported; MIPS packages are excluded. Select `-fx` only for JavaFX builds. Bare installation requests require an explicit ABI; selecting a search result supplies it automatically.
+
 ## JavaFX Support
 
 Some distributions provide JDK versions bundled with JavaFX. These versions are displayed with the `-fx` suffix after the distribution name in the version list and marked with "JavaFX" in the notes. To install a JavaFX bundled version, add `-fx` after the distribution name:

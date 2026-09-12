@@ -20,4 +20,6 @@ jobs:
           go-version: '1.24.0'
           cache: false
       - name: Test Java version resolution with vfox's Lua interpreter
-        run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_use_test.lua
+        run: |
+          go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_use_test.lua
+          go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/loongnix_test.lua

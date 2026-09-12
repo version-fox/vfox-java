@@ -34,6 +34,25 @@ vfox search java graal # 查看所有graalvm版本
 
 已知版本时，使用 `vfox install java@17.0.17-tem`。`install` 的空格分隔参数用于指定多个 SDK，因此 `vfox install java tem` 不会将 `tem` 作为 Java 发行版筛选条件。
 
+## 龙架构（Linux）
+
+在 Linux `loong64` 上，`vfox search java`（或 `vfox search java loongnix`）从 [Loongnix 官方归档](https://ftp.loongnix.cn/Java/)列出 JDK。其他架构继续使用 Foojay。
+
+请按操作系统选择 ABI，插件不会自动猜测：
+
+- `lnxabi1` / `loongnix_abi1`：Linux 4.19 UAPI 构建，适用于 Loongnix 20、Loongnix Server 8.4 等系统。
+- `lnxabi2` / `loongnix_abi2`：Linux 5.10 UAPI 构建，上游文件名标记为 `glibc2.34`，适用于 Debian 12、openEuler 等系统。
+
+请核对[上游兼容性说明](https://www.loongnix.cn/zh/api/java/)，不能仅凭当前内核版本选择 ABI。该源提供 glibc 构建，不提供 musl 构建。
+
+```shell
+vfox search java lnxabi2
+vfox install java@21-lnxabi2-fx  # 匹配最新的 Java 21，带 JavaFX，使用 ABI2
+vfox install java@21.0.12+8-lnxabi2-fx
+```
+
+版本号采用 Java 版本及构建号，不是 Loongson 发行版本号。切换版本时保留 ABI 和 JavaFX 后缀。仅支持归档中的正式版 LoongArch tar 包，排除 MIPS 包；JavaFX 构建需使用 `-fx`。直接安装时必须明确 ABI，从搜索结果选择安装则会自动带上该标识。
+
 ## JavaFX 支持
 
 部分发行版提供了捆绑 JavaFX 的 JDK 版本。这些版本在版本列表中会在发行版名称后显示 `-fx` 后缀，并在备注中标注 "JavaFX"。安装带 JavaFX 的版本时，需要在发行版名称后添加 `-fx`：

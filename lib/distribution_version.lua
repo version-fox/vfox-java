@@ -2,6 +2,8 @@ local strings = require("vfox.strings")
 
 local short_name = {
     ["open"] = "openjdk",
+    ["lnxabi1"] = "loongnix_abi1",
+    ["lnxabi2"] = "loongnix_abi2",
     ["bsg"] = "bisheng",
     ["amzn"] = "corretto",
     ["albba"] = "dragonwell",

@@ -1,17 +1,27 @@
 local foojay = require("foojay")
+local loongnix = require("loongnix")
 local distribution_version_parser = require("distribution_version")
 
 --- Return all available versions provided by this plugin
 --- @param ctx table Empty table used as context, for future extension
 --- @return table Descriptions of available versions and accompanying tool descriptions
 function PLUGIN:Available(ctx)
-    local query = ctx.args[1] or "open"
+    local query = ctx.args[1] or (loongnix.supported() and "loongnix" or "open")
+    if query == "loongnix" or loongnix.is_distribution(query) or (loongnix.supported() and query == "all") then
+        return loongnix.available(query)
+    end
+    if loongnix.supported() then
+        error("Foojay does not support loong64; use vfox search java loongnix")
+    end
     local jdks = {}
     local distribution = nil
 
     if query == "all" then
         for _, dist in ipairs(distribution_version_parser.distributions) do
-            local tempJdks = foojay.fetchtJdkList(dist.name, "")
+            local tempJdks = {}
+            if not loongnix.is_distribution(dist.name) then
+                tempJdks = foojay.fetchtJdkList(dist.name, "")
+            end
             for _, jdk in ipairs(tempJdks) do
                 jdk.short = dist.short_name
                 table.insert(jdks, jdk)
