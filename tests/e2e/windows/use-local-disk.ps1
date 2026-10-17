@@ -18,9 +18,10 @@
 # runners is a network-attached OS disk where every file flush takes
 # milliseconds, onto the runner's local disk. Extracting image layers and
 # whatever the e2e containers write flush file by file, so on C: the
-# servercore pull alone took five minutes. windows-latest has a local D:;
-# windows-11-arm carries an unformatted local NVMe disk, which this formats.
-# A runner with neither keeps Docker on C:.
+# servercore pull alone took five minutes. Go's caches and the temp
+# directory follow, for the suite and the vfox build it runs on the runner.
+# windows-latest has a local D:; windows-11-arm carries an unformatted local
+# NVMe disk, which this formats. A runner with neither keeps all on C:.
 
 $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $true
@@ -43,11 +44,14 @@ elseif ($null -ne $dDisk -and $dDisk -ne (Get-Partition -DriveLetter C).DiskNumb
     $drive = 'D:'
 }
 else {
-    Write-Output 'PASS no local disk here; Docker keeps its data on C:'
+    Write-Output 'PASS no local disk here; Docker, Go and the temp directory stay on C:'
     exit 0
 }
 $dataRoot = "$drive\docker"
-New-Item -ItemType Directory -Force -Path $dataRoot | Out-Null
+$go = "$drive\go"
+$temp = "$drive\temp"
+New-Item -ItemType Directory -Force -Path $dataRoot, "$go\mod", "$go\build", $temp | Out-Null
+"GOMODCACHE=$go\mod", "GOCACHE=$go\build", "TEMP=$temp", "TMP=$temp" | Add-Content -Path $env:GITHUB_ENV
 
 if (Get-Service docker -ErrorAction SilentlyContinue) {
     # The engine windows-latest preinstalls: point its config at the local
@@ -77,4 +81,4 @@ else {
     # with this data root.
     "E2E_DOCKER_DATA_ROOT=$dataRoot" | Add-Content -Path $env:GITHUB_ENV
 }
-Write-Output "PASS Docker keeps its data on $dataRoot"
+Write-Output "PASS Docker keeps its data on $dataRoot, Go its caches in $go, and the temp directory is $temp"

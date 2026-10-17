@@ -29,6 +29,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -69,9 +70,6 @@ func TestE2E(t *testing.T) {
 	}
 	repoRoot := filepath.Join(here, "..", "..", "..")
 
-	ctx := context.Background()
-	buildImage(t, ctx, repoRoot, image, platform, baseImage)
-
 	combos, err := common.Matrix()
 	if err != nil {
 		t.Fatal(err)
@@ -80,7 +78,14 @@ func TestE2E(t *testing.T) {
 		t.Fatal("empty matrix: nothing to run")
 	}
 
-	vfoxMain := &vfoxMainImage{dir: t.TempDir(), base: image, arch: arch}
+	ctx := context.Background()
+	// The main combos' vfox compiles while the image builds.
+	var vfoxMain *vfoxMainImage
+	if slices.ContainsFunc(combos, func(c common.Combo) bool { return c.Vfox == "main" }) {
+		vfoxMain = startVfoxMain(ctx, t, image, arch)
+	}
+	buildImage(t, ctx, repoRoot, image, platform, baseImage)
+
 	sem := make(chan struct{}, maxJobs())
 	for _, c := range combos {
 		c := c

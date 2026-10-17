@@ -140,29 +140,50 @@ func installVfoxRelease(ctx context.Context, t *testing.T, ctr tc.Container, box
 }
 
 // vfoxMainImage is the e2e image plus vfox.exe built from main, which every
-// main combo starts from. The runner builds vfox once, with its own Go,
-// while the latest combos run; building it in each main combo's container
-// meant installing the Go MSI there, then cloning and building, over two
-// minutes a combo on arm64.
+// main combo starts from. The runner compiles vfox once, with its own Go,
+// while the image builds; building it in each main combo's container meant
+// installing the Go MSI there, then cloning and building, over two minutes a
+// combo on arm64.
 type vfoxMainImage struct {
-	dir, base, arch string
+	base, arch string
 
+	built chan struct{} // closed once exe and err are set
+	exe   string
 	once  sync.Once
 	image string
 	err   error
 }
 
-// get returns the image, building it on first use; the other main combos
-// wait for that build. A failed build fails every main combo.
+// startVfoxMain starts compiling vfox from main in the background, for the
+// image that layers it onto base.
+func startVfoxMain(ctx context.Context, t *testing.T, base, arch string) *vfoxMainImage {
+	t.Helper()
+	m := &vfoxMainImage{base: base, arch: arch, built: make(chan struct{})}
+	dir := t.TempDir()
+	ctx, cancel := context.WithCancel(ctx)
+	go func() {
+		defer close(m.built)
+		m.exe, m.err = buildVfoxMain(ctx, dir, arch)
+	}()
+	// Before dir is removed: a run that fails early stops the build.
+	t.Cleanup(func() {
+		cancel()
+		<-m.built
+	})
+	return m
+}
+
+// get returns the image, layering the compiled vfox.exe onto base on first
+// use; the other main combos wait for it. A failed build fails every main
+// combo.
 func (m *vfoxMainImage) get(ctx context.Context, t *testing.T) string {
 	t.Helper()
 	m.once.Do(func() {
-		exe, err := buildVfoxMain(ctx, m.dir, m.arch)
-		if err == nil {
-			m.image, err = buildMainImage(ctx, m.base, exe)
+		<-m.built
+		if m.err == nil {
+			m.image, m.err = buildMainImage(ctx, m.base, m.exe)
 		}
-		m.err = err
-		if err == nil {
+		if m.err == nil {
 			t.Logf("PASS built vfox from main with %s (%s)", runtime.Version(), m.arch)
 		}
 	})
@@ -173,13 +194,16 @@ func (m *vfoxMainImage) get(ctx context.Context, t *testing.T) string {
 }
 
 // buildVfoxMain downloads vfox's main branch into dir and builds vfox.exe
-// there for arch with the runner's Go, returning its path.
+// there for arch with the runner's Go, returning its path. It runs
+// Windows' own curl and tar: CI runners also put Git's GNU tar on the PATH,
+// which reads the colon of a drive letter as a remote host.
 func buildVfoxMain(ctx context.Context, dir, arch string) (string, error) {
 	tarball := filepath.Join(dir, "vfox-main.tar.gz")
 	exe := filepath.Join(dir, "vfox.exe")
-	download := exec.CommandContext(ctx, "curl.exe",
+	system32 := filepath.Join(os.Getenv("SystemRoot"), "System32")
+	download := exec.CommandContext(ctx, filepath.Join(system32, "curl.exe"),
 		append(strings.Fields(curlRetry), "-fsSL", "-o", tarball, vfoxMainSource)...)
-	extract := exec.CommandContext(ctx, "tar.exe", "-xzf", tarball, "-C", dir)
+	extract := exec.CommandContext(ctx, filepath.Join(system32, "tar.exe"), "-xzf", tarball, "-C", dir)
 	build := exec.CommandContext(ctx, "go", "build", "-trimpath", "-o", exe, ".")
 	build.Dir = filepath.Join(dir, "vfox-main")
 	build.Env = append(os.Environ(), "CGO_ENABLED=0", "GOOS=windows", "GOARCH="+arch)

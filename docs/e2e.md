@@ -3,10 +3,10 @@
 The offline Lua hook tests (`tests/*_test.lua`) run in the **Test Plugin**
 workflow. The end-to-end suite runs in containers against real vfox on Linux
 and Windows; each `vfox` x `distribution` combination gets its own throwaway
-container. On Linux, CI runs the suite natively on the stock runners (Docker
-plus Go from `actions/setup-go`), the way the repository dev container
-reproduces it locally. On Windows it runs through a Docker Compose runner
-image, since dev containers cannot host Windows container images (see below).
+container. CI runs the suite natively on the stock runners (Docker plus Go
+from `actions/setup-go`). Locally, the repository dev container reproduces
+that on Linux; on Windows a Docker Compose runner image does, since dev
+containers cannot host Windows container images (see below).
 
 ## Dev container
 
@@ -165,11 +165,15 @@ The `windows-11-arm` runner has no Windows Hypervisor Platform feature, so
 Hyper-V isolation is unavailable; process isolation needs only the
 Containers feature.
 
-CI first runs `use-local-disk.ps1`, which moves Docker's data root off the
-runners' network-attached C: onto a local disk: `windows-latest`'s D:, or the
-unformatted NVMe disk of `windows-11-arm`, which it formats. Image layers and
-the containers' files are written file by file, so on C: the servercore pull
-alone took five minutes. The script refuses to run outside GitHub Actions.
+CI skips the runner image: extracting its Go took two and a half minutes on
+`windows-11-arm`, where `actions/setup-go` already provides the same Go. It
+runs `go test ./windows` on the runner with `E2E_MAX_JOBS=3`, after
+`use-local-disk.ps1` moves Docker's data root, Go's caches and the temp
+directory off the runners' network-attached C: onto a local disk:
+`windows-latest`'s D:, or the unformatted NVMe disk of `windows-11-arm`,
+which it formats. Image layers and the containers' files are written file by
+file, so on C: the servercore pull alone took five minutes. The script
+refuses to run outside GitHub Actions.
 
 The `main` combos run with `VFOX_HOME` pointing inside a path containing a
 space (`C:\Users\John Doe\.vfox`), mirroring

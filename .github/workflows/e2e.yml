@@ -29,9 +29,10 @@ concurrency:
 # The Linux job runs the suite natively, the way the dev container runs it
 # locally: Go at the dev container's version (.devcontainer/Dockerfile) plus
 # the runner's stock Docker, with the same TESTCONTAINERS_RYUK_DISABLED knob.
-# The Windows jobs keep the compose runner image
-# (tests/e2e/windows/Dockerfile-runner), which carries its own Go toolchain,
-# so a Windows host needs only Docker. See docs/e2e.md.
+# The Windows jobs run it natively too, with the same Go, rather than through
+# the compose runner image (tests/e2e/windows/Dockerfile-runner) that lets a
+# local Windows host need only Docker: on windows-11-arm, extracting Go into
+# that image alone took two and a half minutes. See docs/e2e.md.
 
 jobs:
   e2e-linux:
@@ -68,42 +69,32 @@ jobs:
       matrix:
         # TODO See https://github.com/actions/runner-images/issues/13729
         runs-on: [windows-latest, windows-11-arm]
-        include:
-          - runs-on: windows-latest
-            compose: tests/e2e/windows/compose.amd64.yaml
-          - runs-on: windows-11-arm
-            compose: tests/e2e/windows/compose.arm64.yaml
     runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 60
+    env:
+      # Three containers at a time, as on Linux, once Docker is off C:.
+      E2E_MAX_JOBS: "3"
     steps:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
       # C: is a network-attached disk on these runners, where extracting the
-      # servercore image took five minutes; Docker keeps its data on a local
-      # disk instead.
+      # servercore image took five minutes; Docker, Go's caches and the temp
+      # directory go to a local disk instead.
       - run: pwsh -NoProfile -File tests/e2e/windows/use-local-disk.ps1
-      # The windows-11-arm runner ships neither Docker for Windows containers
-      # nor a Go new enough to build moby, so both are provisioned here. The
-      # engine build, minutes long, is cached on the script that pins it, so
-      # Go is only needed when that cache misses.
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.1
+          cache: false
+      # The windows-11-arm runner ships no Docker for Windows containers, so
+      # the engine is built here with that Go; the build, minutes long, is
+      # cached on the script that pins it.
       - if: matrix.runs-on == 'windows-11-arm'
-        id: moby
         uses: actions/cache@v6
         with:
           path: C:\vfox-docker\moby\bundles
           key: moby-windows-arm64-${{ hashFiles('tests/e2e/windows/install-docker-arm64.ps1') }}
-      - if: matrix.runs-on == 'windows-11-arm' && steps.moby.outputs.cache-hit != 'true'
-        uses: actions/setup-go@v6
-        with:
-          go-version: 1.27.1
-          cache: false
       - if: matrix.runs-on == 'windows-11-arm'
         run: pwsh -NoProfile -File tests/e2e/windows/install-docker-arm64.ps1
-      - if: matrix.runs-on == 'windows-11-arm'
-        name: Install Compose CLI plugin
-        run: |
-          New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.docker\cli-plugins" | Out-Null
-          curl.exe -fsSL "https://github.com/docker/compose/releases/download/v5.5.1/docker-compose-windows-aarch64.exe" -o "$env:USERPROFILE\.docker\cli-plugins\docker-compose.exe"
-          docker compose version
-      - run: docker compose -f ${{ matrix.compose }} run --rm --build e2e
+      - run: go test -v -timeout 55m -run TestE2E ./windows
+        working-directory: tests/e2e
