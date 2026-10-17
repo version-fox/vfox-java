@@ -222,6 +222,23 @@ func TestPaddedIdentifier(t *testing.T) {
 	}
 }
 
+func TestEarlyAccess(t *testing.T) {
+	for _, c := range []struct{ dist, version, installed, identifier string }{
+		{"open", "25.0.2", "25-ea+1", "25.0.0.0+ea.1-open"},
+		{"tem", "21.0.8", "21-ea+1-tem", "21.0.0.0+ea.1-tem"},
+		{"librca-fx", "25.0.4", "25-ea+1-librca-fx", "25.0.0.0-fx+ea.1-librca"},
+		{"jb", "21.0.5", "21-ea+1-jb", "21.0.0.0+ea.1-jbr"},
+		{"graalce", "25.0.2", "25-ea+1-graalce", "25.0.0.0+ea.1-graalce"},
+	} {
+		if got := EarlyAccess(c.dist, c.version); got != c.installed {
+			t.Errorf("EarlyAccess(%s, %s) = %q, want %q", c.dist, c.version, got, c.installed)
+		}
+		if got := EarlyAccessIdentifier(c.dist, c.version); got != c.identifier {
+			t.Errorf("EarlyAccessIdentifier(%s, %s) = %q, want %q", c.dist, c.version, got, c.identifier)
+		}
+	}
+}
+
 func TestAlias(t *testing.T) {
 	for _, c := range []struct{ dist, installed, want string }{
 		{"open", "25.0.2+10", "openjdk-25.0.2+10"},

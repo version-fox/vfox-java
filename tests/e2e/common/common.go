@@ -308,6 +308,29 @@ func PaddedIdentifier(distribution, version, installed string) string {
 	return version + buildNumber.FindString(installed) + "-" + sdkmanName(distribution)
 }
 
+// EarlyAccess renders the installed name of an early-access build of the
+// pinned major (<major>-ea+1, e.g. 21-ea+1-tem, 25-ea+1 for OpenJDK).
+// jdk.java.net removes each early-access build within weeks, so the suite
+// fakes the install: a java-<version> directory whose bin holds a stand-in
+// java that only prints this name.
+func EarlyAccess(distribution, version string) string {
+	return Spec(distribution, Major(version)+"-ea+1")
+}
+
+// EarlyAccessIdentifier renders SDKMAN's identifier of that build, spelled
+// as `sdk list java` shows OpenJDK's (28.0.0.0+ea.20-open):
+// "<major>.0.0.0[-fx]+ea.1-<distribution>" (21.0.0.0+ea.1-tem,
+// 25.0.0.0-fx+ea.1-librca). ParseLegacyFile matched only SDKMAN's older
+// 21.ea.1-tem to it, so it took the newest release of the major instead
+// (vfox-java#86).
+func EarlyAccessIdentifier(distribution, version string) string {
+	version = Major(version) + ".0.0.0"
+	if JavaFX(distribution) {
+		version += "-fx"
+	}
+	return version + "+ea.1-" + sdkmanName(distribution)
+}
+
 // Alias renders the asdf-style spelling "<long-name>-<version>[-fx]" of an
 // installed version, which PreUse must rewrite back to installed
 // (temurin-21.0.8+9 to 21.0.8+9-tem, openjdk-25.0.2+10 to 25.0.2+10).

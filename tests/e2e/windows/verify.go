@@ -59,11 +59,12 @@ func verifySearch(ctx context.Context, t *testing.T, ctr tc.Container, box slotB
 // java=21.0.8.0+9-tem, see common.PaddedIdentifier) or the installed version
 // itself (e.g. java=21.0.8+9-tem), written by Set-Content with Windows line
 // endings, while vfox lists an empty install of another release first (see
-// common.Decoy). It runs before any `vfox use`, so java can only come from
-// the legacy file.
+// common.Decoy). SDKMAN's identifier of an early-access build (e.g.
+// java=21.0.0.0+ea.1-tem) must then select a faked install of that build
+// (see common.EarlyAccess), not the release. It runs before any `vfox use`,
+// so java can only come from the legacy file.
 func verifyLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, distribution, version, installed, arch string) {
 	t.Helper()
-	const dir = `C:\e2e-legacy-sdkmanrc`
 	// vfox counts a version as installed once its directory holds
 	// java-<version>; the decoy holds nothing more, so selecting it leaves
 	// no java on PATH.
@@ -79,25 +80,46 @@ func verifyLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, box s
 		common.PaddedIdentifier(distribution, version, installed),
 		installed,
 	} {
-		execOK(ctx, t, ctr, fmt.Sprintf(
-			"New-Item -ItemType Directory -Force -Path %s | Out-Null; Set-Content -Path %s -Value %s",
-			pwshQuote(dir), pwshQuote(dir+`\.sdkmanrc`), pwshQuote("java="+identifier)), box.vars...)
-		// The probe activates its own PowerShell process. Activation pins
-		// __VFOX_PID, which scopes the `vfox env` state cache, but Windows may
-		// reuse a just-exited PID and legacy files are not among the cache's
-		// tracked inputs, so the cache file is removed before the export.
-		script := fmt.Sprintf(
-			"Invoke-Expression -Command (vfox activate pwsh | Out-String); "+
-				"Set-Location -LiteralPath %s; "+
-				"if ($env:__VFOX_CURTMPPATH) { Remove-Item -LiteralPath (Join-Path $env:__VFOX_CURTMPPATH 'env-state.json') -Force -ErrorAction SilentlyContinue }; "+
-				"$__vfoxExport = vfox env -s pwsh | Out-String; "+
-				"if ($__vfoxExport.Trim()) { Invoke-Expression -Command $__vfoxExport }; "+
-				"java %s", pwshQuote(dir), showSettings)
-		out := execRetry(ctx, t, ctr, ".sdkmanrc java="+identifier, script, box.vars...)
+		out := legacyJava(ctx, t, ctr, box, identifier)
 		common.CheckJava(t, out, distribution, version, arch, ".sdkmanrc java="+identifier)
 		t.Logf("PASS .sdkmanrc java=%s selects java %s, not %s", identifier, version, decoy)
 	}
 	execOK(ctx, t, ctr, fmt.Sprintf("Remove-Item -LiteralPath %s -Recurse -Force", decoyDir), box.vars...)
+
+	// The early-access build's java (a java.cmd) only prints its name, which
+	// the release's java, selected instead, would not.
+	ea := common.EarlyAccess(distribution, version)
+	eaDir := fmt.Sprintf("(Join-Path $env:VFOX_HOME %s)", pwshQuote(`cache\java\v-`+ea))
+	execOK(ctx, t, ctr, fmt.Sprintf(
+		"$bin = Join-Path %s %s; New-Item -ItemType Directory -Force -Path $bin | Out-Null; "+
+			"Set-Content -Path (Join-Path $bin 'java.cmd') -Value %s",
+		eaDir, pwshQuote(`java-`+ea+`\bin`), pwshQuote("@echo "+ea)), box.vars...)
+	identifier := common.EarlyAccessIdentifier(distribution, version)
+	out := legacyJava(ctx, t, ctr, box, identifier)
+	require.Containsf(t, out, ea, ".sdkmanrc java=%s must select %s, not %s", identifier, ea, installed)
+	t.Logf("PASS .sdkmanrc java=%s selects %s, not %s", identifier, ea, installed)
+	execOK(ctx, t, ctr, fmt.Sprintf("Remove-Item -LiteralPath %s -Recurse -Force", eaDir), box.vars...)
+}
+
+// legacyJava writes java=<identifier> to a .sdkmanrc and returns what java
+// prints next to it. The probe activates its own PowerShell process.
+// Activation pins __VFOX_PID, which scopes the `vfox env` state cache, but
+// Windows may reuse a just-exited PID and legacy files are not among the
+// cache's tracked inputs, so the cache file is removed before the export.
+func legacyJava(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, identifier string) string {
+	t.Helper()
+	const dir = `C:\e2e-legacy-sdkmanrc`
+	execOK(ctx, t, ctr, fmt.Sprintf(
+		"New-Item -ItemType Directory -Force -Path %s | Out-Null; Set-Content -Path %s -Value %s",
+		pwshQuote(dir), pwshQuote(dir+`\.sdkmanrc`), pwshQuote("java="+identifier)), box.vars...)
+	script := fmt.Sprintf(
+		"Invoke-Expression -Command (vfox activate pwsh | Out-String); "+
+			"Set-Location -LiteralPath %s; "+
+			"if ($env:__VFOX_CURTMPPATH) { Remove-Item -LiteralPath (Join-Path $env:__VFOX_CURTMPPATH 'env-state.json') -Force -ErrorAction SilentlyContinue }; "+
+			"$__vfoxExport = vfox env -s pwsh | Out-String; "+
+			"if ($__vfoxExport.Trim()) { Invoke-Expression -Command $__vfoxExport }; "+
+			"java %s", pwshQuote(dir), showSettings)
+	return execRetry(ctx, t, ctr, ".sdkmanrc java="+identifier, script, box.vars...)
 }
 
 // verifyToolchain runs java and javac through the activate + env hooks and

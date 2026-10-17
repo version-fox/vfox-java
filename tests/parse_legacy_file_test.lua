@@ -98,6 +98,20 @@ local cases = {
     { "java=25.0.1.0+8-open\n", { "25+36" }, "25+36" },
     { "java=26.0.1-oracle\n", { "26-oracle" }, "26-oracle" },
     { "java=26.0.2-oracle\n", { "26-oracle", "26.0.1-oracle" }, "26.0.1-oracle" },
+    -- SDKMAN's semverish identifiers write early-access builds 28.0.0+ea.19,
+    -- padded or not, where it used to write 28.ea.19 (vfox-java#86).
+    { "java=28.ea.19-open\n", { "28-ea+19" }, "28-ea+19" },
+    { "java=28.0.0+ea.19-open\n", { "28-ea+19" }, "28-ea+19" },
+    { "java=28.0.0.0+ea.19-open\n", { "28-ea+18", "28-ea+19", "27+36" }, "28-ea+19" },
+    { "java=26.0.0+ea.13-graal\n", { "26-ea+2-graal", "26-ea+13-graal" }, "26-ea+13-graal" },
+    { "java=28.0.0.0+ea.19-jbr\n", { "28-ea+19-jb" }, "28-ea+19-jb" },
+    { "java=28.0.0.0-fx+ea.19-zulu\n", { "28-ea+19-zulu", "28-ea+19-zulu-fx" }, "28-ea+19-zulu-fx" },
+    -- A build not installed takes the newest one installed, as 28.ea.20 does.
+    { "java=28.ea.20-open\n", { "28-ea+18", "28-ea+19" }, "28-ea+19" },
+    { "java=28.0.0.0+ea.20-open\n", { "28-ea+18", "28-ea+19" }, "28-ea+19" },
+    -- Never a release for an early-access build, nor the other way round.
+    { "java=28.0.0.0+ea.19-open\n", { "28+36", "28.0.1+3" }, nil },
+    { "java=28.0.0+36-open\n", { "28-ea+19" }, nil },
     -- No java line at all selects nothing.
     { "maven=3.9.9\n", { "21.0.8+9-tem" }, nil },
 }
