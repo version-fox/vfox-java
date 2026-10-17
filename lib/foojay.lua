@@ -59,7 +59,12 @@ foojay.fetchtJdkList = function(distribution, version)
         lib_c_type = detect_lib_c_type()
     end
 
-    local reqUrl = URL:format(version, distribution, arch, archive_type, os, lib_c_type)
+    -- A bare major such as 21 matches only its GA build (21+35); latest=available
+    -- picks the newest 21.x instead. Longer versions keep matching exactly, as
+    -- latest=available would look at the major alone.
+    local latest = version:match("^%d+$") and "&latest=available" or ""
+
+    local reqUrl = URL:format(version, distribution, arch, archive_type, os, lib_c_type) .. latest
 
     local resp, err = http.get({
         url = reqUrl,
@@ -77,7 +82,7 @@ foojay.fetchtJdkList = function(distribution, version)
     -- Fallback to tar.gz on Windows if no zip packages found (e.g. JetBrains JDK)
     if os == "windows" and (not result or #result == 0) then
         archive_type = "tar.gz"
-        reqUrl = URL:format(version, distribution, arch, archive_type, os, lib_c_type)
+        reqUrl = URL:format(version, distribution, arch, archive_type, os, lib_c_type) .. latest
         resp, err = http.get({
             url = reqUrl,
         })
