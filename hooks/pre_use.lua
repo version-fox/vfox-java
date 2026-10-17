@@ -14,6 +14,63 @@
 
 local distribution_version_parser = require("distribution_version")
 
+--- Compares the numbers in two version strings one by one, missing ones as 0.
+local function compare(a, b)
+    local x, y = {}, {}
+    for number in a:gmatch("%d+") do
+        table.insert(x, tonumber(number))
+    end
+    for number in b:gmatch("%d+") do
+        table.insert(y, tonumber(number))
+    end
+    for i = 1, math.max(#x, #y) do
+        if (x[i] or 0) ~= (y[i] or 0) then
+            return (x[i] or 0) > (y[i] or 0) and 1 or -1
+        end
+    end
+    return 0
+end
+
+--- Whether Java version a is newer than b: the release decides, then the
+--- build (21.0.12.1+1 > 21.0.8+9 > 21.0.8+7 > 21+35).
+local function newer(a, b)
+    local a_release, a_build = a:match("^([^+]*)(.*)$")
+    local b_release, b_build = b:match("^([^+]*)(.*)$")
+    local order = compare(a_release, b_release)
+    return order > 0 or order == 0 and compare(a_build, b_build) > 0
+end
+
+--- Returns the installed version that version .. suffix names. vfox uses the
+--- returned version as is, while installed names carry the build number
+--- PreInstall found, which the input may leave out. So, like PreInstall, take
+--- the newest build of a release (21.0.8-tem selects 21.0.8+9-tem) and the
+--- newest release of a bare major (21-tem selects 21.0.12.1+1-tem), unless the
+--- name itself is installed. Without a match, return the name for vfox to
+--- report as not installed.
+local function installed_version(installed_sdks, version, suffix)
+    local name = version .. suffix
+    if installed_sdks[name] then
+        return name
+    end
+    -- A bare major takes any release of it (21.0.12.1+1 for 21) but no EA build
+    -- (26-ea+13 for 26); other versions take only a build number (not
+    -- 21.0.12.1+1 for 21.0.12, nor 21.0.12+8 for 21.0.1).
+    local more = version:match("^%d+$") and "^[.+][%d.+]*$" or "^%+%d+$"
+    local best, best_version
+    for candidate in pairs(installed_sdks) do
+        local java_version = candidate:sub(1, #candidate - #suffix)
+        if
+            java_version .. suffix == candidate
+            and java_version:sub(1, #version) == version
+            and java_version:sub(#version + 1):find(more)
+            and (not best or newer(java_version, best_version))
+        then
+            best, best_version = candidate, java_version
+        end
+    end
+    return best or name
+end
+
 function PLUGIN:PreUse(ctx)
     local input_version = ctx.version
     local distribution_version = distribution_version_parser.parse_version(input_version)
@@ -29,10 +86,13 @@ function PLUGIN:PreUse(ctx)
 
     if distribution_version and distribution_version.distribution.short_name ~= "open" then
         return {
-            version = distribution_version.version
-                .. "-"
-                .. distribution_version.distribution.short_name
-                .. (distribution_version.javafx_bundled and "-fx" or ""),
+            version = installed_version(
+                ctx.installedSdks or {},
+                distribution_version.version,
+                "-"
+                    .. distribution_version.distribution.short_name
+                    .. (distribution_version.javafx_bundled and "-fx" or "")
+            ),
         }
     else
         return {

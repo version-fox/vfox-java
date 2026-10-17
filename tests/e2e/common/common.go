@@ -260,6 +260,17 @@ func LegacyIdentifier(distribution, version string) string {
 	return version + "-" + Base(distribution)
 }
 
+// UseSpec renders the spec `vfox use` must take as `vfox install` did,
+// leaving PreUse to find the build number among the installed versions
+// (21.0.8-tem selects 21.0.8+9-tem). OpenJDK is left out for now: PreUse
+// hands its input back unchanged (vfox-java#70).
+func UseSpec(distribution, version string) (string, bool) {
+	if Base(distribution) == "open" {
+		return "", false
+	}
+	return Spec(distribution, version), true
+}
+
 // Alias renders the asdf-style spelling "<long-name>-<version>[-fx]" of an
 // installed version, which PreUse must rewrite back to installed. OpenJDK
 // has none: its versions carry no suffix for PreUse to rewrite.
