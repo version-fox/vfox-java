@@ -1,0 +1,97 @@
+# Copyright 2026 Han Li and contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: E2E
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+# The Linux job runs the suite natively, the way the dev container runs it
+# locally: Go at the dev container's version (.devcontainer/Dockerfile) plus
+# the runner's stock Docker, with the same TESTCONTAINERS_RYUK_DISABLED knob.
+# The Windows jobs keep the compose runner image
+# (tests/e2e/windows/Dockerfile-runner), which carries its own Go toolchain,
+# so a Windows host needs only Docker. See docs/e2e.md.
+
+jobs:
+  e2e-linux:
+    if: github.repository == 'version-fox/vfox-java'
+    name: Linux container (${{ matrix.runs-on }})
+    strategy:
+      fail-fast: false
+      matrix:
+        runs-on: [ubuntu-latest, ubuntu-26.04-arm]
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 60
+    env:
+      # Ryuk publishes a port on the host daemon and waits for the suite to
+      # dial back to it; the dev container disables it (it runs
+      # Docker-out-of-Docker), and CI matches so both paths stay identical.
+      # Containers are terminated explicitly via t.Cleanup instead.
+      TESTCONTAINERS_RYUK_DISABLED: "true"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.1
+          cache: false
+      - run: go test -v -timeout 55m -run TestE2E ./linux
+        working-directory: tests/e2e
+
+  e2e-windows:
+    if: github.repository == 'version-fox/vfox-java'
+    name: Windows container (${{ matrix.runs-on }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # TODO See https://github.com/actions/runner-images/issues/13729
+        runs-on: [windows-latest, windows-11-arm]
+        include:
+          - runs-on: windows-latest
+            compose: tests/e2e/windows/compose.amd64.yaml
+          - runs-on: windows-11-arm
+            compose: tests/e2e/windows/compose.arm64.yaml
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      # The windows-11-arm runner ships neither Docker for Windows containers
+      # nor a Go new enough to build moby, so both are provisioned here.
+      - if: matrix.runs-on == 'windows-11-arm'
+        uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.1
+          cache: false
+      - if: matrix.runs-on == 'windows-11-arm'
+        run: pwsh -NoProfile -File tests/e2e/windows/install-docker-arm64.ps1
+      - if: matrix.runs-on == 'windows-11-arm'
+        name: Install Compose CLI plugin
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.docker\cli-plugins" | Out-Null
+          curl.exe -fsSL "https://github.com/docker/compose/releases/download/v5.5.1/docker-compose-windows-aarch64.exe" -o "$env:USERPROFILE\.docker\cli-plugins\docker-compose.exe"
+          docker compose version
+      - run: docker compose -f ${{ matrix.compose }} run --rm --build e2e

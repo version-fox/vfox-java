@@ -1,3 +1,17 @@
+-- Copyright 2026 Han Li and contributors
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--   http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 local foojay = require("foojay")
 local loongnix = require("loongnix")
 local distribution_version_parser = require("distribution_version")
@@ -14,7 +28,7 @@ function PLUGIN:Available(ctx)
         error("Foojay does not support loong64; use vfox search java loongnix")
     end
     local jdks = {}
-    local distribution = nil
+    local short_name = nil
 
     if query == "all" then
         for _, dist in ipairs(distribution_version_parser.distributions) do
@@ -28,10 +42,11 @@ function PLUGIN:Available(ctx)
             end
         end
     else
-        distribution = distribution_version_parser.parse_distribution(query)
+        local distribution = distribution_version_parser.parse_distribution(query)
         if not distribution then
             error("Unsupported distribution: " .. query)
         end
+        short_name = distribution.short_name
         jdks = foojay.fetchtJdkList(distribution.name, "")
     end
 
@@ -40,19 +55,19 @@ function PLUGIN:Available(ctx)
     for _, jdk in ipairs(jdks) do
         local v = jdk.java_version
         local short = jdk.short
-        
+
         -- Add -fx suffix for JavaFX bundled versions (after distribution name)
         local fx_suffix = ""
         if jdk.javafx_bundled == true then
             fx_suffix = "-fx"
         end
-        
+
         if query == "all" then
             v = v .. "-" .. short .. fx_suffix
         elseif query == "open" then
             v = v .. fx_suffix
         else
-            v = v .. "-" .. distribution.short_name .. fx_suffix
+            v = v .. "-" .. short_name .. fx_suffix
         end
 
         if not seen[v] then
@@ -64,10 +79,9 @@ function PLUGIN:Available(ctx)
             end
             table.insert(result, {
                 version = v,
-                note = note
+                note = note,
             })
         end
-
     end
     return result
 end
