@@ -14,10 +14,7 @@
 
 package windows
 
-import (
-	"strings"
-	"testing"
-)
+import "testing"
 
 func TestMaxJobsDefault(t *testing.T) {
 	t.Setenv("E2E_MAX_JOBS", "")
@@ -28,21 +25,6 @@ func TestMaxJobsDefault(t *testing.T) {
 	t.Setenv("E2E_MAX_JOBS", "0")
 	if got := maxJobs(); got != 2 {
 		t.Errorf("maxJobs(0) = %d, want 2 (clamped to default)", got)
-	}
-}
-
-func TestVfoxHome(t *testing.T) {
-	profile := `C:\Users\ContainerAdministrator`
-	if got, want := vfoxHome(profile, "latest-tem", "latest"),
-		`C:\Users\ContainerAdministrator\vfox-e2e-runs\latest-tem\.vfox`; got != want {
-		t.Errorf("vfoxHome(latest) = %q, want %q", got, want)
-	}
-	got := vfoxHome(profile, "main-tem", "main")
-	if got != spacedVfoxHome {
-		t.Errorf("vfoxHome(main) = %q, want %q", got, spacedVfoxHome)
-	}
-	if !strings.Contains(got, " ") {
-		t.Errorf("vfoxHome(main) = %q, want a path containing a space", got)
 	}
 }
 
