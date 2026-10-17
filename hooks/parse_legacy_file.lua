@@ -15,6 +15,7 @@
 local strings = require("vfox.strings")
 
 local distribution_version_parser = require("distribution_version")
+local installed_version = require("installed_version")
 
 --- Rewrites an SDKMAN identifier in the plugin's spelling, which parse_version
 --- reads. SDKMAN calls JetBrains jbr (the plugin's jb) and puts fx in the
@@ -64,52 +65,30 @@ function PLUGIN:ParseLegacyFile(ctx)
         return {}
     end
 
-    local versionArr = strings.split(fullVersion, "+")
-    local version = versionArr[1]
-    local build = versionArr[2]
-
+    local version = strings.split(fullVersion, "+")[1]
     local majorVersion = strings.split(version, ".")[1]
 
     --- Installed versions end in -<vendor> (OpenJDK's in nothing), then -fx for
     --- JavaFX builds: 21.0.8+9-tem, 21.0.12+7-zulu-fx, 25.0.2+10.
     local suffix = (vendor == "open" and "" or "-" .. vendor) .. (distributionVersion.javafx_bundled and "-fx" or "")
 
-    --- Whether installed version v is of this distribution and JavaFX flavour,
-    --- with a Java version starting with prefix.
-    local function matches(v, prefix)
-        local java_version = v:sub(1, #v - #suffix)
-        return java_version .. suffix == v
-            and (vendor ~= "open" or not strings.contains(java_version, "-"))
-            and strings.has_prefix(java_version, prefix)
-    end
-
     --- Get the list of versions of the current plugin installed
     --- (a plain call: vfox 1.x rejects the extra ctx argument of ctx:...).
-    local targetVersion
-    local versions = ctx.getInstalledVersions()
-    for _, v in ipairs(versions) do
-        --- It may be exactly the same, try it first.
-        if v == javaVersion then
-            targetVersion = v
-            break
-        end
-
-        if matches(v, version) then
-            targetVersion = v
-            break
-        end
+    --- vfox sorts it as strings, descending (21.0.8+9-tem, 21.0.12+8-tem,
+    --- 21.0.1+12-tem), so the first match is not the one to take.
+    local installed = {}
+    for _, v in ipairs(ctx.getInstalledVersions()) do
+        installed[v] = true
     end
 
-    if not targetVersion then
-        for _, v in ipairs(versions) do
-            if matches(v, majorVersion .. ".") then
-                targetVersion = v
-                break
-            end
-        end
-    end
-
+    --- The version itself (21.0.5+63130-jb), else the newest build of the
+    --- release, as SDKMAN's build numbers count its own rebuilds
+    --- (21.0.12+1.1-tem), else the newest installed release of the major
+    --- (21.0.12+8-tem for 21.0.3-tem).
+    local name = fullVersion .. suffix
     return {
-        version = targetVersion,
+        version = installed[name] and name
+            or installed_version.find(installed, version, suffix)
+            or installed_version.newest(installed, majorVersion .. ".", "^[%d.+]*$", suffix),
     }
 end

@@ -259,6 +259,15 @@ func MissingBuildSpec(distribution, version string) string {
 	return Spec(distribution, version+"+99")
 }
 
+// Decoy renders the installed name of another release whose version starts
+// with the pinned one (<version>0+1, e.g. 21.0.80+1-tem). vfox lists the
+// installed versions sorted as strings, descending, so it comes before the
+// pinned JDK (21.0.8+9-tem), and ParseLegacyFile, which took the first one
+// starting with the release, selected it (vfox-java#79).
+func Decoy(distribution, version string) string {
+	return Spec(distribution, version+"0+1")
+}
+
 // Major returns the leading version component: "21.0.8" -> "21".
 func Major(version string) string {
 	return strings.SplitN(version, ".", 2)[0]
@@ -404,6 +413,22 @@ func InstalledVersion(output string) string {
 		return m[1]
 	}
 	return ""
+}
+
+// listedVersion matches one `vfox list java` entry: "-> <version>", followed
+// by "<— current" for the version in use.
+var listedVersion = regexp.MustCompile(`^-> (\S+)`)
+
+// ListedVersions extracts the installed versions from `vfox list java`
+// output, in the order vfox lists them.
+func ListedVersions(output string) []string {
+	var versions []string
+	for _, line := range strings.Split(StripANSI(output), "\n") {
+		if m := listedVersion.FindStringSubmatch(strings.TrimRight(line, "\r")); m != nil {
+			versions = append(versions, m[1])
+		}
+	}
+	return versions
 }
 
 // unpackedTarball matches the "Unpacking <archive>..." line vfox prints
