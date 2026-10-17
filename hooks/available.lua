@@ -54,7 +54,7 @@ function PLUGIN:Available(ctx)
     local seen = {}
     for _, jdk in ipairs(jdks) do
         local v = jdk.java_version
-        local short = jdk.short
+        local short = jdk.short or short_name
 
         -- Add -fx suffix for JavaFX bundled versions (after distribution name)
         local fx_suffix = ""
@@ -62,12 +62,12 @@ function PLUGIN:Available(ctx)
             fx_suffix = "-fx"
         end
 
-        if query == "all" then
-            v = v .. "-" .. short .. fx_suffix
-        elseif query == "open" then
+        -- OpenJDK versions carry no distribution suffix, as PreInstall names
+        -- them, whether the query is open, openjdk or all.
+        if short == "open" then
             v = v .. fx_suffix
         else
-            v = v .. "-" .. short_name .. fx_suffix
+            v = v .. "-" .. short .. fx_suffix
         end
 
         if not seen[v] then

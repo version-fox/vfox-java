@@ -75,24 +75,24 @@ function PLUGIN:PreUse(ctx)
     local input_version = ctx.version
     local distribution_version = distribution_version_parser.parse_version(input_version)
 
-    -- If it is a pure numeric major version (such as "8"), and the distribution is openjdk, let the core perform fuzzy matching.
-    if distribution_version and distribution_version.distribution.short_name == "open" then
-        if not string.find(distribution_version.version, "%.") then -- Pure numbers, no minor versions
-            -- Return no result, let vfox core perform fuzzy matching. Not "": vfox
-            -- after 1.0.12 rejects a bare string ("cannot unmarshal string").
-            return nil
-        end
+    -- If it is a pure numeric major version (such as "8"), let the core perform
+    -- fuzzy matching, which takes any distribution. Spelled as OpenJDK (8-open,
+    -- openjdk-8), it selects the newest OpenJDK release below instead.
+    if input_version:match("^%d+$") then
+        -- Return no result, let vfox core perform fuzzy matching. Not "": vfox
+        -- after 1.0.12 rejects a bare string ("cannot unmarshal string").
+        return nil
     end
 
-    if distribution_version and distribution_version.distribution.short_name ~= "open" then
+    if distribution_version then
+        -- OpenJDK versions are installed without a distribution suffix, so
+        -- 25.0.2+10-open and openjdk-25.0.2+10 both name 25.0.2+10.
+        local suffix = distribution_version.javafx_bundled and "-fx" or ""
+        if distribution_version.distribution.short_name ~= "open" then
+            suffix = "-" .. distribution_version.distribution.short_name .. suffix
+        end
         return {
-            version = installed_version(
-                ctx.installedSdks or {},
-                distribution_version.version,
-                "-"
-                    .. distribution_version.distribution.short_name
-                    .. (distribution_version.javafx_bundled and "-fx" or "")
-            ),
+            version = installed_version(ctx.installedSdks or {}, distribution_version.version, suffix),
         }
     else
         return {

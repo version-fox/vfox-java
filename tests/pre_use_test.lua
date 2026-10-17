@@ -32,6 +32,12 @@ for _, version in ipairs({
     "26-ea+13-graal",
     "25.0.2-graalce",
     "21.0.12+8-lnxabi2-fx",
+    -- OpenJDK versions carry no distribution suffix.
+    "25.0.2+10",
+    "21+35",
+    "21.0.2+13",
+    "28-ea+18",
+    "28-ea+19",
 }) do
     installed[version] = { name = "java", version = version, path = "/sdks/java-" .. version }
 end
@@ -66,6 +72,23 @@ local cases = {
     { "25-graal", "25-graal" },
     { "8-zulu", "8-zulu" },
     { "26-graal", "26-graal" },
+    -- OpenJDK, however the input spells it, selects the version installed without a suffix.
+    { "25.0.2", "25.0.2+10" },
+    { "25.0.2-open", "25.0.2+10" },
+    { "25.0.2+10-open", "25.0.2+10" },
+    { "openjdk-25.0.2", "25.0.2+10" },
+    { "openjdk-25.0.2+10", "25.0.2+10" },
+    { "21-open", "21.0.2+13" },
+    { "openjdk-21", "21.0.2+13" },
+    { "28.ea", "28-ea+19" },
+    { "28.ea.18", "28-ea+18" },
+    -- Never another distribution, JavaFX flavour or an EA build either.
+    { "21.0.8", "21.0.8" },
+    { "21.0.12-open", "21.0.12" },
+    { "25.0.4-fx", "25.0.4-fx" },
+    { "25.0.2-open-fx", "25.0.2-fx" },
+    { "17-open", "17" },
+    { "28-open", "28" },
 }
 for _, case in ipairs(cases) do
     local result = PLUGIN:PreUse({ version = case[1], installedSdks = installed })
