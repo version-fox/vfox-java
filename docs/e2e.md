@@ -64,7 +64,10 @@ JDK, so `java` can only come from what vfox installs:
 2. A release no distribution has published (`<major>.0.99`) fails to install,
    with `PreInstall` naming the platform it searched (`linux/amd64`,
    `windows/arm64`, ...), so the Foojay lookup is checked to target the
-   runner.
+   runner. So does a build of the pinned release that was never published
+   (`<version>+99`, e.g. `21.0.8+99-tem`), proving the lookup keeps the
+   build number: Foojay reads an unencoded `+` as a space and drops the
+   build, and the release's newest build would install instead.
 3. The pinned release installs under the name `PreInstall` gives it: the
    requested version plus the build number (`21.0.8-tem` installs as
    `21.0.8+9-tem`). `vfox search java <distribution>` (the `Available` hook)

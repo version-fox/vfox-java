@@ -51,26 +51,27 @@ func setupVfox(ctx context.Context, t *testing.T, ctr tc.Container, vfoxVersion 
 	t.Logf("PASS %s with the local java plugin", strings.TrimSpace(execOK(ctx, t, ctr, "vfox --version")))
 }
 
-// checkMissingVersionRejected proves an unpublished release fails loudly
-// instead of installing something else: PreInstall finds no Foojay package
-// and names the platform it searched, which must be the runner's
-// (RUNTIME.osType/archType).
+// checkMissingVersionRejected proves an unpublished release, and an
+// unpublished build of the pinned one, fail loudly instead of installing
+// something else: PreInstall finds no Foojay package and names the platform
+// it searched, which must be the runner's (RUNTIME.osType/archType).
 func checkMissingVersionRejected(ctx context.Context, t *testing.T, ctr tc.Container, distribution, version, arch string) {
 	t.Helper()
-	spec := common.MissingSpec(distribution, version)
-	want := "No JDK found for " + spec
-	out := common.Retry(ctx, t, "vfox install java@"+spec+" (must fail)", func() (int, string) {
-		code, out := execRun(ctx, t, ctr, "vfox install java@"+spec)
-		if code == 0 {
-			t.Fatalf("installing the unpublished %s unexpectedly succeeded\n--- output ---\n%s", spec, out)
-		}
-		// Any other failure (e.g. Foojay unreachable) is retried like the
-		// other network-touching calls.
-		if strings.Contains(out, want) {
-			return 0, out
-		}
-		return code, out
-	})
-	require.Contains(t, out, " on linux/"+arch, "the lookup must target the runner platform")
-	t.Logf("PASS java@%s is rejected on linux/%s", spec, arch)
+	for _, spec := range []string{common.MissingSpec(distribution, version), common.MissingBuildSpec(distribution, version)} {
+		want := "No JDK found for " + spec
+		out := common.Retry(ctx, t, "vfox install java@"+spec+" (must fail)", func() (int, string) {
+			code, out := execRun(ctx, t, ctr, "vfox install java@"+spec)
+			if code == 0 {
+				t.Fatalf("installing the unpublished %s unexpectedly succeeded\n--- output ---\n%s", spec, out)
+			}
+			// Any other failure (e.g. Foojay unreachable) is retried like the
+			// other network-touching calls.
+			if strings.Contains(out, want) {
+				return 0, out
+			}
+			return code, out
+		})
+		require.Contains(t, out, " on linux/"+arch, "the lookup must target the runner platform")
+		t.Logf("PASS java@%s is rejected on linux/%s", spec, arch)
+	}
 }

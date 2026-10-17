@@ -250,6 +250,15 @@ func MissingSpec(distribution, version string) string {
 	return Spec(distribution, Major(version)+".0.99")
 }
 
+// MissingBuildSpec renders a build of the release that no distribution has
+// published (<version>+99). Foojay answers it with an empty package list
+// only when the + reaches it encoded: read as a space, it drops the build
+// and lists every build of the release, so PreInstall installed the newest
+// (vfox-java#73).
+func MissingBuildSpec(distribution, version string) string {
+	return Spec(distribution, version+"+99")
+}
+
 // Major returns the leading version component: "21.0.8" -> "21".
 func Major(version string) string {
 	return strings.SplitN(version, ".", 2)[0]
