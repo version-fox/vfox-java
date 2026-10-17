@@ -184,11 +184,11 @@ func TestRetryAttemptsDefault(t *testing.T) {
 }
 
 func TestSpecs(t *testing.T) {
-	for _, c := range []struct{ dist, version, spec, missing, missingBuild, legacy string }{
-		{"open", "25.0.2", "25.0.2", "25.0.99", "25.0.2+99", "25.0.2-open"},
-		{"tem", "21.0.8", "21.0.8-tem", "21.0.99-tem", "21.0.8+99-tem", "21.0.8-tem"},
-		{"librca-fx", "25.0.4", "25.0.4-librca-fx", "25.0.99-librca-fx", "25.0.4+99-librca-fx", "25.0.4.fx-librca"},
-		{"jb", "21.0.5", "21.0.5-jb", "21.0.99-jb", "21.0.5+99-jb", "21.0.5-jbr"},
+	for _, c := range []struct{ dist, version, spec, missing, missingBuild, legacy, decoy string }{
+		{"open", "25.0.2", "25.0.2", "25.0.99", "25.0.2+99", "25.0.2-open", "25.0.20+1"},
+		{"tem", "21.0.8", "21.0.8-tem", "21.0.99-tem", "21.0.8+99-tem", "21.0.8-tem", "21.0.80+1-tem"},
+		{"librca-fx", "25.0.4", "25.0.4-librca-fx", "25.0.99-librca-fx", "25.0.4+99-librca-fx", "25.0.4.fx-librca", "25.0.40+1-librca-fx"},
+		{"jb", "21.0.5", "21.0.5-jb", "21.0.99-jb", "21.0.5+99-jb", "21.0.5-jbr", "21.0.50+1-jb"},
 	} {
 		if got := Spec(c.dist, c.version); got != c.spec {
 			t.Errorf("Spec(%s, %s) = %q, want %q", c.dist, c.version, got, c.spec)
@@ -201,6 +201,9 @@ func TestSpecs(t *testing.T) {
 		}
 		if got := LegacyIdentifier(c.dist, c.version); got != c.legacy {
 			t.Errorf("LegacyIdentifier(%s, %s) = %q, want %q", c.dist, c.version, got, c.legacy)
+		}
+		if got := Decoy(c.dist, c.version); got != c.decoy {
+			t.Errorf("Decoy(%s, %s) = %q, want %q", c.dist, c.version, got, c.decoy)
 		}
 	}
 }
@@ -291,6 +294,17 @@ func TestInstalledVersion(t *testing.T) {
 	}
 	if got := InstalledVersion("java@21.0.8+9-tem is already installed"); got != "" {
 		t.Errorf("InstalledVersion = %q, want empty", got)
+	}
+}
+
+func TestListedVersions(t *testing.T) {
+	out := "-> 21.0.80+1-tem\r\n" +
+		"-> 21.0.8+9-tem \x1b[92m<— current\x1b[0m\r\n"
+	if got := ListedVersions(out); len(got) != 2 || got[0] != "21.0.80+1-tem" || got[1] != "21.0.8+9-tem" {
+		t.Errorf("ListedVersions = %q, want [21.0.80+1-tem 21.0.8+9-tem]", got)
+	}
+	if got := ListedVersions("no available version\n"); len(got) != 0 {
+		t.Errorf("ListedVersions = %q, want none", got)
 	}
 }
 

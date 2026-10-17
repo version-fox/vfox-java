@@ -248,7 +248,7 @@ func runOne(t *testing.T, ctx context.Context, image, platform, arch string, c c
 	installed := installJava(ctx, t, ctr, box, common.Spec(c.Distribution, version))
 	verifySearch(ctx, t, ctr, box, c.Distribution, installed)
 	// Before any `vfox use`, so java can only come from the legacy file.
-	verifyLegacyFile(ctx, t, ctr, box, c.Distribution, version, arch)
+	verifyLegacyFile(ctx, t, ctr, box, c.Distribution, version, installed, arch)
 
 	useJava(ctx, t, ctr, box, activation, installed)
 	verifyToolchain(ctx, t, ctr, box, activation, c.Distribution, version, installed, arch)

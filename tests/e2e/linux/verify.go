@@ -53,20 +53,33 @@ func verifySearch(ctx context.Context, t *testing.T, ctr tc.Container, distribut
 // verifyLegacyFile proves ParseLegacyFile selects the installed JDK from a
 // .sdkmanrc (PLUGIN.legacyFilenames) holding the SDKMAN identifier without
 // the build number (e.g. java=21.0.8-tem, java=21.0.5-jbr,
-// java=25.0.4.fx-librca). It runs before any `vfox use`, so java can only
+// java=25.0.4.fx-librca) or the installed version itself (e.g.
+// java=21.0.8+9-tem), while vfox lists an empty install of another release
+// first (see common.Decoy). It runs before any `vfox use`, so java can only
 // come from the legacy file.
-func verifyLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, distribution, version, arch string) {
+func verifyLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, distribution, version, installed, arch string) {
 	t.Helper()
 	const dir = "/tmp/e2e-legacy-sdkmanrc"
-	identifier := common.LegacyIdentifier(distribution, version)
-	execOK(ctx, t, ctr, fmt.Sprintf("mkdir --parents %s && printf 'java=%%s\\n' %s > %s/.sdkmanrc",
-		dir, shQuote(identifier), dir))
-	// The probe activates inside its own exec, a fresh shell session, so no
-	// `vfox env` state cached by an earlier call can answer for the file.
-	out := execRetry(ctx, t, ctr, ".sdkmanrc java="+identifier, fmt.Sprintf(
-		`cd %s && eval "$(vfox activate bash)" && eval "$(vfox env -s bash)" && %s`, dir, showSettings))
-	common.CheckJava(t, out, distribution, version, arch, ".sdkmanrc java="+identifier)
-	t.Logf("PASS .sdkmanrc java=%s selects java %s", identifier, version)
+	// vfox counts a version as installed once its directory holds
+	// java-<version>; the decoy holds nothing more, so selecting it leaves
+	// no java on PATH.
+	decoy := common.Decoy(distribution, version)
+	decoyDir := `"${VFOX_HOME:-$HOME/.vfox}"/cache/java/` + shQuote("v-"+decoy)
+	execOK(ctx, t, ctr, "mkdir --parents "+decoyDir+"/"+shQuote("java-"+decoy))
+	listed := common.ListedVersions(execOK(ctx, t, ctr, "vfox list java"))
+	require.Equalf(t, []string{decoy, installed}, listed, "vfox list java must list the decoy %s first", decoy)
+
+	for _, identifier := range []string{common.LegacyIdentifier(distribution, version), installed} {
+		execOK(ctx, t, ctr, fmt.Sprintf("mkdir --parents %s && printf 'java=%%s\\n' %s > %s/.sdkmanrc",
+			dir, shQuote(identifier), dir))
+		// The probe activates inside its own exec, a fresh shell session, so no
+		// `vfox env` state cached by an earlier call can answer for the file.
+		out := execRetry(ctx, t, ctr, ".sdkmanrc java="+identifier, fmt.Sprintf(
+			`cd %s && eval "$(vfox activate bash)" && eval "$(vfox env -s bash)" && %s`, dir, showSettings))
+		common.CheckJava(t, out, distribution, version, arch, ".sdkmanrc java="+identifier)
+		t.Logf("PASS .sdkmanrc java=%s selects java %s, not %s", identifier, version, decoy)
+	}
+	execOK(ctx, t, ctr, "rm --recursive "+decoyDir)
 }
 
 // verifyToolchain runs java and javac through the activate hook and checks

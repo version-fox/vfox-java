@@ -35,8 +35,5 @@ package.preload["vfox.strings"] = function()
         trim_prefix = function(value, prefix)
             return has_prefix(value, prefix) and value:sub(#prefix + 1) or value
         end,
-        contains = function(value, substring)
-            return value:find(substring, 1, true) ~= nil
-        end,
     }
 end

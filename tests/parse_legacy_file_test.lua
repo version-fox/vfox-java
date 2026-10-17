@@ -21,6 +21,11 @@ local function parse(content, installed)
     local file = assert(io.open(path, "wb"))
     assert(file:write(content))
     assert(file:close())
+    -- vfox lists the installed versions sorted as strings, descending.
+    installed = { unpack(installed) }
+    table.sort(installed, function(a, b)
+        return a > b
+    end)
     local ok, result = pcall(function()
         return PLUGIN:ParseLegacyFile({
             filepath = path,
@@ -48,6 +53,17 @@ local cases = {
     { "java=21.0.5+79248-jb\n", { "21.0.5+79248-jb" }, "21.0.5+79248-jb" },
     -- Without the exact release, the newest installed one of the major.
     { "java=21.0.1-tem\n", { "21.0.8+9-tem" }, "21.0.8+9-tem" },
+    -- Neither the first version listed nor one whose release merely starts with
+    -- the requested one (vfox-java#79): the version itself, else the newest
+    -- build of the release, else the newest release of the major.
+    { "java=21.0.1-tem\n", { "21.0.1+12-tem", "21.0.12+8-tem" }, "21.0.1+12-tem" },
+    { "java=21.0.1+12-tem\n", { "21.0.1+12-tem", "21.0.12+8-tem" }, "21.0.1+12-tem" },
+    { "java=21.0.5+63130-jb\n", { "21.0.5+63130-jb", "21.0.5+79248-jb" }, "21.0.5+63130-jb" },
+    { "java=21.0.5-jb\n", { "21.0.5+63130-jb", "21.0.5+79248-jb" }, "21.0.5+79248-jb" },
+    { "java=21-tem\n", { "21.0.8+9-tem", "21.0.12+8-tem" }, "21.0.12+8-tem" },
+    { "java=21.0.3-tem\n", { "21.0.8+9-tem", "21.0.12+8-tem" }, "21.0.12+8-tem" },
+    -- SDKMAN's build numbers count its own rebuilds, so they select the release.
+    { "java=21.0.8+1.1-tem\n", { "21.0.8+9-tem", "21.0.12+8-tem" }, "21.0.8+9-tem" },
     -- Windows line endings, as Set-Content writes them.
     { "java=21.0.8-tem\r\nmaven=3.9.9\r\n", { "21.0.8+9-tem" }, "21.0.8+9-tem" },
     -- SDKMAN's JetBrains is jbr and its JavaFX builds are 21.0.12.fx-zulu or,
