@@ -80,12 +80,16 @@ JDK, so `java` can only come from what vfox installs:
    without the build number selects the JDK through `ParseLegacyFile`:
    `java=21.0.8-tem`, `java=21.0.5-jbr` (SDKMAN's name for JetBrains) or
    `java=25.0.4.fx-librca` (its spelling of JavaFX builds). So does one
-   holding the installed version (`java=21.0.8+9-tem`). Both run next to an
-   empty install of another release whose version starts with the pinned
-   one (`21.0.80+1-tem`): vfox sorts installed versions as strings,
-   descending, so `vfox list java` must show it first, and
-   `ParseLegacyFile` used to take it as the first one starting with the
-   release. On Windows the file is written with CRLF line endings.
+   padding the release with a zero, as `sdk list java` shows many:
+   `java=21.0.8.0+9-tem`, `java=25.0.4.0-fx+9-librca` (Foojay, and so the
+   installed name, has no such zero). So does one holding the installed
+   version (`java=21.0.8+9-tem`). All run next to an empty install of
+   another release whose version starts with the pinned one
+   (`21.0.80+1-tem`): vfox sorts installed versions as strings, descending,
+   so `vfox list java` must show it first. `ParseLegacyFile` used to take it
+   as the first one starting with the release, and, for the padded release,
+   as the newest release of the major. On Windows the file is written with
+   CRLF line endings.
 5. After `vfox use --global`, the JDK on `PATH` reports the requested
    `java.version`, the runner's `os.arch` (`amd64` / `aarch64`, which also
    catches an x64 JDK emulated on Windows ARM64) and the distribution's

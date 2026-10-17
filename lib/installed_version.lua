@@ -62,6 +62,26 @@ function installed_version.newest(installed, prefix, rest, suffix)
     return best
 end
 
+--- Returns the installed version of a release given without a build number,
+--- or nil: the release itself (17.0.12-graal), else its newest build
+--- (21.0.8+9-tem for 21.0.8, 27+36-librca for 27), but never another release
+--- (not 21.0.12.1+1 for 21.0.12, nor 21.0.12+8 for 21.0.1).
+function installed_version.release(installed, release, suffix)
+    local name = release .. suffix
+    if installed[name] then
+        return name
+    end
+    return installed_version.newest(installed, release, "^%+%d+$", suffix)
+end
+
+--- Returns the newest installed release of a major, or nil: any release of it
+--- (21.0.12.1+1-tem for 21), the first one too (27+36-librca, 27-oracle for
+--- 27), but no EA build (26-ea+13 for 26).
+function installed_version.major(installed, major, suffix)
+    local name = major .. suffix
+    return installed_version.newest(installed, major, "^[.+][%d.+]*$", suffix) or installed[name] and name
+end
+
 --- Returns the installed version that version .. suffix names, or nil. The
 --- input may leave out the build number PreInstall found, so, like PreInstall,
 --- take the newest build of a release (21.0.8-tem selects 21.0.8+9-tem) and
@@ -72,11 +92,10 @@ function installed_version.find(installed, version, suffix)
     if installed[name] then
         return name
     end
-    -- A bare major takes any release of it (21.0.12.1+1 for 21) but no EA build
-    -- (26-ea+13 for 26); other versions take only a build number (not
-    -- 21.0.12.1+1 for 21.0.12, nor 21.0.12+8 for 21.0.1).
-    local rest = version:match("^%d+$") and "^[.+][%d.+]*$" or "^%+%d+$"
-    return installed_version.newest(installed, version, rest, suffix)
+    if version:match("^%d+$") then
+        return installed_version.major(installed, version, suffix)
+    end
+    return installed_version.release(installed, version, suffix)
 end
 
 return installed_version

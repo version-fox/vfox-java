@@ -53,10 +53,11 @@ func verifySearch(ctx context.Context, t *testing.T, ctr tc.Container, distribut
 // verifyLegacyFile proves ParseLegacyFile selects the installed JDK from a
 // .sdkmanrc (PLUGIN.legacyFilenames) holding the SDKMAN identifier without
 // the build number (e.g. java=21.0.8-tem, java=21.0.5-jbr,
-// java=25.0.4.fx-librca) or the installed version itself (e.g.
-// java=21.0.8+9-tem), while vfox lists an empty install of another release
-// first (see common.Decoy). It runs before any `vfox use`, so java can only
-// come from the legacy file.
+// java=25.0.4.fx-librca), the one with a zero padding the release (e.g.
+// java=21.0.8.0+9-tem, see common.PaddedIdentifier) or the installed version
+// itself (e.g. java=21.0.8+9-tem), while vfox lists an empty install of
+// another release first (see common.Decoy). It runs before any `vfox use`,
+// so java can only come from the legacy file.
 func verifyLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, distribution, version, installed, arch string) {
 	t.Helper()
 	const dir = "/tmp/e2e-legacy-sdkmanrc"
@@ -69,7 +70,11 @@ func verifyLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, distr
 	listed := common.ListedVersions(execOK(ctx, t, ctr, "vfox list java"))
 	require.Equalf(t, []string{decoy, installed}, listed, "vfox list java must list the decoy %s first", decoy)
 
-	for _, identifier := range []string{common.LegacyIdentifier(distribution, version), installed} {
+	for _, identifier := range []string{
+		common.LegacyIdentifier(distribution, version),
+		common.PaddedIdentifier(distribution, version, installed),
+		installed,
+	} {
 		execOK(ctx, t, ctr, fmt.Sprintf("mkdir --parents %s && printf 'java=%%s\\n' %s > %s/.sdkmanrc",
 			dir, shQuote(identifier), dir))
 		// The probe activates inside its own exec, a fresh shell session, so no
