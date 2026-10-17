@@ -260,26 +260,17 @@ func LegacyIdentifier(distribution, version string) string {
 	return version + "-" + Base(distribution)
 }
 
-// UseSpec renders the spec `vfox use` must take as `vfox install` did,
-// leaving PreUse to find the build number among the installed versions
-// (21.0.8-tem selects 21.0.8+9-tem). OpenJDK is left out for now: PreUse
-// hands its input back unchanged (vfox-java#70).
-func UseSpec(distribution, version string) (string, bool) {
-	if Base(distribution) == "open" {
-		return "", false
-	}
-	return Spec(distribution, version), true
-}
-
 // Alias renders the asdf-style spelling "<long-name>-<version>[-fx]" of an
-// installed version, which PreUse must rewrite back to installed. OpenJDK
-// has none: its versions carry no suffix for PreUse to rewrite.
+// installed version, which PreUse must rewrite back to installed
+// (temurin-21.0.8+9 to 21.0.8+9-tem, openjdk-25.0.2+10 to 25.0.2+10).
 func Alias(distribution, installed string) (string, bool) {
 	d, ok := distributions[Base(distribution)]
-	if !ok || Base(distribution) == "open" {
+	if !ok {
 		return "", false
 	}
-	core, found := strings.CutSuffix(installed, "-"+distribution)
+	// Installed versions end the way specs do: "-tem", "-librca-fx", or
+	// nothing for OpenJDK.
+	core, found := strings.CutSuffix(installed, Spec(distribution, ""))
 	if !found {
 		return "", false
 	}

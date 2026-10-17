@@ -146,15 +146,13 @@ func verifyToolchain(ctx context.Context, t *testing.T, ctr tc.Container, box sl
 //  2. the spec the JDK was installed with (e.g. java@21.0.8-tem), whose
 //     build number PreUse finds among the installed versions;
 //  3. the asdf-style <long-name>-<version>[-fx] spelling (e.g.
-//     java@temurin-21.0.8+9), which PreUse rewrites to <version>-<short>.
+//     java@temurin-21.0.8+9), which PreUse rewrites to <version>-<short>
+//     (<version> for OpenJDK, installed without a suffix).
 //
 // After each `vfox use`, java on PATH must still be the installed JDK.
 func verifyPreUse(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, activation, distribution, version, installed string) {
 	t.Helper()
-	spellings := []string{common.Major(version)}
-	if spec, ok := common.UseSpec(distribution, version); ok {
-		spellings = append(spellings, spec)
-	}
+	spellings := []string{common.Major(version), common.Spec(distribution, version)}
 	if alias, ok := common.Alias(distribution, installed); ok {
 		spellings = append(spellings, alias)
 	}

@@ -88,10 +88,9 @@ JDK, so `java` can only come from what vfox installs:
 6. `PreUse` maps the spellings users type to the installed version without
    another download: the bare major (`java@21`, left to vfox core's fuzzy
    matching), the spec the JDK was installed with (`java@21.0.8-tem`, whose
-   build number `PreUse` finds among the installed versions; not yet for
-   OpenJDK, whose input `PreUse` hands back unchanged) and the asdf-style
-   `<long-name>-<version>[-fx]` (`java@temurin-21.0.8+9`, rewritten to
-   `21.0.8+9-tem`).
+   build number `PreUse` finds among the installed versions) and the
+   asdf-style `<long-name>-<version>[-fx]` (`java@temurin-21.0.8+9`,
+   rewritten to `21.0.8+9-tem`; `java@openjdk-25.0.2+10` to `25.0.2+10`).
 
 The default matrix runs every distribution against both vfox channels
 (`latest`, `main`):

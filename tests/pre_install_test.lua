@@ -26,7 +26,7 @@ local function pkg(java_version, fx)
 end
 
 -- Foojay answers observed on 2026-10-17 for linux/amd64 tar.gz packages, keyed
--- by "<distribution> <version>[ <latest>]".
+-- by "<distribution>[ <version>][ <latest>]".
 local foojay = {
     ["temurin 21"] = { pkg("21+35") },
     ["temurin 21 available"] = { pkg("21.0.12.1+1") },
@@ -39,9 +39,13 @@ local foojay = {
     ["zulu 21 available"] = { pkg("21.0.12.1+1"), pkg("21.0.12.1+1", true) },
     ["openjdk 21"] = { pkg("21+35") },
     ["openjdk 21 available"] = { pkg("21.0.2+13") },
+    ["openjdk 25.0.2"] = { pkg("25.0.2+10") },
     ["openjdk 28-ea"] = { pkg("28-ea+19"), pkg("28-ea+18") },
     ["jetbrains 21"] = { pkg("21+2121") },
     ["jetbrains 21 available"] = { pkg("21.0.11+1163116") },
+    -- Searching asks for no version; abridged.
+    ["openjdk"] = { pkg("25.0.2+10"), pkg("21.0.2+13") },
+    ["temurin"] = { pkg("25.0.2+10"), pkg("21.0.8+9") },
 }
 
 local requests = {}
@@ -56,7 +60,10 @@ package.preload.http = function()
                 for key, value in request.url:sub(#JDKS + 1):gmatch("([^&=]+)=([^&]*)") do
                     params[key] = value
                 end
-                local key = params.distribution .. " " .. params.version
+                local key = params.distribution
+                if params.version ~= "" then
+                    key = key .. " " .. params.version
+                end
                 if params.latest then
                     key = key .. " " .. params.latest
                 end
@@ -112,6 +119,9 @@ check("17-graal", "17.0.12-graal", true)
 -- Anything longer than a major still matches exactly.
 check("21.0.8-tem", "21.0.8+9-tem", false)
 check("28.ea", "28-ea+19", false)
+-- OpenJDK versions carry no suffix, however the input spells the distribution.
+check("25.0.2-open", "25.0.2+10", false)
+check("openjdk-25.0.2", "25.0.2+10", false)
 -- On Windows the tar.gz retry keeps asking for the newest release.
 RUNTIME.osType = "windows"
 assert(check("21-jb", "21.0.11+1163116-jb", true) == 2, "21-jb: expected a zip lookup and a tar.gz retry")
@@ -121,5 +131,20 @@ RUNTIME.osType = "linux"
 requests = {}
 PLUGIN:Available({ args = { "tem" } })
 assert(#requests == 1 and not requests[1]:find("latest=", 1, true), "Available: unexpected lookup " .. requests[1])
+
+-- Searching lists OpenJDK versions without a suffix, the way PreInstall names
+-- them, so vfox marks them installed whether the query is open, openjdk or all.
+local function listed(query)
+    local versions = {}
+    for _, item in ipairs(PLUGIN:Available({ args = { query } })) do
+        versions[item.version] = true
+    end
+    return versions
+end
+for _, query in ipairs({ "open", "openjdk", "all" }) do
+    assert(listed(query)["25.0.2+10"], "Available " .. query .. ": 25.0.2+10 is not listed")
+end
+local all = listed("all")
+assert(all["25.0.2+10-tem"] and all["21.0.8+9-tem"], "Available all: Temurin versions lost their suffix")
 
 print("PASS: " .. cases .. " PreInstall Foojay lookup cases")

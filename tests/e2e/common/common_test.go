@@ -201,23 +201,9 @@ func TestSpecs(t *testing.T) {
 	}
 }
 
-func TestUseSpec(t *testing.T) {
-	for _, c := range []struct{ dist, version, want string }{
-		{"tem", "21.0.8", "21.0.8-tem"},
-		{"librca-fx", "25.0.4", "25.0.4-librca-fx"},
-		{"graalce", "25.0.2", "25.0.2-graalce"},
-	} {
-		if got, ok := UseSpec(c.dist, c.version); !ok || got != c.want {
-			t.Errorf("UseSpec(%s, %s) = %q, %v; want %q", c.dist, c.version, got, ok, c.want)
-		}
-	}
-	if got, ok := UseSpec("open", "25.0.2"); ok {
-		t.Errorf("UseSpec(open, 25.0.2) = %q, want none", got)
-	}
-}
-
 func TestAlias(t *testing.T) {
 	for _, c := range []struct{ dist, installed, want string }{
+		{"open", "25.0.2+10", "openjdk-25.0.2+10"},
 		{"tem", "21.0.8+9-tem", "temurin-21.0.8+9"},
 		{"librca-fx", "25.0.4+9-librca-fx", "liberica-25.0.4+9-fx"},
 		{"jb", "21.0.5+79248-jb", "jetbrains-21.0.5+79248"},
@@ -228,7 +214,6 @@ func TestAlias(t *testing.T) {
 		}
 	}
 	for _, c := range []struct{ dist, installed string }{
-		{"open", "25.0.2+10"},      // no suffix to rewrite
 		{"zulu", "21.0.8+9-zulu"},  // long name unknown to the suite
 		{"tem", "21.0.8+9-librca"}, // not this distribution's version
 	} {
