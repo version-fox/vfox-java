@@ -23,7 +23,10 @@
 package windows
 
 import (
+	"archive/tar"
+	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -77,11 +80,17 @@ func TestE2E(t *testing.T) {
 		t.Fatal("empty matrix: nothing to run")
 	}
 
+	vfoxMain := &vfoxMainImage{dir: t.TempDir(), base: image, arch: arch}
 	sem := make(chan struct{}, maxJobs())
 	for _, c := range combos {
 		c := c
 		t.Run(c.Slug(), func(t *testing.T) {
 			t.Parallel()
+			image := image
+			if c.Vfox == "main" {
+				// Before taking a slot, so the latest combos run meanwhile.
+				image = vfoxMain.get(ctx, t)
+			}
 			sem <- struct{}{}
 			defer func() { <-sem }()
 			runOne(t, ctx, image, platform, arch, c)
@@ -127,6 +136,51 @@ func buildImage(t *testing.T, ctx context.Context, repoRoot, image, platform, ba
 	if tag != image {
 		t.Fatalf("built tag %s, want %s", tag, image)
 	}
+}
+
+// buildMainImage layers vfox.exe onto base as <base>-main, for the main
+// combos. Its build context is that file and the Dockerfile alone,
+// assembled in memory.
+func buildMainImage(ctx context.Context, base, exe string) (string, error) {
+	vfox, err := os.ReadFile(exe)
+	if err != nil {
+		return "", err
+	}
+	var buildContext bytes.Buffer
+	tw := tar.NewWriter(&buildContext)
+	for _, f := range []struct {
+		name string
+		data []byte
+	}{
+		{"Dockerfile", []byte("FROM " + base + "\nCOPY vfox.exe " + mainVfoxExe + "\n")},
+		{"vfox.exe", vfox},
+	} {
+		if err := tw.WriteHeader(&tar.Header{Name: f.name, Mode: 0o644, Size: int64(len(f.data))}); err != nil {
+			return "", err
+		}
+		if _, err := tw.Write(f.data); err != nil {
+			return "", err
+		}
+	}
+	if err := tw.Close(); err != nil {
+		return "", err
+	}
+
+	provider, err := tc.NewDockerProvider()
+	if err != nil {
+		return "", fmt.Errorf("new docker provider: %w", err)
+	}
+	defer provider.Close()
+	// No PullParent: base exists only on this daemon.
+	return provider.BuildImage(ctx, &tc.ContainerRequest{
+		FromDockerfile: tc.FromDockerfile{
+			ContextArchive: bytes.NewReader(buildContext.Bytes()),
+			Repo:           "vfox-java-e2e",
+			Tag:            base[strings.LastIndex(base, ":")+1:] + "-main",
+			KeepImage:      true,
+			BuildLogWriter: os.Stdout,
+		},
+	})
 }
 
 // runOne starts one long-lived container per combo and drives the whole

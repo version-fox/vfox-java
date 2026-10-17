@@ -60,7 +60,9 @@ JDK, so `java` can only come from what vfox installs:
 
 1. vfox is installed from the requested channel — the latest release
    (`latest`) or built from source (`main`) — and the local `java` plugin is
-   registered from this checkout.
+   registered from this checkout. On Windows, the runner builds `main` once,
+   while the `latest` combinations run, and the `main` containers start from
+   the e2e image plus that `vfox.exe`.
 2. A release no distribution has published (`<major>.0.99`) fails to install,
    with `PreInstall` naming the platform it searched (`linux/amd64`,
    `windows/arm64`, ...), so the Foojay lookup is checked to target the
@@ -153,10 +155,11 @@ suite needs an ARM64 host (a Copilot+ PC or the `windows-11-arm` CI runner).
 There is no dev container for this suite — the Dev Containers spec rejects
 Windows container images (see [Dev container](#dev-container)) — so it keeps
 its Docker Compose runner. The runner image (`Dockerfile-runner`: stock
-servercore plus the pinned Go MSI) drives the host daemon through the mounted
-named pipe; the host requirement is Docker in Windows-container mode plus the
-Compose v5 plugin (installed once per machine below). Go never touches the
-host, so it cannot conflict with a vfox-managed toolchain.
+servercore plus the pinned Go, which also builds vfox `main`) drives the host
+daemon through the mounted named pipe; the host requirement is Docker in
+Windows-container mode plus the Compose v5 plugin (installed once per machine
+below). Go never touches the host, so it cannot conflict with a vfox-managed
+toolchain.
 
 The `windows-11-arm` runner has no Windows Hypervisor Platform feature, so
 Hyper-V isolation is unavailable; process isolation needs only the
@@ -240,7 +243,9 @@ docker compose -f tests/e2e/windows/compose.arm64.yaml run --rm --build e2e
 
 On arm64, Go is also what builds the engine, so `install-docker-arm64.ps1`
 runs before the suite; the compose runner image then carries its own pinned
-Go for the tests, and the host Go is not used again. Scope the run down with
+Go for the tests, and the host Go is not used again. The script reuses an
+engine of its pinned version that it built before; CI restores one from a
+cache keyed on the script. Scope the run down with
 `$env:VFOX_VERSION = 'latest'; $env:DISTRIBUTION = 'tem'` in front of the
 compose command, as on the other platforms.
 
