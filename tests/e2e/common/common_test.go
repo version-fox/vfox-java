@@ -201,6 +201,21 @@ func TestSpecs(t *testing.T) {
 	}
 }
 
+func TestUseSpec(t *testing.T) {
+	for _, c := range []struct{ dist, version, want string }{
+		{"tem", "21.0.8", "21.0.8-tem"},
+		{"librca-fx", "25.0.4", "25.0.4-librca-fx"},
+		{"graalce", "25.0.2", "25.0.2-graalce"},
+	} {
+		if got, ok := UseSpec(c.dist, c.version); !ok || got != c.want {
+			t.Errorf("UseSpec(%s, %s) = %q, %v; want %q", c.dist, c.version, got, ok, c.want)
+		}
+	}
+	if got, ok := UseSpec("open", "25.0.2"); ok {
+		t.Errorf("UseSpec(open, 25.0.2) = %q, want none", got)
+	}
+}
+
 func TestAlias(t *testing.T) {
 	for _, c := range []struct{ dist, installed, want string }{
 		{"tem", "21.0.8+9-tem", "temurin-21.0.8+9"},
