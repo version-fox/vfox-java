@@ -79,6 +79,10 @@ jobs:
       - uses: actions/checkout@v7
         with:
           persist-credentials: false
+      # C: is a network-attached disk on these runners, where extracting the
+      # servercore image took five minutes; Docker keeps its data on a local
+      # disk instead.
+      - run: pwsh -NoProfile -File tests/e2e/windows/use-local-disk.ps1
       # The windows-11-arm runner ships neither Docker for Windows containers
       # nor a Go new enough to build moby, so both are provisioned here. The
       # engine build, minutes long, is cached on the script that pins it, so

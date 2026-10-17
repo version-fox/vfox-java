@@ -102,7 +102,9 @@ else {
     $env:PATH = "$bin;$env:PATH"
     if ($env:GITHUB_PATH) { Add-Content -Path $env:GITHUB_PATH -Value $bin }
 
-    $dataRoot = Join-Path $root 'data'
+    # CI points E2E_DOCKER_DATA_ROOT at the runner's local disk
+    # (use-local-disk.ps1).
+    $dataRoot = if ($env:E2E_DOCKER_DATA_ROOT) { $env:E2E_DOCKER_DATA_ROOT } else { Join-Path $root 'data' }
     $log = Join-Path $root 'dockerd.log'
     $dockerdArgs = "--data-root `"$dataRoot`" --debug --exec-opt isolation=process"
     Start-Process -FilePath (Join-Path $bin 'dockerd.exe') -ArgumentList $dockerdArgs -RedirectStandardOutput $log -RedirectStandardError (Join-Path $root 'dockerd.err.log')

@@ -165,6 +165,12 @@ The `windows-11-arm` runner has no Windows Hypervisor Platform feature, so
 Hyper-V isolation is unavailable; process isolation needs only the
 Containers feature.
 
+CI first runs `use-local-disk.ps1`, which moves Docker's data root off the
+runners' network-attached C: onto a local disk: `windows-latest`'s D:, or the
+unformatted NVMe disk of `windows-11-arm`, which it formats. Image layers and
+the containers' files are written file by file, so on C: the servercore pull
+alone took five minutes. The script refuses to run outside GitHub Actions.
+
 The `main` combos run with `VFOX_HOME` pointing inside a path containing a
 space (`C:\Users\John Doe\.vfox`), mirroring
 [vfox-flutter#33](https://github.com/version-fox/vfox-flutter/issues/33).
