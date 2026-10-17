@@ -17,7 +17,12 @@ package windows
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"runtime"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -26,17 +31,20 @@ import (
 	"github.com/version-fox/vfox-java/tests/e2e/common"
 )
 
-// Java defaults live in the common package; only the Windows-specific
-// toolchain pin stays here.
+// Java defaults live in the common package; only Windows-specific values
+// stay here.
 const (
-	// goWindowsVersion pins the Go toolchain MSI used to build vfox@main
-	// inside the container.
-	goWindowsVersion = "1.27.1"
-
 	// spacedVfoxHome is the default vfox home of a Windows account whose
 	// name contains a space, the layout reported in
 	// https://github.com/version-fox/vfox-flutter/issues/33 .
 	spacedVfoxHome = `C:\Users\John Doe\.vfox`
+
+	// vfoxMainSource is vfox's main branch, built once per run for every
+	// main combo (see vfoxMainImage).
+	vfoxMainSource = "https://github.com/version-fox/vfox/archive/refs/heads/main.tar.gz"
+
+	// mainVfoxExe is where the main combos' image carries that build.
+	mainVfoxExe = "C:/vfox-main/vfox.exe"
 )
 
 // pwshQuote renders a single-quoted PowerShell string literal.
@@ -131,49 +139,99 @@ func installVfoxRelease(ctx context.Context, t *testing.T, ctr tc.Container, box
 	t.Logf("PASS installed vfox %s (%s)", tag, vfoxArch)
 }
 
-// installVfoxMain installs the pinned Go MSI, clones vfox, and builds
-// vfox.exe. msiexec exit codes 0/3010/1937 all mean success (ok /
-// reboot-required / in-use-files).
-func installVfoxMain(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, procArch string) {
+// vfoxMainImage is the e2e image plus vfox.exe built from main, which every
+// main combo starts from. The runner compiles vfox once, with its own Go,
+// while the image builds; building it in each main combo's container meant
+// installing the Go MSI there, then cloning and building, over two minutes a
+// combo on arm64.
+type vfoxMainImage struct {
+	base, arch string
+
+	built chan struct{} // closed once exe and err are set
+	exe   string
+	once  sync.Once
+	image string
+	err   error
+}
+
+// startVfoxMain starts compiling vfox from main in the background, for the
+// image that layers it onto base.
+func startVfoxMain(ctx context.Context, t *testing.T, base, arch string) *vfoxMainImage {
 	t.Helper()
-	goArch := "amd64"
-	if procArch == "ARM64" {
-		goArch = "arm64"
+	m := &vfoxMainImage{base: base, arch: arch, built: make(chan struct{})}
+	dir := t.TempDir()
+	ctx, cancel := context.WithCancel(ctx)
+	go func() {
+		defer close(m.built)
+		m.exe, m.err = buildVfoxMain(ctx, dir, arch)
+	}()
+	// Before dir is removed: a run that fails early stops the build.
+	t.Cleanup(func() {
+		cancel()
+		<-m.built
+	})
+	return m
+}
+
+// get returns the image, layering the compiled vfox.exe onto base on first
+// use; the other main combos wait for it. A failed build fails every main
+// combo.
+func (m *vfoxMainImage) get(ctx context.Context, t *testing.T) string {
+	t.Helper()
+	m.once.Do(func() {
+		<-m.built
+		if m.err == nil {
+			m.image, m.err = buildMainImage(ctx, m.base, m.exe)
+		}
+		if m.err == nil {
+			t.Logf("PASS built vfox from main with %s (%s)", runtime.Version(), m.arch)
+		}
+	})
+	if m.err != nil {
+		t.Fatalf("build vfox from main: %v", m.err)
 	}
-	goMsi := box.tmp + `\go.msi`
-	execOK(ctx, t, ctr, fmt.Sprintf(
-		"curl.exe %s -fsSL -o %s %s",
-		curlRetry, pwshQuote(goMsi),
-		pwshQuote(fmt.Sprintf("https://go.dev/dl/go%s.windows-%s.msi", goWindowsVersion, goArch))),
-		box.vars...)
-	execOK(ctx, t, ctr, fmt.Sprintf(`$goInstall = $null
-for ($attempt = 1; $attempt -le 5; $attempt++) {
-  $goInstall = Start-Process msiexec.exe -Wait -PassThru -ArgumentList '/i', %s, '/quiet', '/norestart'
-  if ($goInstall.ExitCode -in 0, 3010, 1937) { break }
-  Start-Sleep -Seconds 15
-}
-if ($goInstall.ExitCode -notin 0, 3010, 1937) { throw ('FAIL the Go MSI install exited with code ' + $goInstall.ExitCode) }
-Remove-Item %s`, pwshQuote(goMsi), pwshQuote(goMsi)), box.vars...)
-
-	src := box.workDir + `\vfox-src`
-	execOK(ctx, t, ctr,
-		fmt.Sprintf("git clone --depth 1 https://github.com/version-fox/vfox %s", pwshQuote(src)),
-		box.vars...)
-	execOK(ctx, t, ctr, fmt.Sprintf(
-		`& 'C:\Program Files\Go\bin\go.exe' -C %s build -trimpath -o %s .`,
-		pwshQuote(src), pwshQuote(box.vfoxExe)), box.vars...)
-	t.Logf("PASS built vfox from main with Go %s (%s)", goWindowsVersion, goArch)
+	return m.image
 }
 
-// setupVfox installs vfox (release, or builds main) and registers the local
-// java plugin.
+// buildVfoxMain downloads vfox's main branch into dir and builds vfox.exe
+// there for arch with the runner's Go, returning its path. It runs
+// Windows' own curl and tar: CI runners also put Git's GNU tar on the PATH,
+// which reads the colon of a drive letter as a remote host.
+func buildVfoxMain(ctx context.Context, dir, arch string) (string, error) {
+	tarball := filepath.Join(dir, "vfox-main.tar.gz")
+	exe := filepath.Join(dir, "vfox.exe")
+	system32 := filepath.Join(os.Getenv("SystemRoot"), "System32")
+	download := exec.CommandContext(ctx, filepath.Join(system32, "curl.exe"),
+		append(strings.Fields(curlRetry), "-fsSL", "-o", tarball, vfoxMainSource)...)
+	extract := exec.CommandContext(ctx, filepath.Join(system32, "tar.exe"), "-xzf", tarball, "-C", dir)
+	build := exec.CommandContext(ctx, "go", "build", "-trimpath", "-o", exe, ".")
+	build.Dir = filepath.Join(dir, "vfox-main")
+	build.Env = append(os.Environ(), "CGO_ENABLED=0", "GOOS=windows", "GOARCH="+arch)
+	for _, cmd := range []*exec.Cmd{download, extract, build} {
+		if out, err := cmd.CombinedOutput(); err != nil {
+			return "", fmt.Errorf("%s: %w\n%s", strings.Join(cmd.Args, " "), err, out)
+		}
+	}
+	return exe, nil
+}
+
+// installVfoxMain stages the vfox.exe built from main that the main combos'
+// image carries (see vfoxMainImage).
+func installVfoxMain(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox) {
+	t.Helper()
+	execOK(ctx, t, ctr, fmt.Sprintf("Copy-Item -Path %s -Destination %s",
+		pwshQuote(mainVfoxExe), pwshQuote(box.vfoxExe)), box.vars...)
+	t.Logf("PASS staged vfox built from main")
+}
+
+// setupVfox installs vfox (release, or the build from main) and registers
+// the local java plugin.
 func setupVfox(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, vfoxVersion string) {
 	t.Helper()
-	procArch := procArchOfContainer(ctx, t, ctr)
 	if vfoxVersion == "main" {
-		installVfoxMain(ctx, t, ctr, box, procArch)
+		installVfoxMain(ctx, t, ctr, box)
 	} else {
-		installVfoxRelease(ctx, t, ctr, box, procArch)
+		installVfoxRelease(ctx, t, ctr, box, procArchOfContainer(ctx, t, ctr))
 	}
 	execOK(ctx, t, ctr, fmt.Sprintf(
 		"tar -a -cf %s -C 'C:\\e2e' metadata.lua hooks lib",
@@ -210,26 +268,28 @@ func activatedEnv(activation, script string) string {
 		"if ($__vfoxExport.Trim()) { Invoke-Expression -Command $__vfoxExport }\r\n" + script
 }
 
-// checkMissingVersionRejected proves an unpublished release fails loudly
-// instead of installing something else: PreInstall finds no Foojay package
-// (zip or tar.gz) and names the platform it searched, which must be the
-// runner's (RUNTIME.osType/archType).
+// checkMissingVersionRejected proves an unpublished release, and an
+// unpublished build of the pinned one, fail loudly instead of installing
+// something else: PreInstall finds no Foojay package (zip or tar.gz) and
+// names the platform it searched, which must be the runner's
+// (RUNTIME.osType/archType).
 func checkMissingVersionRejected(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, distribution, version, arch string) {
 	t.Helper()
-	spec := common.MissingSpec(distribution, version)
-	want := "No JDK found for " + spec
-	out := common.Retry(ctx, t, "vfox install java@"+spec+" (must fail)", func() (int, string) {
-		code, out := execRun(ctx, t, ctr, "vfox install "+pwshQuote("java@"+spec), box.vars...)
-		if code == 0 {
-			t.Fatalf("installing the unpublished %s unexpectedly succeeded\n--- output ---\n%s", spec, out)
-		}
-		// Any other failure (e.g. Foojay unreachable) is retried like the
-		// other network-touching calls.
-		if strings.Contains(out, want) {
-			return 0, out
-		}
-		return code, out
-	})
-	require.Contains(t, out, " on windows/"+arch, "the lookup must target the runner platform")
-	t.Logf("PASS java@%s is rejected on windows/%s", spec, arch)
+	for _, spec := range []string{common.MissingSpec(distribution, version), common.MissingBuildSpec(distribution, version)} {
+		want := "No JDK found for " + spec
+		out := common.Retry(ctx, t, "vfox install java@"+spec+" (must fail)", func() (int, string) {
+			code, out := execRun(ctx, t, ctr, "vfox install "+pwshQuote("java@"+spec), box.vars...)
+			if code == 0 {
+				t.Fatalf("installing the unpublished %s unexpectedly succeeded\n--- output ---\n%s", spec, out)
+			}
+			// Any other failure (e.g. Foojay unreachable) is retried like the
+			// other network-touching calls.
+			if strings.Contains(out, want) {
+				return 0, out
+			}
+			return code, out
+		})
+		require.Contains(t, out, " on windows/"+arch, "the lookup must target the runner platform")
+		t.Logf("PASS java@%s is rejected on windows/%s", spec, arch)
+	}
 }

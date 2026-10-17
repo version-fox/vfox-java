@@ -20,8 +20,8 @@
 # The host requirement is Docker plus the Compose v5 plugin (installed once
 # per machine, see docs/e2e.md); Go never touches the host, so it cannot
 # conflict with a vfox-managed toolchain. The runner image
-# (Dockerfile-runner: stock servercore plus the pinned Go MSI) is built for
-# the host arch, because there is no stock golang Windows image for arm64.
+# (Dockerfile-runner: stock servercore plus the pinned Go) is built for the
+# host arch, because there is no stock golang Windows image for arm64.
 # It drives the host daemon through the mounted named pipe. Ryuk is disabled
 # in code (it has no Windows image); every container is terminated explicitly
 # via t.Cleanup instead.

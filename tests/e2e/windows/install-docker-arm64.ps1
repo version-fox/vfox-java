@@ -50,6 +50,17 @@ function Wait-Engine {
     return $false
 }
 
+# Whether $Bin holds a whole engine build of $Version: one from an earlier
+# run, or the one CI restores from its cache (keyed on this file).
+function Test-Build {
+    param([string] $Bin, [string] $Version)
+    $dockerd = Join-Path $Bin 'dockerd.exe'
+    if (-not ((Test-Path $dockerd) -and (Test-Path (Join-Path $Bin 'docker.exe')))) { return $false }
+    $PSNativeCommandUseErrorActionPreference = $false
+    $banner = (& $dockerd --version 2>&1) -join ''
+    return $banner -like "Docker version $Version,*"
+}
+
 if ($env:PROCESSOR_ARCHITECTURE -ne 'ARM64') { throw "FAIL this script builds a windows/arm64 engine and needs an arm64 host" }
 
 if (Test-Engine) {
@@ -59,31 +70,41 @@ else {
     $mobyVersion = '29.8.1'
     $root = 'C:\vfox-docker'
     New-Item -ItemType Directory -Force -Path $root | Out-Null
-    Write-Output 'Building docker from source for windows/arm64 ...'
-
-    if (-not (Get-Command go -ErrorAction SilentlyContinue)) { throw 'FAIL go is not on the PATH' }
-    $env:GOPATH = Join-Path $root 'gopath'
-
     $moby = Join-Path $root 'moby'
-    Invoke-Native { git clone --depth 1 --branch "docker-v$mobyVersion" https://github.com/moby/moby.git $moby } 'the moby clone'
-    Invoke-Native { go install github.com/tc-hib/go-winres@v0.3.1 } 'the go-winres install'
-    $env:DOCKERCLI_VERSION = $mobyVersion
-    $env:VERSION = $mobyVersion
-    Push-Location $moby
-    try {
-        & .\hack\make.ps1 -Client -Daemon
+    $bin = Join-Path $moby 'bundles'
+
+    if (Test-Build $bin $mobyVersion) {
+        Write-Output "Using the docker $mobyVersion build in $bin"
     }
-    finally {
-        Pop-Location
+    else {
+        Write-Output 'Building docker from source for windows/arm64 ...'
+
+        if (-not (Get-Command go -ErrorAction SilentlyContinue)) { throw 'FAIL go is not on the PATH' }
+        $env:GOPATH = Join-Path $root 'gopath'
+
+        # A partial or older build gives way to a fresh clone.
+        if (Test-Path $moby) { Remove-Item -Recurse -Force $moby }
+        Invoke-Native { git clone --depth 1 --branch "docker-v$mobyVersion" https://github.com/moby/moby.git $moby } 'the moby clone'
+        Invoke-Native { go install github.com/tc-hib/go-winres@v0.3.1 } 'the go-winres install'
+        $env:DOCKERCLI_VERSION = $mobyVersion
+        $env:VERSION = $mobyVersion
+        Push-Location $moby
+        try {
+            & .\hack\make.ps1 -Client -Daemon
+        }
+        finally {
+            Pop-Location
+        }
     }
 
-    $bin = Join-Path $moby 'bundles'
     if (-not (Test-Path (Join-Path $bin 'dockerd.exe'))) { throw 'FAIL the moby build produced no dockerd.exe' }
     if (-not (Test-Path (Join-Path $bin 'docker.exe'))) { throw 'FAIL the moby build produced no docker.exe' }
     $env:PATH = "$bin;$env:PATH"
     if ($env:GITHUB_PATH) { Add-Content -Path $env:GITHUB_PATH -Value $bin }
 
-    $dataRoot = Join-Path $root 'data'
+    # CI points E2E_DOCKER_DATA_ROOT at the runner's local disk
+    # (use-local-disk.ps1).
+    $dataRoot = if ($env:E2E_DOCKER_DATA_ROOT) { $env:E2E_DOCKER_DATA_ROOT } else { Join-Path $root 'data' }
     $log = Join-Path $root 'dockerd.log'
     $dockerdArgs = "--data-root `"$dataRoot`" --debug --exec-opt isolation=process"
     Start-Process -FilePath (Join-Path $bin 'dockerd.exe') -ArgumentList $dockerdArgs -RedirectStandardOutput $log -RedirectStandardError (Join-Path $root 'dockerd.err.log')

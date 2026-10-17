@@ -43,7 +43,11 @@ local foojay = {
     ["openjdk 21"] = { pkg("21+35") },
     ["openjdk 21 available"] = { pkg("21.0.2+13") },
     ["openjdk 25.0.2"] = { pkg("25.0.2+10") },
-    ["openjdk 28-ea"] = { pkg("28-ea+19"), pkg("28-ea+18") },
+    ["openjdk 28-ea"] = { pkg("28-ea+19"), pkg("28-ea+18"), pkg("28-ea+15") },
+    ["openjdk 28-ea+15"] = { pkg("28-ea+15") },
+    -- JetBrains Runtime has nine 21.0.5 builds; abridged.
+    ["jetbrains 21.0.5"] = { pkg("21.0.5+79248"), pkg("21.0.5+76240"), pkg("21.0.5+63130"), pkg("21.0.5+6318") },
+    ["jetbrains 21.0.5+63130"] = { pkg("21.0.5+63130") },
     -- Searching asks for no version; abridged.
     ["openjdk"] = { pkg("25.0.2+10"), pkg("21.0.2+13") },
     ["temurin"] = { pkg("25.0.2+10"), pkg("21.0.8+9") },
@@ -72,14 +76,20 @@ package.preload.http = function()
                 local params = {}
                 local archive_types = {}
                 for key, value in request.url:sub(#JDKS + 1):gmatch("([^&=]+)=([^&]*)") do
+                    -- Foojay decodes the query string, reading a bare + as a space.
+                    value = value:gsub("%+", " "):gsub("%%(%x%x)", function(hex)
+                        return string.char(tonumber(hex, 16))
+                    end)
                     params[key] = value
                     if key == "archive_type" then
                         archive_types[value] = true
                     end
                 end
+                -- A version stops at a space: 21.0.5 63130 matches every 21.0.5 build.
+                local version = params.version:match("^[^ ]*")
                 local key = params.distribution
-                if params.version ~= "" then
-                    key = key .. " " .. params.version
+                if version ~= "" then
+                    key = key .. " " .. version
                 end
                 if params.latest then
                     key = key .. " " .. params.latest
@@ -151,6 +161,9 @@ check("17-graal", "17.0.12-graal", true)
 -- Anything longer than a major still matches exactly.
 check("21.0.8-tem", "21.0.8+9-tem", false)
 check("28.ea", "28-ea+19", false)
+-- A build number installs that build, not the newest one of its release.
+check("28.ea.15", "28-ea+15", false)
+check("21.0.5+63130-jb", "21.0.5+63130-jb", false)
 -- OpenJDK versions carry no suffix, however the input spells the distribution.
 check("25.0.2-open", "25.0.2+10", false)
 check("openjdk-25.0.2", "25.0.2+10", false)

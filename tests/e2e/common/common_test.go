@@ -184,17 +184,20 @@ func TestRetryAttemptsDefault(t *testing.T) {
 }
 
 func TestSpecs(t *testing.T) {
-	for _, c := range []struct{ dist, version, spec, missing, legacy string }{
-		{"open", "25.0.2", "25.0.2", "25.0.99", "25.0.2-open"},
-		{"tem", "21.0.8", "21.0.8-tem", "21.0.99-tem", "21.0.8-tem"},
-		{"librca-fx", "25.0.4", "25.0.4-librca-fx", "25.0.99-librca-fx", "25.0.4.fx-librca"},
-		{"jb", "21.0.5", "21.0.5-jb", "21.0.99-jb", "21.0.5-jbr"},
+	for _, c := range []struct{ dist, version, spec, missing, missingBuild, legacy string }{
+		{"open", "25.0.2", "25.0.2", "25.0.99", "25.0.2+99", "25.0.2-open"},
+		{"tem", "21.0.8", "21.0.8-tem", "21.0.99-tem", "21.0.8+99-tem", "21.0.8-tem"},
+		{"librca-fx", "25.0.4", "25.0.4-librca-fx", "25.0.99-librca-fx", "25.0.4+99-librca-fx", "25.0.4.fx-librca"},
+		{"jb", "21.0.5", "21.0.5-jb", "21.0.99-jb", "21.0.5+99-jb", "21.0.5-jbr"},
 	} {
 		if got := Spec(c.dist, c.version); got != c.spec {
 			t.Errorf("Spec(%s, %s) = %q, want %q", c.dist, c.version, got, c.spec)
 		}
 		if got := MissingSpec(c.dist, c.version); got != c.missing {
 			t.Errorf("MissingSpec(%s, %s) = %q, want %q", c.dist, c.version, got, c.missing)
+		}
+		if got := MissingBuildSpec(c.dist, c.version); got != c.missingBuild {
+			t.Errorf("MissingBuildSpec(%s, %s) = %q, want %q", c.dist, c.version, got, c.missingBuild)
 		}
 		if got := LegacyIdentifier(c.dist, c.version); got != c.legacy {
 			t.Errorf("LegacyIdentifier(%s, %s) = %q, want %q", c.dist, c.version, got, c.legacy)

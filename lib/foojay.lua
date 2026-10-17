@@ -34,6 +34,16 @@ local function detect_lib_c_type()
     return "glibc"
 end
 
+--- Percent-encodes a query string value. Foojay reads a bare + as a space and
+--- drops the build after it, so 21.0.5+63130 would match every 21.0.5 build.
+--- @param value string
+--- @return string
+local function encode(value)
+    return (value:gsub("[^%w%-._~]", function(c)
+        return ("%%%02X"):format(c:byte())
+    end))
+end
+
 foojay.fetchtJdkList = function(distribution, version)
     local os = RUNTIME.osType
     local arch = RUNTIME.archType
@@ -66,7 +76,7 @@ foojay.fetchtJdkList = function(distribution, version)
     -- latest=available would look at the major alone.
     local latest = version:match("^%d+$") and "&latest=available" or ""
 
-    local reqUrl = URL:format(version, distribution, arch, archive_types, os, lib_c_type) .. latest
+    local reqUrl = URL:format(encode(version), distribution, arch, archive_types, os, lib_c_type) .. latest
 
     local resp, err = http.get({
         url = reqUrl,
