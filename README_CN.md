@@ -261,3 +261,7 @@ $ vfox search java jb
 
 - [SDKMAN](https://github.com/sdkman/)
 - [foojayio](https://github.com/foojayio/discoapi)
+
+## 测试
+
+详见 [docs/e2e.md](docs/e2e.md)。

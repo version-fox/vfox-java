@@ -1,13 +1,29 @@
+-- Copyright 2026 Han Li and contributors
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--   http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 local http = require("http")
 local json = require("json")
 
 local foojay = require("foojay")
 local loongnix = require("loongnix")
 local distribution_version_parser = require("distribution_version")
+--- @class PreInstallContext
+--- @field version string User-input version
+
 --- Returns some pre-installed information, such as version number, download address, local files, etc.
 --- If checksum is provided, vfox will automatically check it for you.
---- @param ctx table
---- @field ctx.version string User-input version
+--- @param ctx PreInstallContext
 --- @return table Version information
 function PLUGIN:PreInstall(ctx)
     local distribution_version = distribution_version_parser.parse_version(ctx.version)
@@ -19,9 +35,17 @@ function PLUGIN:PreInstall(ctx)
     end
     local jdks = foojay.fetchtJdkList(distribution_version.distribution.name, distribution_version.version)
     if not jdks or #jdks == 0 then
-        error("No JDK found for " .. ctx.version .. " on " .. RUNTIME.osType .. "/" .. RUNTIME.archType .. ". Please check available versions with 'vfox search java'")
+        error(
+            "No JDK found for "
+                .. ctx.version
+                .. " on "
+                .. RUNTIME.osType
+                .. "/"
+                .. RUNTIME.archType
+                .. ". Please check available versions with 'vfox search java'"
+        )
     end
-    
+
     -- Filter JDKs based on JavaFX requirement
     local filtered_jdks = {}
     for _, jdk in ipairs(jdks) do
@@ -30,12 +54,21 @@ function PLUGIN:PreInstall(ctx)
             table.insert(filtered_jdks, jdk)
         end
     end
-    
+
     if #filtered_jdks == 0 then
         local fx_msg = distribution_version.javafx_bundled and " with JavaFX" or " without JavaFX"
-        error("No JDK found for " .. ctx.version .. fx_msg .. " on " .. RUNTIME.osType .. "/" .. RUNTIME.archType .. ". Please check available versions with 'vfox search java'")
+        error(
+            "No JDK found for "
+                .. ctx.version
+                .. fx_msg
+                .. " on "
+                .. RUNTIME.osType
+                .. "/"
+                .. RUNTIME.archType
+                .. ". Please check available versions with 'vfox search java'"
+        )
     end
-    
+
     local jdk = filtered_jdks[1]
     if not jdk.links or not jdk.links.pkg_info_uri then
         error("Invalid JDK package info: missing download links for " .. ctx.version)
@@ -46,13 +79,13 @@ function PLUGIN:PreInstall(ctx)
     -- if checksum == "" and info.checksum_uri ~= "" then
     --     checksum = httpGet(info.checksum_uri, "Failed to fetch checksum")
     -- end
-    
+
     -- Build final version string with fx suffix if needed (after distribution name)
     local fx_suffix = ""
     if jdk.javafx_bundled == true then
         fx_suffix = "-fx"
     end
-    
+
     local finalV
     if distribution_version.distribution.short_name == "open" then
         finalV = jdk.java_version .. fx_suffix
@@ -63,13 +96,13 @@ function PLUGIN:PreInstall(ctx)
         -- [info.checksum_type] = checksum,
         url = info.direct_download_uri,
         version = finalV,
-        note = jdk.major_version
+        note = jdk.major_version,
     }
 end
 
 function httpGet(url, errMsg)
     local resp, err = http.get({
-        url = url
+        url = url,
     })
     if err ~= nil then
         error(errMsg .. ": " .. err)

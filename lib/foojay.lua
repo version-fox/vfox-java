@@ -1,10 +1,24 @@
+-- Copyright 2026 Han Li and contributors
+--
+-- Licensed under the Apache License, Version 2.0 (the "License");
+-- you may not use this file except in compliance with the License.
+-- You may obtain a copy of the License at
+--
+--   http://www.apache.org/licenses/LICENSE-2.0
+--
+-- Unless required by applicable law or agreed to in writing, software
+-- distributed under the License is distributed on an "AS IS" BASIS,
+-- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+-- See the License for the specific language governing permissions and
+-- limitations under the License.
+
 local http = require("http")
 local json = require("json")
 
 local foojay = {}
 
 local URL =
-"https://api.foojay.io/disco/v3.0/packages/jdks?version=%s&distribution=%s&architecture=%s&archive_type=%s&operating_system=%s&lib_c_type=%s&directly_downloadable=true"
+    "https://api.foojay.io/disco/v3.0/packages/jdks?version=%s&distribution=%s&architecture=%s&archive_type=%s&operating_system=%s&lib_c_type=%s&directly_downloadable=true"
 
 --- Detects the libc type on Linux systems (glibc or musl)
 --- @return string "glibc" or "musl"
@@ -20,8 +34,7 @@ local function detect_lib_c_type()
     return "glibc"
 end
 
-foojay.fetchtJdkList= function (distribution, version)
-
+foojay.fetchtJdkList = function(distribution, version)
     local os = RUNTIME.osType
     local arch = RUNTIME.archType
     -- Convert arm64 to aarch64 for foojay API compatibility
@@ -36,7 +49,7 @@ foojay.fetchtJdkList= function (distribution, version)
     local archive_type = "tar.gz"
     if os == "windows" then
         archive_type = "zip"
-        if (arch == "amd64") then
+        if arch == "amd64" then
             arch = "x64"
         end
     end
@@ -49,7 +62,7 @@ foojay.fetchtJdkList= function (distribution, version)
     local reqUrl = URL:format(version, distribution, arch, archive_type, os, lib_c_type)
 
     local resp, err = http.get({
-        url = reqUrl
+        url = reqUrl,
     })
     if err ~= nil then
         error("Failed to fetch jdk info from foojay: " .. err)
@@ -66,7 +79,7 @@ foojay.fetchtJdkList= function (distribution, version)
         archive_type = "tar.gz"
         reqUrl = URL:format(version, distribution, arch, archive_type, os, lib_c_type)
         resp, err = http.get({
-            url = reqUrl
+            url = reqUrl,
         })
         if err ~= nil then
             error("Failed to fetch jdk info from foojay: " .. err)

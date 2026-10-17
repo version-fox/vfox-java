@@ -1,0 +1,62 @@
+# Copyright 2026 Han Li and contributors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# License header check (Apache SkyWalking Eyes): Go, Lua, YAML, TOML,
+# Dockerfiles, ignore files and similar text formats are covered.
+# Some headers stay hand-written because `header fix` cannot place them:
+# go.mod, .gitattributes and .dockerignore have no comment style upstream,
+# the Windows Dockerfiles must keep `# escape=` on line 1 (their headers sit
+# right below it), and the fixer only recognises the exact name `Dockerfile`,
+# not Dockerfile-runner. The checker still verifies them all.
+# PowerShell is check-only here (no `<# ... #>` fix support upstream):
+# tests/e2e/windows/*.ps1 is fixed and checked with addlicense instead (see
+# the addlicense step in .github/workflows/license.yml and docs/e2e.md).
+# CI runs the check via .github/workflows/license.yml; the local commands
+# (Docker only) are documented in docs/e2e.md.
+header:
+  license:
+    spdx-id: Apache-2.0
+    copyright-owner: Han Li and contributors
+    content: |
+      Copyright 2026 Han Li and contributors
+
+      Licensed under the Apache License, Version 2.0 (the "License");
+      you may not use this file except in compliance with the License.
+      You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+      Unless required by applicable law or agreed to in writing, software
+      distributed under the License is distributed on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+      See the License for the specific language governing permissions and
+      limitations under the License.
+
+  paths-ignore:
+    # Files without the header by design; go.sum cannot take one at all (the
+    # go tool parses every non-empty line as a hash record).
+    - '**/*.md'
+    - '**/*.json'
+    - '**/go.sum'
+    - '.tool-versions'
+    - 'LICENSE'
+    # Plain-text template for addlicense (no comment markers in it; keep its
+    # text in sync with the `content` block above).
+    - '.license.tpl'
+    # Offline copies of the upstream Loongnix directory listings the hook
+    # tests parse (see tests/fixtures/loongnix/README.md); they keep the
+    # upstream markup rather than taking a header.
+    - 'tests/fixtures/**'
+
+  comment: on-failure

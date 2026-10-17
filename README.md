@@ -232,6 +232,10 @@ $ vfox search java jb
 - [SDKMAN](https://github.com/sdkman/)
 - [foojayio](https://github.com/foojayio/discoapi)
 
+## Testing
+
+See [docs/e2e.md](docs/e2e.md) for details.
+
 ## Releasing this plugin
 
 Maintainers can publish from **Actions → Plugin → Run workflow** on the default
