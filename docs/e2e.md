@@ -88,8 +88,14 @@ JDK, so `java` can only come from what vfox installs:
    (`21.0.80+1-tem`): vfox sorts installed versions as strings, descending,
    so `vfox list java` must show it first. `ParseLegacyFile` used to take it
    as the first one starting with the release, and, for the padded release,
-   as the newest release of the major. On Windows the file is written with
-   CRLF line endings.
+   as the newest release of the major. Then SDKMAN's identifier of an
+   early-access build of the pinned major, spelled as `sdk list java` shows
+   OpenJDK's (`28.0.0.0+ea.20-open`), must select that build:
+   `java=21.0.0.0+ea.1-tem` selects `21-ea+1-tem`, not the release, which
+   `ParseLegacyFile` took while it understood only SDKMAN's older
+   `21.ea.1-tem`. jdk.java.net removes each early-access build within weeks,
+   so that install is faked: its `bin` holds a stand-in `java` that only
+   prints the name. On Windows the file is written with CRLF line endings.
 5. After `vfox use --global`, the JDK on `PATH` reports the requested
    `java.version`, the runner's `os.arch` (`amd64` / `aarch64`, which also
    catches an x64 JDK emulated on Windows ARM64) and the distribution's

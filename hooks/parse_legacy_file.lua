@@ -21,6 +21,9 @@ local installed_version = require("installed_version")
 --- reads. SDKMAN calls JetBrains jbr (the plugin's jb) and puts fx in the
 --- version of JavaFX builds: 21.0.12.fx-zulu, or 21.0.12-fx+1.1-librca in its
 --- semverish identifiers (the plugin's 21.0.12-zulu-fx, 21.0.12+1.1-librca-fx).
+--- The semverish ones spell early-access builds 28.0.0+ea.19-open, padded or
+--- not (28.0.0.0+ea.19-open), where SDKMAN used to write the plugin's
+--- 28.ea.19-open (Foojay's 28-ea+19).
 --- Any other spelling, the plugin's own included, is returned unchanged.
 local function plugin_spelling(identifier)
     local version, distribution = identifier:match("^(.+)%-([^-]+)$")
@@ -30,11 +33,16 @@ local function plugin_spelling(identifier)
     if distribution == "jbr" then
         distribution = "jb"
     end
+    local suffix = "-" .. distribution
     local release, build = version:match("^(%d[%d.]*)[.-]fx(.*)$")
     if release then
-        return release .. build .. "-" .. distribution .. "-fx"
+        version, suffix = release .. build, suffix .. "-fx"
     end
-    return version .. "-" .. distribution
+    local major, ea_build = version:match("^(%d+)[.0]*%+ea%.(%d+)$")
+    if major then
+        version = major .. ".ea." .. ea_build
+    end
+    return version .. suffix
 end
 
 function PLUGIN:ParseLegacyFile(ctx)

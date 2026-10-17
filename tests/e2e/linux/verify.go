@@ -56,11 +56,12 @@ func verifySearch(ctx context.Context, t *testing.T, ctr tc.Container, distribut
 // java=25.0.4.fx-librca), the one with a zero padding the release (e.g.
 // java=21.0.8.0+9-tem, see common.PaddedIdentifier) or the installed version
 // itself (e.g. java=21.0.8+9-tem), while vfox lists an empty install of
-// another release first (see common.Decoy). It runs before any `vfox use`,
-// so java can only come from the legacy file.
+// another release first (see common.Decoy). SDKMAN's identifier of an
+// early-access build (e.g. java=21.0.0.0+ea.1-tem) must then select a faked
+// install of that build (see common.EarlyAccess), not the release. It runs
+// before any `vfox use`, so java can only come from the legacy file.
 func verifyLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, distribution, version, installed, arch string) {
 	t.Helper()
-	const dir = "/tmp/e2e-legacy-sdkmanrc"
 	// vfox counts a version as installed once its directory holds
 	// java-<version>; the decoy holds nothing more, so selecting it leaves
 	// no java on PATH.
@@ -75,16 +76,37 @@ func verifyLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, distr
 		common.PaddedIdentifier(distribution, version, installed),
 		installed,
 	} {
-		execOK(ctx, t, ctr, fmt.Sprintf("mkdir --parents %s && printf 'java=%%s\\n' %s > %s/.sdkmanrc",
-			dir, shQuote(identifier), dir))
-		// The probe activates inside its own exec, a fresh shell session, so no
-		// `vfox env` state cached by an earlier call can answer for the file.
-		out := execRetry(ctx, t, ctr, ".sdkmanrc java="+identifier, fmt.Sprintf(
-			`cd %s && eval "$(vfox activate bash)" && eval "$(vfox env -s bash)" && %s`, dir, showSettings))
+		out := legacyJava(ctx, t, ctr, identifier)
 		common.CheckJava(t, out, distribution, version, arch, ".sdkmanrc java="+identifier)
 		t.Logf("PASS .sdkmanrc java=%s selects java %s, not %s", identifier, version, decoy)
 	}
 	execOK(ctx, t, ctr, "rm --recursive "+decoyDir)
+
+	// The early-access build's java only prints its name, which the
+	// release's java, selected instead, would not.
+	ea := common.EarlyAccess(distribution, version)
+	eaDir := `"${VFOX_HOME:-$HOME/.vfox}"/cache/java/` + shQuote("v-"+ea)
+	bin := eaDir + "/" + shQuote("java-"+ea) + "/bin"
+	execOK(ctx, t, ctr, fmt.Sprintf("mkdir --parents %s && printf '%%s' %s > %s/java && chmod +x %s/java",
+		bin, shQuote("#!/bin/sh\necho "+shQuote(ea)+"\n"), bin, bin))
+	identifier := common.EarlyAccessIdentifier(distribution, version)
+	out := legacyJava(ctx, t, ctr, identifier)
+	require.Containsf(t, out, ea, ".sdkmanrc java=%s must select %s, not %s", identifier, ea, installed)
+	t.Logf("PASS .sdkmanrc java=%s selects %s, not %s", identifier, ea, installed)
+	execOK(ctx, t, ctr, "rm --recursive "+eaDir)
+}
+
+// legacyJava writes java=<identifier> to a .sdkmanrc and returns what java
+// prints next to it. The probe activates inside its own exec, a fresh shell
+// session, so no `vfox env` state cached by an earlier call can answer for
+// the file.
+func legacyJava(ctx context.Context, t *testing.T, ctr tc.Container, identifier string) string {
+	t.Helper()
+	const dir = "/tmp/e2e-legacy-sdkmanrc"
+	execOK(ctx, t, ctr, fmt.Sprintf("mkdir --parents %s && printf 'java=%%s\\n' %s > %s/.sdkmanrc",
+		dir, shQuote(identifier), dir))
+	return execRetry(ctx, t, ctr, ".sdkmanrc java="+identifier, fmt.Sprintf(
+		`cd %s && eval "$(vfox activate bash)" && eval "$(vfox env -s bash)" && %s`, dir, showSettings))
 }
 
 // verifyToolchain runs java and javac through the activate hook and checks
