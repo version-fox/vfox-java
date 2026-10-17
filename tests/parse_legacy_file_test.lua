@@ -38,6 +38,9 @@ local function parse(content, installed)
     return result.version
 end
 
+-- The JDKs installed in vfox-java#71.
+local jb_and_zulu_fx = { "21.0.5+79248-jb", "21.0.12+7-zulu-fx" }
+
 local cases = {
     -- SDKMAN identifiers carry no build number.
     { "java=21.0.8-tem\n", { "21.0.8+9-zulu", "21.0.8+9-tem" }, "21.0.8+9-tem" },
@@ -47,9 +50,19 @@ local cases = {
     { "java=21.0.1-tem\n", { "21.0.8+9-tem" }, "21.0.8+9-tem" },
     -- Windows line endings, as Set-Content writes them.
     { "java=21.0.8-tem\r\nmaven=3.9.9\r\n", { "21.0.8+9-tem" }, "21.0.8+9-tem" },
-    -- Identifiers the plugin does not know (SDKMAN's JetBrains is jbr) or no
-    -- java line at all select nothing.
-    { "java=21.0.5-jbr\n", { "21.0.5+79248-jb" }, nil },
+    -- SDKMAN's JetBrains is jbr and its JavaFX builds are 21.0.12.fx-zulu or,
+    -- semverish, 21.0.12-fx+1.1-librca; the plugin's own spellings work too.
+    { "java=21.0.5-jb\n", jb_and_zulu_fx, "21.0.5+79248-jb" },
+    { "java=21.0.5-jbr\n", jb_and_zulu_fx, "21.0.5+79248-jb" },
+    { "java=21.0.12.fx-zulu\n", jb_and_zulu_fx, "21.0.12+7-zulu-fx" },
+    { "java=21.0.12-zulu-fx\n", jb_and_zulu_fx, "21.0.12+7-zulu-fx" },
+    { "java=21.0.12-fx+1.1-librca\n", { "21.0.12+10-librca", "21.0.12+10-librca-fx" }, "21.0.12+10-librca-fx" },
+    -- Never a JavaFX build for one without JavaFX, nor the other way round.
+    { "java=21.0.12-zulu\n", { "21.0.12+7-zulu-fx", "21.0.12+7-zulu" }, "21.0.12+7-zulu" },
+    { "java=21.0.12-zulu\n", jb_and_zulu_fx, nil },
+    { "java=21.0.12.fx-zulu\n", { "21.0.12+7-zulu" }, nil },
+    { "java=21.0.8.fx-zulu\n", { "21.0.12+7-zulu", "21.0.12+7-zulu-fx" }, "21.0.12+7-zulu-fx" },
+    -- No java line at all selects nothing.
     { "maven=3.9.9\n", { "21.0.8+9-tem" }, nil },
 }
 for _, case in ipairs(cases) do

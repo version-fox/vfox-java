@@ -32,9 +32,6 @@ package.preload["vfox.strings"] = function()
             end
         end,
         has_prefix = has_prefix,
-        has_suffix = function(value, suffix)
-            return suffix == "" or value:sub(-#suffix) == suffix
-        end,
         trim_prefix = function(value, prefix)
             return has_prefix(value, prefix) and value:sub(#prefix + 1) or value
         end,
