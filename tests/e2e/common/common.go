@@ -254,10 +254,19 @@ func Major(version string) string {
 	return strings.SplitN(version, ".", 2)[0]
 }
 
-// LegacyIdentifier renders the SDKMAN-style identifier a .sdkmanrc holds for
-// a release: "<version>-<distribution>", without the build number.
+// LegacyIdentifier renders the SDKMAN identifier a .sdkmanrc holds for a
+// release: "<version>-<distribution>", without the build number, in SDKMAN's
+// spelling: JetBrains is "jbr" and JavaFX builds are
+// "<version>.fx-<distribution>" (21.0.5-jbr, 25.0.4.fx-librca).
 func LegacyIdentifier(distribution, version string) string {
-	return version + "-" + Base(distribution)
+	name := Base(distribution)
+	if name == "jb" {
+		name = "jbr"
+	}
+	if JavaFX(distribution) {
+		version += ".fx"
+	}
+	return version + "-" + name
 }
 
 // Alias renders the asdf-style spelling "<long-name>-<version>[-fx]" of an

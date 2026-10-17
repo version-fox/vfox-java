@@ -16,6 +16,26 @@ local strings = require("vfox.strings")
 
 local distribution_version_parser = require("distribution_version")
 
+--- Rewrites an SDKMAN identifier in the plugin's spelling, which parse_version
+--- reads. SDKMAN calls JetBrains jbr (the plugin's jb) and puts fx in the
+--- version of JavaFX builds: 21.0.12.fx-zulu, or 21.0.12-fx+1.1-librca in its
+--- semverish identifiers (the plugin's 21.0.12-zulu-fx, 21.0.12+1.1-librca-fx).
+--- Any other spelling, the plugin's own included, is returned unchanged.
+local function plugin_spelling(identifier)
+    local version, distribution = identifier:match("^(.+)%-([^-]+)$")
+    if not version then
+        return identifier
+    end
+    if distribution == "jbr" then
+        distribution = "jb"
+    end
+    local release, build = version:match("^(%d[%d.]*)[.-]fx(.*)$")
+    if release then
+        return release .. build .. "-" .. distribution .. "-fx"
+    end
+    return version .. "-" .. distribution
+end
+
 function PLUGIN:ParseLegacyFile(ctx)
     local filepath = ctx.filepath
 
@@ -25,7 +45,7 @@ function PLUGIN:ParseLegacyFile(ctx)
 
     for line in io.lines(filepath) do
         if strings.has_prefix(line, "java=") then
-            javaVersion = strings.trim_prefix(line, "java=")
+            javaVersion = plugin_spelling(strings.trim_prefix(line, "java="))
             break
         end
     end
@@ -50,6 +70,19 @@ function PLUGIN:ParseLegacyFile(ctx)
 
     local majorVersion = strings.split(version, ".")[1]
 
+    --- Installed versions end in -<vendor> (OpenJDK's in nothing), then -fx for
+    --- JavaFX builds: 21.0.8+9-tem, 21.0.12+7-zulu-fx, 25.0.2+10.
+    local suffix = (vendor == "open" and "" or "-" .. vendor) .. (distributionVersion.javafx_bundled and "-fx" or "")
+
+    --- Whether installed version v is of this distribution and JavaFX flavour,
+    --- with a Java version starting with prefix.
+    local function matches(v, prefix)
+        local java_version = v:sub(1, #v - #suffix)
+        return java_version .. suffix == v
+            and (vendor ~= "open" or not strings.contains(java_version, "-"))
+            and strings.has_prefix(java_version, prefix)
+    end
+
     --- Get the list of versions of the current plugin installed
     --- (a plain call: vfox 1.x rejects the extra ctx argument of ctx:...).
     local targetVersion
@@ -61,31 +94,17 @@ function PLUGIN:ParseLegacyFile(ctx)
             break
         end
 
-        if vendor == "open" and not strings.contains(v, "-") and strings.has_prefix(v, version) then
+        if matches(v, version) then
             targetVersion = v
             break
-        end
-
-        if strings.has_suffix(v, "-" .. vendor) then
-            if strings.has_prefix(v, version) then
-                targetVersion = v
-                break
-            end
         end
     end
 
     if not targetVersion then
         for _, v in ipairs(versions) do
-            if vendor == "open" and not strings.contains(v, "-") and strings.has_prefix(v, majorVersion .. ".") then
+            if matches(v, majorVersion .. ".") then
                 targetVersion = v
                 break
-            end
-
-            if strings.has_suffix(v, "-" .. vendor) then
-                if strings.has_prefix(v, majorVersion .. ".") then
-                    targetVersion = v
-                    break
-                end
             end
         end
     end

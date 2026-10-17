@@ -187,7 +187,8 @@ func TestSpecs(t *testing.T) {
 	for _, c := range []struct{ dist, version, spec, missing, legacy string }{
 		{"open", "25.0.2", "25.0.2", "25.0.99", "25.0.2-open"},
 		{"tem", "21.0.8", "21.0.8-tem", "21.0.99-tem", "21.0.8-tem"},
-		{"librca-fx", "25.0.4", "25.0.4-librca-fx", "25.0.99-librca-fx", "25.0.4-librca"},
+		{"librca-fx", "25.0.4", "25.0.4-librca-fx", "25.0.99-librca-fx", "25.0.4.fx-librca"},
+		{"jb", "21.0.5", "21.0.5-jb", "21.0.99-jb", "21.0.5-jbr"},
 	} {
 		if got := Spec(c.dist, c.version); got != c.spec {
 			t.Errorf("Spec(%s, %s) = %q, want %q", c.dist, c.version, got, c.spec)

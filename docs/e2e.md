@@ -73,11 +73,11 @@ JDK, so `java` can only come from what vfox installs:
    a SKIP when absent): `Available` lists zip packages and reaches tar.gz
    ones only when a distribution has no zip at all, so JetBrains Runtime
    21.0.5 installs but is not listed.
-4. Before any `vfox use`, a `.sdkmanrc` holding the SDKMAN-style identifier
-   (`java=21.0.8-tem`) selects the JDK through `ParseLegacyFile`. On Windows
-   the file is written with CRLF line endings. JavaFX builds skip this probe:
-   SDKMAN spells them `<version>.fx-<distribution>`, which the legacy parser
-   does not resolve.
+4. Before any `vfox use`, a `.sdkmanrc` holding the SDKMAN identifier
+   without the build number selects the JDK through `ParseLegacyFile`:
+   `java=21.0.8-tem`, `java=21.0.5-jbr` (SDKMAN's name for JetBrains) or
+   `java=25.0.4.fx-librca` (its spelling of JavaFX builds). On Windows the
+   file is written with CRLF line endings.
 5. After `vfox use --global`, the JDK on `PATH` reports the requested
    `java.version`, the runner's `os.arch` (`amd64` / `aarch64`, which also
    catches an x64 JDK emulated on Windows ARM64) and the distribution's

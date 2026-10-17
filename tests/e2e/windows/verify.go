@@ -62,18 +62,12 @@ func verifySearch(ctx context.Context, t *testing.T, ctr tc.Container, box slotB
 }
 
 // verifyLegacyFile proves ParseLegacyFile selects the installed JDK from a
-// .sdkmanrc (PLUGIN.legacyFilenames) holding the SDKMAN-style identifier
-// without the build number (e.g. java=21.0.8-tem), written by Set-Content
-// with Windows line endings. It runs before any `vfox use`, so java can only
-// come from the legacy file. JavaFX builds are skipped: SDKMAN spells them
-// <version>.fx-<distribution>, which hooks/parse_legacy_file.lua does not
-// resolve.
+// .sdkmanrc (PLUGIN.legacyFilenames) holding the SDKMAN identifier without
+// the build number (e.g. java=21.0.8-tem, java=21.0.5-jbr,
+// java=25.0.4.fx-librca), written by Set-Content with Windows line endings.
+// It runs before any `vfox use`, so java can only come from the legacy file.
 func verifyLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, distribution, version, arch string) {
 	t.Helper()
-	if common.JavaFX(distribution) {
-		t.Logf("SKIP .sdkmanrc probe: SDKMAN spells JavaFX builds <version>.fx-<distribution>")
-		return
-	}
 	const dir = `C:\e2e-legacy-sdkmanrc`
 	identifier := common.LegacyIdentifier(distribution, version)
 	execOK(ctx, t, ctr, fmt.Sprintf(
