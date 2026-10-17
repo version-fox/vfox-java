@@ -78,6 +78,26 @@ local cases = {
     { "java=21.0.12-zulu\n", jb_and_zulu_fx, nil },
     { "java=21.0.12.fx-zulu\n", { "21.0.12+7-zulu" }, nil },
     { "java=21.0.8.fx-zulu\n", { "21.0.12+7-zulu", "21.0.12+7-zulu-fx" }, "21.0.12+7-zulu-fx" },
+    -- SDKMAN pads releases with zeros that Foojay, and so the installed name,
+    -- leaves out (vfox-java#80).
+    { "java=27.0.0+36-librca\n", { "27+36-librca" }, "27+36-librca" },
+    { "java=27.0.0-fx+36-librca\n", { "27+36-librca", "27+36-librca-fx" }, "27+36-librca-fx" },
+    { "java=27.0.0+35-zulu\n", { "27+35-zulu" }, "27+35-zulu" },
+    { "java=27.0.0.0+35-tem\n", { "27+35-tem" }, "27+35-tem" },
+    { "java=27.0.0+35-open\n", { "27+35" }, "27+35" },
+    { "java=26.0.0.0+35-open\n", { "26+35" }, "26+35" },
+    { "java=25.0.1.0+8-open\n", { "25.0.1+8", "25.0.2+10" }, "25.0.1+8" },
+    { "java=21.0.0.0-graal\n", { "21-graal", "21.0.12-graal" }, "21-graal" },
+    { "java=21.0.12.0-sapmchn\n", { "21.0.12-sapmchn", "21.0.12.1-sapmchn" }, "21.0.12-sapmchn" },
+    { "java=27.0.0.0+33-amzn\n", { "27-amzn" }, "27-amzn" },
+    { "java=21.0.10-tem\n", { "21.0.1+12-tem", "21.0.10+7-tem" }, "21.0.10+7-tem" },
+    -- A padded major names its first release, a bare major the newest one.
+    { "java=26.0.0.0+35-open\n", { "26+34", "26.0.2+10" }, "26+34" },
+    { "java=26-open\n", { "26+34", "26.0.2+10" }, "26.0.2+10" },
+    -- Without the release, the first release of the major is the newest one too.
+    { "java=25.0.1.0+8-open\n", { "25+36" }, "25+36" },
+    { "java=26.0.1-oracle\n", { "26-oracle" }, "26-oracle" },
+    { "java=26.0.2-oracle\n", { "26-oracle", "26.0.1-oracle" }, "26.0.1-oracle" },
     -- No java line at all selects nothing.
     { "maven=3.9.9\n", { "21.0.8+9-tem" }, nil },
 }

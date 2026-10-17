@@ -65,7 +65,12 @@ function PLUGIN:ParseLegacyFile(ctx)
         return {}
     end
 
-    local version = strings.split(fullVersion, "+")[1]
+    --- SDKMAN pads the release with zeros that Foojay, and so the installed
+    --- name, leaves out: 27.0.0+36 is 27+36, 25.0.1.0+8 is 25.0.1+8.
+    local version, build = fullVersion:match("^([^+]*)(.*)$")
+    while version:find("%.0$") do
+        version = version:sub(1, -3)
+    end
     local majorVersion = strings.split(version, ".")[1]
 
     --- Installed versions end in -<vendor> (OpenJDK's in nothing), then -fx for
@@ -81,14 +86,16 @@ function PLUGIN:ParseLegacyFile(ctx)
         installed[v] = true
     end
 
-    --- The version itself (21.0.5+63130-jb), else the newest build of the
-    --- release, as SDKMAN's build numbers count its own rebuilds
+    --- The version itself (21.0.5+63130-jb), else the release itself or its
+    --- newest build, as SDKMAN's build numbers count its own rebuilds
     --- (21.0.12+1.1-tem), else the newest installed release of the major
-    --- (21.0.12+8-tem for 21.0.3-tem).
-    local name = fullVersion .. suffix
+    --- (21.0.12+8-tem for 21.0.3-tem). A bare major (21-tem) skips the
+    --- release, taking the newest one as vfox use java@21-tem does, while
+    --- SDKMAN's 21.0.0 still names the release 21 (21+35-tem).
+    local name = version .. build .. suffix
     return {
         version = installed[name] and name
-            or installed_version.find(installed, version, suffix)
-            or installed_version.newest(installed, majorVersion .. ".", "^[%d.+]*$", suffix),
+            or not fullVersion:match("^%d+$") and installed_version.release(installed, version, suffix)
+            or installed_version.major(installed, majorVersion, suffix),
     }
 end

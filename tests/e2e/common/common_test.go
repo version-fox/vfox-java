@@ -208,6 +208,20 @@ func TestSpecs(t *testing.T) {
 	}
 }
 
+func TestPaddedIdentifier(t *testing.T) {
+	for _, c := range []struct{ dist, version, installed, want string }{
+		{"open", "25.0.2", "25.0.2+10", "25.0.2.0+10-open"},
+		{"tem", "21.0.8", "21.0.8+9-tem", "21.0.8.0+9-tem"},
+		{"librca-fx", "25.0.4", "25.0.4+9-librca-fx", "25.0.4.0-fx+9-librca"},
+		{"jb", "21.0.5", "21.0.5+79248-jb", "21.0.5.0+79248-jbr"},
+		{"graalce", "25.0.2", "25.0.2-graalce", "25.0.2.0-graalce"},
+	} {
+		if got := PaddedIdentifier(c.dist, c.version, c.installed); got != c.want {
+			t.Errorf("PaddedIdentifier(%s, %s, %s) = %q, want %q", c.dist, c.version, c.installed, got, c.want)
+		}
+	}
+}
+
 func TestAlias(t *testing.T) {
 	for _, c := range []struct{ dist, installed, want string }{
 		{"open", "25.0.2+10", "openjdk-25.0.2+10"},

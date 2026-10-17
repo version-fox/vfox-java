@@ -273,19 +273,39 @@ func Major(version string) string {
 	return strings.SplitN(version, ".", 2)[0]
 }
 
+// sdkmanName returns SDKMAN's name for the distribution, which calls
+// JetBrains "jbr".
+func sdkmanName(distribution string) string {
+	if name := Base(distribution); name != "jb" {
+		return name
+	}
+	return "jbr"
+}
+
 // LegacyIdentifier renders the SDKMAN identifier a .sdkmanrc holds for a
 // release: "<version>-<distribution>", without the build number, in SDKMAN's
 // spelling: JetBrains is "jbr" and JavaFX builds are
 // "<version>.fx-<distribution>" (21.0.5-jbr, 25.0.4.fx-librca).
 func LegacyIdentifier(distribution, version string) string {
-	name := Base(distribution)
-	if name == "jb" {
-		name = "jbr"
-	}
 	if JavaFX(distribution) {
 		version += ".fx"
 	}
-	return version + "-" + name
+	return version + "-" + sdkmanName(distribution)
+}
+
+// PaddedIdentifier renders the SDKMAN identifier of an installed version
+// with a zero padding the release, as `sdk list java` shows many
+// (25.0.1.0+8-open, 21.0.9.0+116386-jbr):
+// "<version>.0[-fx][+<build>]-<distribution>" with the installed build
+// (21.0.8.0+9-tem, 25.0.4.0-fx+9-librca). Foojay, and so the installed
+// name, leaves the zero out; ParseLegacyFile did not, so it found no such
+// release and fell back to the newest one of the major (vfox-java#80).
+func PaddedIdentifier(distribution, version, installed string) string {
+	version += ".0"
+	if JavaFX(distribution) {
+		version += "-fx"
+	}
+	return version + buildNumber.FindString(installed) + "-" + sdkmanName(distribution)
 }
 
 // Alias renders the asdf-style spelling "<long-name>-<version>[-fx]" of an
