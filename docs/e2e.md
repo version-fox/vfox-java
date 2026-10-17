@@ -260,6 +260,7 @@ lua-language-server --check . --checklevel=Warning
 
 ```bash
 # Offline hook tests (.github/workflows/test.yml).
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_install_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_use_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/parse_legacy_file_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/loongnix_test.lua
