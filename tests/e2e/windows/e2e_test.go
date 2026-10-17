@@ -132,8 +132,8 @@ func buildImage(t *testing.T, ctx context.Context, repoRoot, image, platform, ba
 // runOne starts one long-lived container per combo and drives the whole
 // E2E flow (setup -> install -> verify) through pwsh exec calls, asserting
 // in Go. A combo passes when every phase exits 0 and the outputs carry the
-// expected markers. vfox main combos run against a VFOX_HOME containing a
-// space (see vfoxHome).
+// expected markers. Every combo runs against a VFOX_HOME containing a
+// space (see spacedVfoxHome).
 func runOne(t *testing.T, ctx context.Context, image, platform, arch string, c common.Combo) {
 	t.Helper()
 	prefix := c.Prefix(platform)
@@ -181,7 +181,7 @@ func runOne(t *testing.T, ctx context.Context, image, platform, arch string, c c
 	procArch := procArchOfContainer(ctx, t, ctr)
 	t.Logf("=== vfox %s, java@%s, %s (%s) ===", c.Vfox, common.Spec(c.Distribution, version), platform, procArch)
 
-	box := setupSlotEnv(ctx, t, ctr, c.Slug(), c.Vfox)
+	box := setupSlotEnv(ctx, t, ctr, c.Slug())
 	setupVfox(ctx, t, ctr, box, c.Vfox)
 	checkMissingVersionRejected(ctx, t, ctr, box, c.Distribution, version, arch)
 
