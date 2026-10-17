@@ -69,10 +69,8 @@ JDK, so `java` can only come from what vfox installs:
    requested version plus the build number (`21.0.8-tem` installs as
    `21.0.8+9-tem`). `vfox search java <distribution>` (the `Available` hook)
    lists that same name as installed, noting JavaFX on `-fx` builds. On
-   Windows, a JDK installed through the tar.gz fallback is exempt (logged as
-   a SKIP when absent): `Available` lists zip packages and reaches tar.gz
-   ones only when a distribution has no zip at all, so JetBrains Runtime
-   21.0.5 installs but is not listed.
+   Windows that includes JetBrains Runtime 21.0.5, which ships only as
+   tar.gz there.
 4. Before any `vfox use`, a `.sdkmanrc` holding the SDKMAN identifier
    without the build number selects the JDK through `ParseLegacyFile`:
    `java=21.0.8-tem`, `java=21.0.5-jbr` (SDKMAN's name for JetBrains) or
@@ -100,7 +98,7 @@ The default matrix runs every distribution against both vfox channels
 | `open`       | 25.0.2  | the default distribution, versions without a suffix      | ✓     |       |
 | `tem`        | 21.0.8  | the common path (tar.gz on Linux, zip on Windows)        | ✓     | ✓     |
 | `librca-fx`  | 25.0.4  | JavaFX bundled builds (`-fx`)                            | ✓     | ✓     |
-| `jb`         | 21.0.5  | the tar.gz fallback on Windows, which has no zip for it  | ✓     | ✓     |
+| `jb`         | 21.0.5  | the tar.gz path on Windows, which has no zip for it      | ✓     | ✓     |
 | `graalce`    | 25.0.2  | `GRAALVM_HOME`                                           | ✓     |       |
 
 Every pinned release is published through Foojay for each platform its row

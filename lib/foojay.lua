@@ -18,7 +18,7 @@ local json = require("json")
 local foojay = {}
 
 local URL =
-    "https://api.foojay.io/disco/v3.0/packages/jdks?version=%s&distribution=%s&architecture=%s&archive_type=%s&operating_system=%s&lib_c_type=%s&directly_downloadable=true"
+    "https://api.foojay.io/disco/v3.0/packages/jdks?version=%s&distribution=%s&architecture=%s&%s&operating_system=%s&lib_c_type=%s&directly_downloadable=true"
 
 --- Detects the libc type on Linux systems (glibc or musl)
 --- @return string "glibc" or "musl"
@@ -46,9 +46,11 @@ foojay.fetchtJdkList = function(distribution, version)
         os = "macos"
     end
 
-    local archive_type = "tar.gz"
+    local archive_types = "archive_type=tar.gz"
     if os == "windows" then
-        archive_type = "zip"
+        -- JetBrains Runtime ships Windows zips for its newer builds only. Foojay
+        -- lists both archive types in one answer, still newest version first.
+        archive_types = "archive_type=zip&archive_type=tar.gz"
         if arch == "amd64" then
             arch = "x64"
         end
@@ -64,7 +66,7 @@ foojay.fetchtJdkList = function(distribution, version)
     -- latest=available would look at the major alone.
     local latest = version:match("^%d+$") and "&latest=available" or ""
 
-    local reqUrl = URL:format(version, distribution, arch, archive_type, os, lib_c_type) .. latest
+    local reqUrl = URL:format(version, distribution, arch, archive_types, os, lib_c_type) .. latest
 
     local resp, err = http.get({
         url = reqUrl,
@@ -78,23 +80,6 @@ foojay.fetchtJdkList = function(distribution, version)
 
     local respBody = json.decode(resp.body)
     local result = respBody.result
-
-    -- Fallback to tar.gz on Windows if no zip packages found (e.g. JetBrains JDK)
-    if os == "windows" and (not result or #result == 0) then
-        archive_type = "tar.gz"
-        reqUrl = URL:format(version, distribution, arch, archive_type, os, lib_c_type) .. latest
-        resp, err = http.get({
-            url = reqUrl,
-        })
-        if err ~= nil then
-            error("Failed to fetch jdk info from foojay: " .. err)
-        end
-        if resp.status_code ~= 200 then
-            error("Failed to fetch jdk info from foojay: status_code =>" .. resp.status_code)
-        end
-        respBody = json.decode(resp.body)
-        result = respBody.result
-    end
 
     return result
 end

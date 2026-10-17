@@ -186,8 +186,8 @@ func runOne(t *testing.T, ctx context.Context, image, platform, arch string, c c
 	checkMissingVersionRejected(ctx, t, ctr, box, c.Distribution, version, arch)
 
 	activation := fetchActivation(ctx, t, ctr, box)
-	installed, tarball := installJava(ctx, t, ctr, box, common.Spec(c.Distribution, version))
-	verifySearch(ctx, t, ctr, box, c.Distribution, installed, tarball)
+	installed := installJava(ctx, t, ctr, box, common.Spec(c.Distribution, version))
+	verifySearch(ctx, t, ctr, box, c.Distribution, installed)
 	// Before any `vfox use`, so java can only come from the legacy file.
 	verifyLegacyFile(ctx, t, ctr, box, c.Distribution, version, arch)
 

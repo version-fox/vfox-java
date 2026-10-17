@@ -50,8 +50,9 @@ var DefaultVersions = map[string]string{
 	"tem": "21.0.8",
 	// Liberica with JavaFX: the -fx selection in PreInstall and PreUse.
 	"librca-fx": "25.0.4",
-	// JetBrains Runtime 21.0.5 ships no Windows zip, so on Windows it takes
-	// the tar.gz fallback in lib/foojay.lua (vfox-java#58).
+	// JetBrains Runtime 21.0.5 ships no Windows zip, so on Windows it
+	// installs from a tar.gz (vfox-java#58), and searching must list it too
+	// (vfox-java#72).
 	"jb": "21.0.5",
 	// GraalVM Community: the GRAALVM_HOME branch of hooks/env_keys.lua.
 	"graalce": "25.0.2",
@@ -401,7 +402,7 @@ func InstalledVersion(output string) string {
 var unpackedTarball = regexp.MustCompile(`(?m)^Unpacking .*\.tar\.gz\.\.\.\r?$`)
 
 // FromTarball reports whether `vfox install` output unpacked a .tar.gz, i.e.
-// on Windows the JDK came from lib/foojay.lua's tar.gz fallback.
+// on Windows the JDK came from a release Foojay lists with no zip.
 func FromTarball(output string) bool {
 	return unpackedTarball.MatchString(StripANSI(output))
 }

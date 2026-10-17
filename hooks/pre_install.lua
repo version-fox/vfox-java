@@ -70,6 +70,14 @@ function PLUGIN:PreInstall(ctx)
     end
 
     local jdk = filtered_jdks[1]
+    -- Windows lists a version's zip and tar.gz packages in either order;
+    -- install the zip where there is one.
+    for _, candidate in ipairs(filtered_jdks) do
+        if candidate.java_version == jdk.java_version and candidate.archive_type == "zip" then
+            jdk = candidate
+            break
+        end
+    end
     if not jdk.links or not jdk.links.pkg_info_uri then
         error("Invalid JDK package info: missing download links for " .. ctx.version)
     end
