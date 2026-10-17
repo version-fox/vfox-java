@@ -37,22 +37,13 @@ const showSettings = "-XshowSettings:properties -version"
 
 // verifySearch checks `vfox search java` (the plugin's Available hook) lists
 // the installed version under the name PreInstall gave it, marked
-// installed, with the JavaFX note for -fx builds.
-//
-// A JDK from the tar.gz fallback (tarball) may be missing from the list:
-// lib/foojay.lua falls back per request, so Available, which lists zip
-// packages, only reaches tar.gz-only releases when the distribution has no
-// zip at all. JetBrains Runtime 21.0.5 is such a release; it is logged and
-// skipped rather than failed.
-func verifySearch(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, distribution, installed string, tarball bool) {
+// installed, with the JavaFX note for -fx builds. That includes releases
+// shipped only as tar.gz, such as JetBrains Runtime 21.0.5 (vfox-java#72).
+func verifySearch(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, distribution, installed string) {
 	t.Helper()
 	cmd := "vfox search java" + common.SearchArgs(distribution)
 	out := execRetry(ctx, t, ctr, cmd, cmd, box.vars...)
 	entry, ok := common.SearchEntry(out, installed)
-	if !ok && tarball {
-		t.Logf("SKIP %s omits %s: installed from the tar.gz fallback, which Available does not list while zip packages exist", cmd, installed)
-		return
-	}
 	require.Truef(t, ok, "%s does not list %s\n--- output ---\n%s", cmd, installed, out)
 	require.Containsf(t, entry, "(installed)", "%s must mark %s installed", cmd, installed)
 	if common.JavaFX(distribution) {

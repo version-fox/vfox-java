@@ -16,17 +16,20 @@ dofile("tests/support.lua")
 local JDKS = "https://api.foojay.io/disco/v3.0/packages/jdks?"
 local IDS = "https://api.foojay.io/disco/v3.0/ids/"
 
-local function pkg(java_version, fx)
+local function pkg(java_version, fx, archive_type)
+    archive_type = archive_type or "tar.gz"
     return {
         java_version = java_version,
         major_version = tonumber(java_version:match("^%d+")),
         javafx_bundled = fx == true,
-        links = { pkg_info_uri = IDS .. java_version .. (fx and "-fx" or "") },
+        archive_type = archive_type,
+        links = { pkg_info_uri = IDS .. java_version .. (fx and "-fx" or "") .. "." .. archive_type },
     }
 end
 
 -- Foojay answers observed on 2026-10-17 for linux/amd64 tar.gz packages, keyed
--- by "<distribution>[ <version>][ <latest>]".
+-- by "<distribution>[ <version>][ <latest>]", and for windows/amd64 zip and
+-- tar.gz packages, keyed by "windows <distribution>[ <version>][ <latest>]".
 local foojay = {
     ["temurin 21"] = { pkg("21+35") },
     ["temurin 21 available"] = { pkg("21.0.12.1+1") },
@@ -41,11 +44,21 @@ local foojay = {
     ["openjdk 21 available"] = { pkg("21.0.2+13") },
     ["openjdk 25.0.2"] = { pkg("25.0.2+10") },
     ["openjdk 28-ea"] = { pkg("28-ea+19"), pkg("28-ea+18") },
-    ["jetbrains 21"] = { pkg("21+2121") },
-    ["jetbrains 21 available"] = { pkg("21.0.11+1163116") },
     -- Searching asks for no version; abridged.
     ["openjdk"] = { pkg("25.0.2+10"), pkg("21.0.2+13") },
     ["temurin"] = { pkg("25.0.2+10"), pkg("21.0.8+9") },
+    -- JetBrains Runtime ships Windows zips for its newer builds only, and Foojay
+    -- lists a version's zip and tar.gz in either order; abridged.
+    ["windows jetbrains 21"] = { pkg("21+2121") },
+    ["windows jetbrains 21 available"] = { pkg("21.0.11+1163116"), pkg("21.0.11+1163116", false, "zip") },
+    ["windows jetbrains 21.0.5"] = { pkg("21.0.5+79248"), pkg("21.0.5+76240") },
+    ["windows jetbrains"] = {
+        pkg("21.0.11+1163116"),
+        pkg("21.0.11+1163116", false, "zip"),
+        pkg("21.0.8+895146", false, "zip"),
+        pkg("21.0.8+895146"),
+        pkg("21.0.5+79248"),
+    },
 }
 
 local requests = {}
@@ -57,8 +70,12 @@ package.preload.http = function()
             local body
             if request.url:sub(1, #JDKS) == JDKS then
                 local params = {}
+                local archive_types = {}
                 for key, value in request.url:sub(#JDKS + 1):gmatch("([^&=]+)=([^&]*)") do
                     params[key] = value
+                    if key == "archive_type" then
+                        archive_types[value] = true
+                    end
                 end
                 local key = params.distribution
                 if params.version ~= "" then
@@ -67,8 +84,17 @@ package.preload.http = function()
                 if params.latest then
                     key = key .. " " .. params.latest
                 end
-                -- Only tar.gz packages are listed, so Windows retries every zip lookup with tar.gz.
-                body = { result = params.archive_type == "tar.gz" and foojay[key] or {} }
+                if params.operating_system == "windows" then
+                    key = "windows " .. key
+                end
+                -- Only the packages of the archive types asked for are listed.
+                local result = {}
+                for _, package in ipairs(foojay[key] or {}) do
+                    if archive_types[package.archive_type] then
+                        table.insert(result, package)
+                    end
+                end
+                body = { result = result }
             else
                 assert(request.url:sub(1, #IDS) == IDS, "unexpected request: " .. request.url)
                 local id = request.url:sub(#IDS + 1)
@@ -92,10 +118,16 @@ dofile("hooks/available.lua")
 dofile("hooks/pre_install.lua")
 
 local cases = 0
-local function check(version, expected, latest)
+local function check(version, expected, latest, archive_type)
     requests = {}
     local result = PLUGIN:PreInstall({ version = version })
     assert(result.version == expected, version .. ": expected " .. expected .. ", got " .. tostring(result.version))
+    if archive_type then
+        assert(
+            result.url:sub(-#archive_type - 1) == "." .. archive_type,
+            version .. ": expected the " .. archive_type .. " package, got " .. result.url
+        )
+    end
     local lookups = 0
     for _, url in ipairs(requests) do
         if url:sub(1, #JDKS) == JDKS then
@@ -122,10 +154,6 @@ check("28.ea", "28-ea+19", false)
 -- OpenJDK versions carry no suffix, however the input spells the distribution.
 check("25.0.2-open", "25.0.2+10", false)
 check("openjdk-25.0.2", "25.0.2+10", false)
--- On Windows the tar.gz retry keeps asking for the newest release.
-RUNTIME.osType = "windows"
-assert(check("21-jb", "21.0.11+1163116-jb", true) == 2, "21-jb: expected a zip lookup and a tar.gz retry")
-RUNTIME.osType = "linux"
 
 -- Searching lists every release, not only the newest one.
 requests = {}
@@ -146,5 +174,21 @@ for _, query in ipairs({ "open", "openjdk", "all" }) do
 end
 local all = listed("all")
 assert(all["25.0.2+10-tem"] and all["21.0.8+9-tem"], "Available all: Temurin versions lost their suffix")
+
+-- Windows asks for zip and tar.gz packages in one lookup: installing takes a
+-- version's zip where there is one, and searching lists the releases that ship
+-- only as tar.gz too, newest first and each once.
+RUNTIME.osType = "windows"
+assert(check("21-jb", "21.0.11+1163116-jb", true, "zip") == 1, "21-jb: expected one lookup")
+assert(check("21.0.5-jb", "21.0.5+79248-jb", false, "tar.gz") == 1, "21.0.5-jb: expected one lookup")
+local jb = {}
+for _, item in ipairs(PLUGIN:Available({ args = { "jb" } })) do
+    table.insert(jb, item.version)
+end
+assert(
+    table.concat(jb, " ") == "21.0.11+1163116-jb 21.0.8+895146-jb 21.0.5+79248-jb",
+    "Available jb on Windows: unexpected " .. table.concat(jb, " ")
+)
+RUNTIME.osType = "linux"
 
 print("PASS: " .. cases .. " PreInstall Foojay lookup cases")

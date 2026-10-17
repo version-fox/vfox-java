@@ -24,21 +24,20 @@ import (
 )
 
 // installJava installs one JDK and returns the version vfox recorded for it
-// (see common.CheckInstalled), plus whether it came from the tar.gz fallback
-// rather than a zip. Install runs plain: vfox.exe resolves through the slot
-// PATH override.
-func installJava(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, spec string) (string, bool) {
+// (see common.CheckInstalled), logging whether it came from a zip or a
+// tar.gz. Install runs plain: vfox.exe resolves through the slot PATH
+// override.
+func installJava(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, spec string) string {
 	t.Helper()
 	out := execRetry(ctx, t, ctr, "vfox install java@"+spec,
 		"vfox install "+pwshQuote("java@"+spec), box.vars...)
 	installed := common.CheckInstalled(t, out, spec)
-	tarball := common.FromTarball(out)
 	archive := "zip"
-	if tarball {
-		archive = "tar.gz fallback"
+	if common.FromTarball(out) {
+		archive = "tar.gz"
 	}
 	t.Logf("PASS java@%s installed as %s (%s)", spec, installed, archive)
-	return installed, tarball
+	return installed
 }
 
 // useJava selects the installed JDK globally; `vfox use` needs the

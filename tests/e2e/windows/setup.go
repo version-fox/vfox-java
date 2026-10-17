@@ -221,8 +221,8 @@ func activatedEnv(activation, script string) string {
 
 // checkMissingVersionRejected proves an unpublished release fails loudly
 // instead of installing something else: PreInstall finds no Foojay package
-// (zip, then the tar.gz fallback) and names the platform it searched, which
-// must be the runner's (RUNTIME.osType/archType).
+// (zip or tar.gz) and names the platform it searched, which must be the
+// runner's (RUNTIME.osType/archType).
 func checkMissingVersionRejected(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, distribution, version, arch string) {
 	t.Helper()
 	spec := common.MissingSpec(distribution, version)
