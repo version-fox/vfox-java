@@ -109,6 +109,11 @@ JDK, so `java` can only come from what vfox installs:
    build number `PreUse` finds among the installed versions) and the
    asdf-style `<long-name>-<version>[-fx]` (`java@temurin-21.0.8+9`,
    rewritten to `21.0.8+9-tem`; `java@openjdk-25.0.2+10` to `25.0.2+10`).
+   So does the release padded with a zero, as SDKMAN writes releases
+   (`java@21.0.8.0-tem`, `java@21.0.8.0+9-tem`), which `vfox install` must
+   first find already installed: `PreInstall` passes the zero on to Foojay,
+   which leaves it out, while `PreUse` looked for an installed version
+   starting with the padded release and reported it not installed.
 
 The default matrix runs every distribution against both vfox channels
 (`latest`, `main`):

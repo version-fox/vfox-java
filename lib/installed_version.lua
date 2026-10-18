@@ -82,11 +82,24 @@ function installed_version.major(installed, major, suffix)
     return installed_version.newest(installed, major, "^[.+][%d.+]*$", suffix) or installed[name] and name
 end
 
+--- Returns a Java version without the zeros SDKMAN pads releases with, which
+--- Foojay, and so the installed name, leaves out even when asked for them:
+--- 27.0.0+36 is 27+36, 25.0.1.0 is 25.0.1.
+function installed_version.unpad(version)
+    local release, build = version:match("^([^+]*)(.*)$")
+    while release:find("%.0$") do
+        release = release:sub(1, -3)
+    end
+    return release .. build
+end
+
 --- Returns the installed version that version .. suffix names, or nil. The
 --- input may leave out the build number PreInstall found, so, like PreInstall,
 --- take the newest build of a release (21.0.8-tem selects 21.0.8+9-tem) and
 --- the newest release of a bare major (21-tem selects 21.0.12.1+1-tem), unless
---- the name itself is installed.
+--- the name itself is installed. It may also pad the release with zeros, which
+--- PreInstall passes on to Foojay: 27.0.0-librca installs, and so selects, the
+--- release 27 (27+36-librca), not the newest one of the major.
 function installed_version.find(installed, version, suffix)
     local name = version .. suffix
     if installed[name] then
@@ -95,7 +108,7 @@ function installed_version.find(installed, version, suffix)
     if version:match("^%d+$") then
         return installed_version.major(installed, version, suffix)
     end
-    return installed_version.release(installed, version, suffix)
+    return installed_version.release(installed, installed_version.unpad(version), suffix)
 end
 
 return installed_version

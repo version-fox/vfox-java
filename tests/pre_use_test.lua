@@ -25,6 +25,8 @@ for _, version in ipairs({
     "21.0.12.1+1-tem",
     "25.0.4+9-librca",
     "25.0.4+9-librca-fx",
+    "27+36-librca",
+    "27+36-librca-fx",
     "21.0.5+63130-jb",
     "21.0.5+79248-jb",
     "17.0.12-graal",
@@ -34,6 +36,7 @@ for _, version in ipairs({
     "21.0.12+8-lnxabi2-fx",
     -- OpenJDK versions carry no distribution suffix.
     "25.0.2+10",
+    "25.0.1+8",
     "21+35",
     "21.0.2+13",
     "28-ea+18",
@@ -89,6 +92,27 @@ local cases = {
     { "25.0.2-open-fx", "25.0.2-fx" },
     { "17-open", "17" },
     { "28-open", "28" },
+    -- A release padded with zeros, as SDKMAN writes it, selects what PreInstall
+    -- installs for it, as Foojay leaves the zeros out (vfox-java#87): that
+    -- release, not the newest one of its major (21.0.0-open is 21+35).
+    { "27.0.0-librca", "27+36-librca" },
+    { "27.0.0+36-librca", "27+36-librca" },
+    { "27.0-librca", "27+36-librca" },
+    { "27.0.0-librca-fx", "27+36-librca-fx" },
+    { "liberica-27.0.0+36-fx", "27+36-librca-fx" },
+    { "21.0.8.0-tem", "21.0.8+9-tem" },
+    { "21.0.8.0+9-tem", "21.0.8+9-tem" },
+    { "21.0.12.0-tem", "21.0.12+8-tem" },
+    { "17.0.12.0-graal", "17.0.12-graal" },
+    { "25.0.1.0-open", "25.0.1+8" },
+    { "25.0.1.0", "25.0.1+8" },
+    { "openjdk-25.0.1.0+8", "25.0.1+8" },
+    { "21.0.0-open", "21+35" },
+    { "21.0.0", "21+35" },
+    -- Padded or not, never another build or an EA build.
+    { "21.0.8.0+7-tem", "21.0.8.0+7-tem" },
+    { "27.0.0+35-librca", "27.0.0+35-librca" },
+    { "26.0.0-graal", "26.0.0-graal" },
 }
 for _, case in ipairs(cases) do
     local result = PLUGIN:PreUse({ version = case[1], installedSdks = installed })

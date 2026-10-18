@@ -352,6 +352,21 @@ func Alias(distribution, installed string) (string, bool) {
 	return alias, true
 }
 
+// PaddedSpecs renders the pinned release padded with a zero, as SDKMAN
+// writes releases (27.0.0-librca, 25.0.1.0-open), in the plugin's spelling:
+// "<version>.0[-<distribution>]" and, when the installed version has a
+// build number, "<version>.0+<build>[-<distribution>]" (21.0.8.0-tem,
+// 21.0.8.0+9-tem). PreInstall passes the zero on to Foojay, which leaves it
+// out, so both install the pinned JDK, but PreUse looked for an installed
+// version starting with the padded release and found none (vfox-java#87).
+func PaddedSpecs(distribution, version, installed string) []string {
+	specs := []string{Spec(distribution, version+".0")}
+	if build := buildNumber.FindString(installed); build != "" {
+		specs = append(specs, Spec(distribution, version+".0"+build))
+	}
+	return specs
+}
+
 // Vendor returns the java.vendor property the distribution's builds report,
 // when the suite knows it.
 func Vendor(distribution string) (string, bool) {
