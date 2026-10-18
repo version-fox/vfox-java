@@ -2,19 +2,19 @@
 
 [中文](changes.md) | [English](../changes.md)
 
-按发布版本列出用户能感受到的变化。GitHub 的 Release 页面列出了对应的 PR。写这篇文档时最新的发布版是 0.6.1，`main` 比它多出“未发布”下面的所有内容。想现在就用上这些变化，见 [install-from-source.md](install-from-source.md)。
+按发布版本列出用户能感受到的变化。GitHub 的 Release 页面列出了对应的 PR。
 
-## 未发布
+## 0.6.2（2026-10-18）
 
 - `.sdkmanrc` 在 vfox 1.x 下重新可用。0.6.1 在 vfox 1.x 下会报 `expected 0 arguments for func() []string, got 1`（测试过 1.0.12 和 1.0.13），但 vfox 不会把这个错误显示出来（[#65](https://github.com/version-fox/vfox-java/pull/65)）。
 - 只写大版本号的 `vfox use java@21` 在 vfox 1.0.13 下可用。0.6.1 在那里会报 `cannot unmarshal string into plugin.PreUseHookResult`（[#65](https://github.com/version-fox/vfox-java/pull/65)）。
 - `.sdkmanrc` 能匹配 SDKMAN 的 `jbr` 和 JavaFX 标识符（[#78](https://github.com/version-fox/vfox-java/pull/78)）、补零的版本（[#85](https://github.com/version-fox/vfox-java/pull/85)）和 EA 标识符（[#88](https://github.com/version-fox/vfox-java/pull/88)、[#96](https://github.com/version-fox/vfox-java/pull/96)）。同一大版本装了多个 JDK 时，会选中文件里指明的那个（[#84](https://github.com/version-fox/vfox-java/pull/84)）。见 [sdkmanrc.md](sdkmanrc.md)。
 - 只写大版本号时，安装最新的版本。`java@21-tem` 装的是 `21.0.12.1+1-tem`，不再是 `21+35-tem`（[#74](https://github.com/version-fox/vfox-java/pull/74)）。`java@25-graal` 装的是 25.0 系列的最新构建 `25.0.4.1-graal`，0.6.1 装的是 `25-graal`（[#101](https://github.com/version-fox/vfox-java/pull/101)）。
 - `vfox use java@21.0.8-tem` 能找到已安装的 `21.0.8+9-tem`（[#76](https://github.com/version-fox/vfox-java/pull/76)）。带 `-open` 或 `openjdk-` 的 OpenJDK 名字（[#77](https://github.com/version-fox/vfox-java/pull/77)）和补零的版本（[#92](https://github.com/version-fox/vfox-java/pull/92)）同样如此。
-- `java@21.0.5+63130-jb` 装的是它指明的那个构建，不再是这个版本的最新构建（[#83](https://github.com/version-fox/vfox-java/pull/83)）。
+- `java@21.0.5+63130-jb` 和 `java@28.ea.15-open` 装的是它们指明的那个构建，不再是这个版本的最新构建（[#83](https://github.com/version-fox/vfox-java/pull/83)）。
 - Windows 上的 `vfox search` 会列出只提供 tar.gz 的版本（[#81](https://github.com/version-fox/vfox-java/pull/81)）。
 - 插件不再设置 `GRAALVM_HOME`（[#93](https://github.com/version-fox/vfox-java/pull/93)）。
-- `java@tem` 这种只写发行版的写法会提示补上版本，不再报 Lua 错误（[#99](https://github.com/version-fox/vfox-java/pull/99)）。
+- `java@tem`、`java@-tem` 这种只写发行版的写法会提示补上版本。0.6.1 对前者报 `attempt to index a non-table object(nil) with key 'match'`，对后者则装上最新版本（[#99](https://github.com/version-fox/vfox-java/pull/99)）。
 - `vfox search` 不再把 GraalVM 每月发布的特性版本标成 LTS（[#100](https://github.com/version-fox/vfox-java/pull/100)）。
 - 仓库有了覆盖 Linux 和 Windows 的容器 e2e 套件，见 [e2e.md](e2e.md)（[#65](https://github.com/version-fox/vfox-java/pull/65)、[#82](https://github.com/version-fox/vfox-java/pull/82)）。
 

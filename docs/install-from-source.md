@@ -2,7 +2,7 @@
 
 [中文](zh-CN/install-from-source.md) | [English](install-from-source.md)
 
-`vfox add java` installs the latest release. `main` has fixes that are not in it yet ([changes.md](changes.md)), and a change you are working on is not in any release. A plugin is a `metadata.lua` plus the `hooks` and `lib` directories, and vfox adds one from a zip of them.
+`vfox add java` installs the latest release. To try `main` before its next release, or a change you are working on, build the plugin from source. A plugin is a `metadata.lua` plus the `hooks` and `lib` directories, and vfox adds one from a zip of them.
 
 ## Ubuntu 26.04
 
@@ -40,7 +40,7 @@ vfox use --global java@21-tem
 java -version
 ```
 
-A build of `main` installs the newest Temurin 21 (`21.0.12.1+1-tem` on 2026-10-18). Release 0.6.1 installs `21+35-tem`, the first build of 21.
+`vfox install java@21-tem` installs the newest Temurin 21, `21.0.12.1+1-tem` on 2026-10-18.
 
 ## When java is already added
 

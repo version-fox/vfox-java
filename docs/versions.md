@@ -15,8 +15,6 @@ vfox install java@21                # no distribution: OpenJDK from jdk.java.net
 
 The distribution is a short name (`tem`) or a long name (`temurin`). Both lists are in [distributions.md](distributions.md). `-fx` goes last and asks for a JavaFX build, see [javafx.md](javafx.md).
 
-> This page describes `main`. Release 0.6.1, the newest one when this was written, differs in places marked "Unreleased", and [changes.md](changes.md) lists all of them.
-
 ## Without a distribution
 
 `java@21` means OpenJDK as published on [jdk.java.net](https://jdk.java.net/), and its installed name has no suffix (`21.0.2+13`). That site carries the newest releases and the last build of older ones: 17 stops at `17.0.2`, 21 at `21.0.2`. So `vfox install java@17.0.17` fails, while `java@17.0.17-tem` works. For a release that is still maintained, name a distribution.
@@ -25,14 +23,14 @@ The distribution is a short name (`tem`) or a long name (`temurin`). Both lists 
 
 `vfox install` asks the plugin which package matches, then vfox downloads and unpacks it.
 
-- A bare major (`21`, `21-tem`) installs the newest release of that major the distribution lists, for example `21.0.12.1+1-tem` on 2026-10-18. Unreleased: 0.6.1 installed the first GA build, `21+35-tem`.
+- A bare major (`21`, `21-tem`) installs the newest release of that major the distribution lists, for example `21.0.12.1+1-tem` on 2026-10-18.
 - A longer version must match a release the distribution lists. `21.0.8-tem` installs `21.0.8+9-tem`, the newest build of 21.0.8. A release nobody published fails with `No JDK found for 21.0.99-tem on linux/amd64`.
-- A build number selects that build: `21.0.5+63130-jb`. Unreleased: 0.6.1 installed the newest build of the release instead.
+- A build number selects that build: `21.0.5+63130-jb`.
 - A release padded with zeros, as SDKMAN writes it, is accepted: `27.0.0-librca` installs `27+36-librca`.
-- Oracle GraalVM's bare major installs the newest build of its 25.0 line, not one of the monthly feature releases, which have to be named in full (`25.4.4.1-graal`). See [GraalVM](distributions.md#graalvm-family). Unreleased: 0.6.1 installed the GA build, `25-graal`.
+- Oracle GraalVM's bare major installs the newest build of its 25.0 line, not one of the monthly feature releases, which have to be named in full (`25.4.4.1-graal`). See [GraalVM](distributions.md#graalvm-family).
 - With `-fx` only JavaFX builds are considered, without it only builds without JavaFX. The two are never mixed.
 - On Windows a release shipped as zip and as tar.gz installs from the zip.
-- A distribution without a version (`java@tem`, `java@-tem`, `java@zulu-fx`) is rejected with a message that asks for one. Unreleased: 0.6.1 failed with a Lua error for `java@tem` and installed the newest release for `java@-tem`.
+- A distribution without a version (`java@tem`, `java@-tem`, `java@zulu-fx`) is rejected with a message that asks for one.
 
 An install that finds the name already present prints `java@21.0.12.1+1-tem is already installed` and downloads nothing.
 
@@ -75,8 +73,6 @@ vfox uninstall java@21.0.8+9-tem
 
 If you name a build or a release, it does not cross over to another one (`21.0.12-tem` does not select `21.0.12.1+1-tem`). It does not cross to another distribution, between JavaFX and plain, or between early-access and GA either. A name that matches nothing is reported as `java@99-tem is not installed`.
 
-Unreleased: 0.6.1 passed what you typed on as it was, so `vfox use java@21.0.8-tem` found nothing and needed the full name, `21.0.8+9-tem`. The same goes for the `-open` and `openjdk-` spellings and for zero-padded releases. Under vfox 1.0.13 and later, `vfox use java@21` and `java@21-open` fail outright with 0.6.1, with `cannot unmarshal string into plugin.PreUseHookResult`, because it answers a bare major with an empty string.
-
 Pick the scope with `vfox use`'s flags: `--global`, `--project` or `--session`, the default. In a shell without vfox's hook, Windows switches to the global scope with a warning, while Linux and macOS stop with `vfox requires hook support`. `--project` writes a `.vfox.toml` that holds the installed name (`java = "17.0.10+7-tem"`). A `.sdkmanrc` is read as well, see [sdkmanrc.md](sdkmanrc.md).
 
 ## Early-access builds
@@ -87,8 +83,6 @@ Spell the build as `<major>.ea[.<build>]`:
 vfox install java@28.ea-open       # newest early-access build, 28-ea+19 on 2026-10-18
 vfox install java@28.ea.15-open    # 28-ea+15
 ```
-
-Unreleased: 0.6.1 ignores the build number and installs the newest early-access build.
 
 The installed name uses Foojay's spelling, `28-ea+19`, and `vfox use java@28-ea+19` takes it as it is. `vfox search` lists GA releases only. Foojay lists early-access builds for OpenJDK, Temurin, Zulu, SapMachine, GraalVM and GraalVM Community, among others. Vendors remove old ones from their servers while Foojay keeps the record, so an old build may fail to download.
 
@@ -117,4 +111,4 @@ The list holds what exists for the machine you run it on, see [platforms.md](pla
 
 `vfox install java tem` does not select Temurin: arguments separated by spaces are several SDKs. Write `java@21-tem`.
 
-The LTS note is Foojay's, except that GraalVM's monthly feature releases (`25.4.4.1-graal`) carry none, though Foojay marks them LTS. Unreleased: 0.6.1 still adds the note.
+The LTS note is Foojay's, except that GraalVM's monthly feature releases (`25.4.4.1-graal`) carry none, though Foojay marks them LTS.

@@ -2,19 +2,19 @@
 
 [中文](zh-CN/changes.md) | [English](changes.md)
 
-What changed in each release, as a user notices it. GitHub's release pages list the pull requests. The newest release at the time of writing is 0.6.1, and `main` is ahead of it by everything under "Unreleased". [install-from-source.md](install-from-source.md) gets you those changes now.
+What changed in each release, as a user notices it. GitHub's release pages list the pull requests.
 
-## Unreleased
+## 0.6.2 (2026-10-18)
 
 - `.sdkmanrc` works under vfox 1.x again. Release 0.6.1 fails with `expected 0 arguments for func() []string, got 1` under vfox 1.x (tested with 1.0.12 and 1.0.13), and vfox hides the error ([#65](https://github.com/version-fox/vfox-java/pull/65)).
 - `vfox use java@21`, a bare major, works under vfox 1.0.13. Release 0.6.1 fails there with `cannot unmarshal string into plugin.PreUseHookResult` ([#65](https://github.com/version-fox/vfox-java/pull/65)).
 - `.sdkmanrc` matches SDKMAN's `jbr` and JavaFX identifiers ([#78](https://github.com/version-fox/vfox-java/pull/78)), zero-padded releases ([#85](https://github.com/version-fox/vfox-java/pull/85)) and early-access identifiers ([#88](https://github.com/version-fox/vfox-java/pull/88), [#96](https://github.com/version-fox/vfox-java/pull/96)). It selects the JDK it names when several of the same major are installed ([#84](https://github.com/version-fox/vfox-java/pull/84)). See [sdkmanrc.md](sdkmanrc.md).
 - A bare major installs the newest release. `java@21-tem` is `21.0.12.1+1-tem` and not `21+35-tem` ([#74](https://github.com/version-fox/vfox-java/pull/74)). `java@25-graal` installs `25.0.4.1-graal`, the newest build of the 25.0 line, where release 0.6.1 installed `25-graal` ([#101](https://github.com/version-fox/vfox-java/pull/101)).
 - `vfox use java@21.0.8-tem` finds the installed `21.0.8+9-tem` ([#76](https://github.com/version-fox/vfox-java/pull/76)). The same goes for OpenJDK names with `-open` or `openjdk-` ([#77](https://github.com/version-fox/vfox-java/pull/77)) and for zero-padded releases ([#92](https://github.com/version-fox/vfox-java/pull/92)).
-- `java@21.0.5+63130-jb` installs the build it names and not the newest build of the release ([#83](https://github.com/version-fox/vfox-java/pull/83)).
+- `java@21.0.5+63130-jb` and `java@28.ea.15-open` install the build they name and not the newest build of the release ([#83](https://github.com/version-fox/vfox-java/pull/83)).
 - `vfox search` on Windows lists releases that ship only as tar.gz ([#81](https://github.com/version-fox/vfox-java/pull/81)).
 - The plugin no longer sets `GRAALVM_HOME` ([#93](https://github.com/version-fox/vfox-java/pull/93)).
-- `java@tem`, a distribution without a version, asks for one instead of failing with a Lua error ([#99](https://github.com/version-fox/vfox-java/pull/99)).
+- `java@tem` and `java@-tem`, a distribution without a version, ask for one. Release 0.6.1 stops with `attempt to index a non-table object(nil) with key 'match'` for the first and installs the newest release for the second ([#99](https://github.com/version-fox/vfox-java/pull/99)).
 - `vfox search` no longer marks GraalVM's monthly feature releases as LTS ([#100](https://github.com/version-fox/vfox-java/pull/100)).
 - The repository has a container e2e suite for Linux and Windows, see [e2e.md](e2e.md) ([#65](https://github.com/version-fox/vfox-java/pull/65), [#82](https://github.com/version-fox/vfox-java/pull/82)).
 

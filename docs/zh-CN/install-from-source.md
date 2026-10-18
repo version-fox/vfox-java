@@ -2,7 +2,7 @@
 
 [中文](install-from-source.md) | [English](../install-from-source.md)
 
-`vfox add java` 安装的是最新的发布版。`main` 上有尚未发布的修复（[changes.md](changes.md)），你正在改的代码也不在任何发布版里。插件就是一个 `metadata.lua` 加上 `hooks` 和 `lib` 两个目录，vfox 可以从它们的 zip 包添加插件。
+`vfox add java` 安装的是最新的发布版。想在下一个版本发布之前用上 `main`，或者试用你正在改的代码，就从源码构建插件。插件就是一个 `metadata.lua` 加上 `hooks` 和 `lib` 两个目录，vfox 可以从它们的 zip 包添加插件。
 
 ## Ubuntu 26.04
 
@@ -40,7 +40,7 @@ vfox use --global java@21-tem
 java -version
 ```
 
-用 `main` 构建出的插件装的是最新的 Temurin 21（截至 2026-10-18 是 `21.0.12.1+1-tem`）；0.6.1 装的是 `21+35-tem`，也就是 21 的第一个构建。
+`vfox install java@21-tem` 装的是最新的 Temurin 21，截至 2026-10-18 是 `21.0.12.1+1-tem`。
 
 ## 已经添加过 java 时
 

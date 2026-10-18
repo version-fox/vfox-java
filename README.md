@@ -24,8 +24,6 @@ vfox install java@21-tem
 vfox use --global java@21-tem
 ```
 
-Unreleased: release 0.6.1, the newest when this was written, installs `21+35-tem` here, and `vfox use --global java@21-tem` then fails with `java@21-tem is not installed`. Use the name that `vfox install` prints, or [install from source](docs/install-from-source.md).
-
 You can verify this using the following command:
 
 ```bash
@@ -33,8 +31,6 @@ java -version
 ```
 
 `vfox search java tem` lists the Temurin releases, and in an interactive terminal it lets you pick one and installs it.
-
-Behavior that only exists on `main` and not in the latest release is marked "Unreleased" in the pages below. [docs/changes.md](docs/changes.md) lists it, and [docs/install-from-source.md](docs/install-from-source.md) gets you `main`.
 
 ## Versions and names
 

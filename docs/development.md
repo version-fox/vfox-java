@@ -125,7 +125,7 @@ The ids are Foojay's (`oracle_open_jdk` is `open`). The notes under "Only some r
 
 A maintainer runs **Actions → Plugin → Run workflow** on the default branch with the version, without `v`. The README describes what the shared workflow does. Afterwards `plugins/java.json` in [vfox-plugins](https://github.com/version-fox/vfox-plugins) shows the version that `vfox add java` serves.
 
-The documentation marks what is newer than the last release with "Unreleased" ("未发布" in Chinese). After a release, move those entries in [changes.md](changes.md) under the new version and take the remarks out, in both languages: `grep -rn -i -e unreleased -e 未发布 docs README*`.
+The documentation marks what is newer than the last release with "Unreleased" ("未发布" in Chinese). After a release, move those entries in [changes.md](changes.md) under the new version and take the remarks out, in both languages: `grep -rn -i -e unreleased -e 未发布 docs README*`. Also search for the number of the previous release: a few sentences compare against it without saying "Unreleased".
 
 ## Writing the docs
 

@@ -11,8 +11,6 @@ java=21.0.8-tem
 
 Only the `java=` line is read. Other lines, such as `maven=3.9.9`, are not this plugin's business.
 
-> Unreleased: release 0.6.1 cannot read `.sdkmanrc` under vfox 1.x. Its hook calls `ctx:getInstalledVersions()`, which every vfox 1.x rejects (tested with 1.0.12 and 1.0.13) with `expected 0 arguments for func() []string, got 1`, and vfox drops that error, so nothing happens. `main` fixes it, matches more of SDKMAN's spellings (`jbr`, JavaFX, zero padding, early access) and picks the right JDK when several of one major are installed. Try it with [install-from-source.md](install-from-source.md). The details are in [changes.md](changes.md).
-
 ## Using it
 
 ```bash

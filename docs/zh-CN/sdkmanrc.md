@@ -11,8 +11,6 @@ java=21.0.8-tem
 
 只读取 `java=` 这一行。其他行，例如 `maven=3.9.9`，与这个插件无关。
 
-> 未发布：0.6.1 在 vfox 1.x 下读不了 `.sdkmanrc`。它的钩子调用了 `ctx:getInstalledVersions()`，所有 vfox 1.x 都会拒绝这种调用（测试过 1.0.12 和 1.0.13），报 `expected 0 arguments for func() []string, got 1`，而 vfox 又不会显示这个错误，所以看上去什么都没发生。`main` 已修复，并且支持 SDKMAN 更多的写法（`jbr`、JavaFX、补零、EA），也能在同一大版本装了多个 JDK 时选对。可以用 [install-from-source.md](install-from-source.md) 先试用，详情见 [changes.md](changes.md)。
-
 ## 使用方法
 
 ```bash
