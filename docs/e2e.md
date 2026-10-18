@@ -78,8 +78,11 @@ JDK, so `java` can only come from what vfox installs:
 3. The pinned release installs under the name `PreInstall` gives it: the
    requested version plus the build number (`21.0.8-tem` installs as
    `21.0.8+9-tem`). `vfox search java <distribution>` (the `Available` hook)
-   lists that same name as installed, noting JavaFX on `-fx` builds. On
-   Windows that includes JetBrains Runtime 21.0.5, which ships only as
+   lists that same name as installed, noting JavaFX on `-fx` builds. For
+   GraalVM it must also list the feature releases GraalVM ships every month
+   since 25.1 (`25.4.4.1-graalce`), none of them noted LTS, though Foojay
+   marks them LTS, as the JDK they build on is; each lasts about a month.
+   On Windows the list includes JetBrains Runtime 21.0.5, which ships only as
    tar.gz there.
 4. Before any `vfox use`, a `.sdkmanrc` holding the SDKMAN identifier
    without the build number selects the JDK through `ParseLegacyFile`:

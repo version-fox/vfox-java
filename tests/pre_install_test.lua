@@ -27,6 +27,11 @@ local function pkg(java_version, fx, archive_type)
     }
 end
 
+local function lts(jdk)
+    jdk.term_of_support = "lts"
+    return jdk
+end
+
 -- Foojay answers observed on 2026-10-17 for linux/amd64 tar.gz packages, keyed
 -- by "<distribution>[ <version>][ <latest>]", and for windows/amd64 zip and
 -- tar.gz packages, keyed by "windows <distribution>[ <version>][ <latest>]".
@@ -51,6 +56,11 @@ local foojay = {
     -- Searching asks for no version; abridged.
     ["openjdk"] = { pkg("25.0.2+10"), pkg("21.0.2+13") },
     ["temurin"] = { pkg("25.0.2+10"), pkg("21.0.8+9") },
+    -- Observed on 2026-10-18: Foojay marks GraalVM's feature releases LTS, as
+    -- 25.0 is, and Mandrel 23.1 LTS, as the JDK 21 it builds on is; abridged.
+    ["graalvm"] = { lts(pkg("25.4.4.1")), lts(pkg("25.1.3")), lts(pkg("25.0.4.1")), lts(pkg("25")), pkg("24.0.2") },
+    ["graalvm_community"] = { lts(pkg("25.4.4.1")), lts(pkg("25.0.2")) },
+    ["mandrel"] = { lts(pkg("23.1.12")) },
     -- JetBrains Runtime ships Windows zips for its newer builds only, and Foojay
     -- lists a version's zip and tar.gz in either order; abridged.
     ["windows jetbrains 21"] = { pkg("21+2121") },
@@ -178,7 +188,7 @@ assert(#requests == 1 and not requests[1]:find("latest=", 1, true), "Available: 
 local function listed(query)
     local versions = {}
     for _, item in ipairs(PLUGIN:Available({ args = { query } })) do
-        versions[item.version] = true
+        versions[item.version] = item.note
     end
     return versions
 end
@@ -187,6 +197,25 @@ for _, query in ipairs({ "open", "openjdk", "all" }) do
 end
 local all = listed("all")
 assert(all["25.0.2+10-tem"] and all["21.0.8+9-tem"], "Available all: Temurin versions lost their suffix")
+
+-- Searching drops the LTS note from GraalVM's feature releases, each
+-- superseded within a month, whether it lists one distribution or all.
+-- GraalVM's other releases keep it, and so do Mandrel's, which Mandrel numbers
+-- after itself.
+for version, note in pairs({
+    ["25.4.4.1-graal"] = "",
+    ["25.1.3-graal"] = "",
+    ["25.0.4.1-graal"] = "LTS",
+    ["25-graal"] = "LTS",
+    ["25.4.4.1-graalce"] = "",
+    ["25.0.2-graalce"] = "LTS",
+    ["23.1.12-mandrel"] = "LTS",
+}) do
+    for _, query in ipairs({ version:match("%-(%a+)$"), "all" }) do
+        local got = listed(query)[version]
+        assert(got == note, ("Available %s: %s noted %q, want %q"):format(query, version, tostring(got), note))
+    end
+end
 
 -- Windows asks for zip and tar.gz packages in one lookup: installing takes a
 -- version's zip where there is one, and searching lists the releases that ship

@@ -16,6 +16,10 @@ local foojay = require("foojay")
 local loongnix = require("loongnix")
 local distribution_version_parser = require("distribution_version")
 
+-- is_feature_release reads GraalVM's numbering only: Liberica NIK and Mandrel
+-- number every release after themselves (Mandrel 23.1.12 is LTS).
+local graalvm = { graal = true, graalce = true }
+
 --- Return all available versions provided by this plugin
 --- @param ctx table Empty table used as context, for future extension
 --- @return table Descriptions of available versions and accompanying tool descriptions
@@ -73,7 +77,10 @@ function PLUGIN:Available(ctx)
         if not seen[v] then
             seen[v] = true
             -- check if version exists
-            local note = jdk.term_of_support == "lts" and "LTS" or ""
+            -- Foojay marks GraalVM's feature releases LTS, as the JDK they build on is.
+            local lts = jdk.term_of_support == "lts"
+                and not (graalvm[short] and distribution_version_parser.is_feature_release(jdk.java_version))
+            local note = lts and "LTS" or ""
             if jdk.javafx_bundled == true then
                 note = note == "" and "JavaFX" or note .. ", JavaFX"
             end
