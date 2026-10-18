@@ -75,10 +75,7 @@ function PLUGIN:ParseLegacyFile(ctx)
 
     --- SDKMAN pads the release with zeros that Foojay, and so the installed
     --- name, leaves out: 27.0.0+36 is 27+36, 25.0.1.0+8 is 25.0.1+8.
-    local version, build = fullVersion:match("^([^+]*)(.*)$")
-    while version:find("%.0$") do
-        version = version:sub(1, -3)
-    end
+    local version, build = installed_version.unpad(fullVersion):match("^([^+]*)(.*)$")
     local majorVersion = strings.split(version, ".")[1]
 
     --- Installed versions end in -<vendor> (OpenJDK's in nothing), then -fx for

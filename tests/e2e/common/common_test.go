@@ -15,6 +15,7 @@
 package common
 
 import (
+	"slices"
 	"testing"
 )
 
@@ -257,6 +258,24 @@ func TestAlias(t *testing.T) {
 	} {
 		if got, ok := Alias(c.dist, c.installed); ok {
 			t.Errorf("Alias(%s, %s) = %q, want none", c.dist, c.installed, got)
+		}
+	}
+}
+
+func TestPaddedSpecs(t *testing.T) {
+	for _, c := range []struct {
+		dist, version, installed string
+		want                     []string
+	}{
+		{"open", "25.0.2", "25.0.2+10", []string{"25.0.2.0", "25.0.2.0+10"}},
+		{"tem", "21.0.8", "21.0.8+9-tem", []string{"21.0.8.0-tem", "21.0.8.0+9-tem"}},
+		{"librca-fx", "25.0.4", "25.0.4+9-librca-fx", []string{"25.0.4.0-librca-fx", "25.0.4.0+9-librca-fx"}},
+		{"jb", "21.0.5", "21.0.5+79248-jb", []string{"21.0.5.0-jb", "21.0.5.0+79248-jb"}},
+		// GraalVM's versions carry no build number.
+		{"graalce", "25.0.2", "25.0.2-graalce", []string{"25.0.2.0-graalce"}},
+	} {
+		if got := PaddedSpecs(c.dist, c.version, c.installed); !slices.Equal(got, c.want) {
+			t.Errorf("PaddedSpecs(%s, %s, %s) = %q, want %q", c.dist, c.version, c.installed, got, c.want)
 		}
 	}
 }

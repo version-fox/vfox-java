@@ -174,7 +174,10 @@ func verifyToolchain(ctx context.Context, t *testing.T, ctr tc.Container, box sl
 //     build number PreUse finds among the installed versions;
 //  3. the asdf-style <long-name>-<version>[-fx] spelling (e.g.
 //     java@temurin-21.0.8+9), which PreUse rewrites to <version>-<short>
-//     (<version> for OpenJDK, installed without a suffix).
+//     (<version> for OpenJDK, installed without a suffix);
+//  4. the release padded with a zero, as SDKMAN writes releases (e.g.
+//     java@21.0.8.0-tem, java@21.0.8.0+9-tem, see common.PaddedSpecs),
+//     which `vfox install` must first find already installed.
 //
 // After each `vfox use`, java on PATH must still be the installed JDK.
 func verifyPreUse(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, activation, distribution, version, installed string) {
@@ -183,6 +186,16 @@ func verifyPreUse(ctx context.Context, t *testing.T, ctr tc.Container, box slotB
 	if alias, ok := common.Alias(distribution, installed); ok {
 		spellings = append(spellings, alias)
 	}
+	// Foojay leaves the zero out, so PreInstall names the installed JDK and
+	// vfox downloads nothing.
+	padded := common.PaddedSpecs(distribution, version, installed)
+	for _, spec := range padded {
+		out := execRetry(ctx, t, ctr, "vfox install java@"+spec, "vfox install "+pwshQuote("java@"+spec), box.vars...)
+		require.Containsf(t, common.StripANSI(out), "java@"+installed+" is already installed",
+			"vfox install java@%s must find the installed %s", spec, installed)
+	}
+	t.Logf("PASS vfox install java@%s finds %s installed", strings.Join(padded, ", java@"), installed)
+	spellings = append(spellings, padded...)
 	for _, spelling := range spellings {
 		out := execOK(ctx, t, ctr, activated(activation, "vfox use --global "+pwshQuote("java@"+spelling)), box.vars...)
 		require.Containsf(t, common.StripANSI(out), "Now using java@"+installed+".",
