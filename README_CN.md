@@ -24,8 +24,6 @@ vfox install java@21-tem
 vfox use --global java@21-tem
 ```
 
-未发布：0.6.1（写这篇文档时最新的发布版）在这里装的是 `21+35-tem`，随后 `vfox use --global java@21-tem` 会报 `java@21-tem is not installed`。请改用 `vfox install` 打印出的名字，或者[从源码安装](docs/zh-CN/install-from-source.md)。
-
 可以用下面的命令验证：
 
 ```bash
@@ -33,8 +31,6 @@ java -version
 ```
 
 `vfox search java tem` 会列出 Temurin 的各个版本，在交互式终端里还可以直接选一个并安装。
-
-只存在于 `main`、还没进入最新发布版的行为，在下面各页里标有“未发布”。完整列表见 [docs/zh-CN/changes.md](docs/zh-CN/changes.md)，想直接用上 `main`，见 [docs/zh-CN/install-from-source.md](docs/zh-CN/install-from-source.md)。
 
 ## 版本与命名
 

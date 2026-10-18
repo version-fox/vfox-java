@@ -34,11 +34,9 @@ https://api.foojay.io/disco/v3.0/packages/jdks
 
 Without `latest=available`, `version=21` matches the 21 GA build only (`21+35`). With it Foojay picks the newest 21.x, which is what `java@21-tem` installs. Longer versions match as they are.
 
-Unreleased: release 0.6.1 sends a `+` as it is, never adds `latest=available` (so `java@21-tem` installs `21+35-tem`), and on Windows asks for `zip` only, falling back to `tar.gz` when that returns nothing.
-
 The answer is a list of packages. The plugin names a release after `java_version`, adds `-fx` where `javafx_bundled` is true, marks it LTS where `term_of_support` is `lts`, and prefers a `zip` over a `tar.gz` of the same version on Windows. For the install it then fetches the package's `links.pkg_info_uri` and downloads its `direct_download_uri`, which is a vendor's own server (GitHub Releases for Temurin). That record also holds a `checksum`. The plugin does not pass it on, so vfox prints `WARNING: Checksum is not provided, skip verify...` and does not verify the download.
 
-`vfox search` differs from the raw list in a few ways. It lists a name once where Foojay has two records for it, and it leaves the LTS note off GraalVM's feature releases (unreleased, see [distributions.md](distributions.md#behavior-of-oracle-graalvm-and-graalvm-community)). It only lists GA releases.
+`vfox search` differs from the raw list in a few ways. It lists a name once where Foojay has two records for it, and it leaves the LTS note off GraalVM's feature releases (see [distributions.md](distributions.md#behavior-of-oracle-graalvm-and-graalvm-community)). It only lists GA releases.
 
 ## Which distributions have a build for my platform
 

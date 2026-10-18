@@ -125,7 +125,7 @@ id 是 Foojay 的（`oracle_open_jdk` 对应 `open`）。“只有部分版本�
 
 维护者在默认分支上执行 **Actions → Plugin → Run workflow**，填入不带 `v` 的版本号。共享工作流具体做什么，README 里有说明。发布之后，[vfox-plugins](https://github.com/version-fox/vfox-plugins) 里的 `plugins/java.json` 会显示 `vfox add java` 提供的是哪个版本。
 
-文档里用“未发布”（英文是“Unreleased”）标记比最新发布版更新的内容。发布之后，把 [changes.md](changes.md) 里的这些条目移到新版本下面，并去掉这些标注，两种语言都要处理：`grep -rn -i -e unreleased -e 未发布 docs README*`。
+文档里用“未发布”（英文是“Unreleased”）标记比最新发布版更新的内容。发布之后，把 [changes.md](changes.md) 里的这些条目移到新版本下面，并去掉这些标注，两种语言都要处理：`grep -rn -i -e unreleased -e 未发布 docs README*`。上一个发布版的版本号也要搜一遍：有几句话是拿它做对比的，没有写“未发布”。
 
 ## 编写文档
 

@@ -16,7 +16,7 @@ Foojay has no package for that release, distribution and flavour on this platfor
 
 ### `No version in tem; add one, such as 21-tem. Please check available versions with 'vfox search java tem'`
 
-The spec holds a distribution and no version. `java@-tem`, `java@temurin-` and `java@zulu-fx` are the same case. Unreleased: 0.6.1 stops with `attempt to index a non-table object(nil) with key 'match'` for `java@tem`, and installs the newest release for `java@-tem`.
+The spec holds a distribution and no version. `java@-tem`, `java@temurin-` and `java@zulu-fx` are the same case.
 
 ### `Could not extract a valid distribution: 21-foo`
 
@@ -65,7 +65,7 @@ While `proxy.enable` is `false`, the usual `HTTP_PROXY`, `HTTPS_PROXY` and `NO_P
 - **`WARNING: Checksum is not provided, skip verify...` on every install.** The plugin does not pass a checksum to vfox, so the download is not verified, see [foojay.md](foojay.md#what-the-plugin-asks).
 - **The installed name has a build number you did not type.** `java@21.0.8-tem` installs `21.0.8+9-tem`. The build is part of the name, see [versions.md](versions.md#installed-names).
 - **`vfox install java@21-tem` and `vfox install java tem` do different things.** The second one is two SDKs, `java` and `tem`.
-- **A `GRAALVM_HOME` you set is left alone.** The plugin sets `JAVA_HOME` and `PATH` only. Unreleased: 0.6.1 replaced it for GraalVM.
+- **A `GRAALVM_HOME` you set is left alone.** The plugin sets `JAVA_HOME` and `PATH` only.
 
 ## Where the JDK is
 

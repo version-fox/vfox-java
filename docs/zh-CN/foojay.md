@@ -34,11 +34,9 @@ https://api.foojay.io/disco/v3.0/packages/jdks
 
 不加 `latest=available` 时，`version=21` 只匹配 21 的 GA 构建（`21+35`）；加上之后，Foojay 会挑出最新的 21.x，`java@21-tem` 装的就是它。更具体的版本则按原样匹配。
 
-未发布：0.6.1 发送的 `+` 不做编码，也从不加 `latest=available`（所以 `java@21-tem` 装的是 `21+35-tem`），在 Windows 上只请求 `zip`，没有结果时才退回 `tar.gz`。
-
 返回的是一个包列表。插件用 `java_version` 给版本命名；`javafx_bundled` 为真时加上 `-fx`；`term_of_support` 是 `lts` 时标注 LTS；在 Windows 上，同一版本既有 `zip` 又有 `tar.gz` 时优先用 `zip`。安装时，插件再取这个包的 `links.pkg_info_uri`，并从其中的 `direct_download_uri` 下载，那是厂商自己的服务器（Temurin 是 GitHub Releases）。这条记录里还有 `checksum`，但插件没有把它交给 vfox，所以 vfox 会打印 `WARNING: Checksum is not provided, skip verify...`，下载内容不做校验。
 
-`vfox search` 与原始列表有几处不同：Foojay 里同一个名字有两条记录时，它只列一次；不给 GraalVM 的特性版本加 LTS 备注（未发布：见 [distributions.md](distributions.md#oracle-graalvm-与-graalvm-社区版的行为)）；只列 GA 版本。
+`vfox search` 与原始列表有几处不同：Foojay 里同一个名字有两条记录时，它只列一次；不给 GraalVM 的特性版本加 LTS 备注（见 [distributions.md](distributions.md#oracle-graalvm-与-graalvm-社区版的行为)）；只列 GA 版本。
 
 ## 我的平台上有哪些发行版
 

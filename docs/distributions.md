@@ -101,17 +101,17 @@ Mandrel and Liberica NIK numbered their releases after themselves up to version 
 
 ### Behavior of Oracle GraalVM and GraalVM Community
 
-- Since 25.1 (June 2026) GraalVM puts out a feature release every month next to its 25.0 line: `25.1.3`, `25.2.4`, `25.3.4.1`, `25.4.4.1`. Each is replaced within about a month. Foojay marks them LTS because the JDK they build on is LTS, and `vfox search` leaves the LTS note off them. Unreleased: 0.6.1 still adds the note.
-- `java@25-graal` installs the newest build of the 25.0 line (`25.0.4.1-graal`), the line Oracle's own `25/latest` download follows. A feature release needs its full version: `java@25.4.4.1-graal`. Unreleased: 0.6.1 installed the GA build `25-graal`.
-- GraalVM Community's 25.0 line ended with `25.0.2`, and the feature releases are all it still ships. `java@25-graalce` installs the newest of them, `25.4.4.1-graalce` on 2026-10-18. Unreleased: 0.6.1 installs the GA build `25-graalce`.
-- The plugin sets `JAVA_HOME` and `PATH`, and no `GRAALVM_HOME`. A `GRAALVM_HOME` that points at a GraalVM of your own stays as it is, and the native-image build plugins fall back to `JAVA_HOME` when it is unset. Unreleased: 0.6.1 set `GRAALVM_HOME` for `graal` and `graalce`, replacing yours.
+- Since 25.1 (June 2026) GraalVM puts out a feature release every month next to its 25.0 line: `25.1.3`, `25.2.4`, `25.3.4.1`, `25.4.4.1`. Each is replaced within about a month. Foojay marks them LTS because the JDK they build on is LTS, and `vfox search` leaves the LTS note off them.
+- `java@25-graal` installs the newest build of the 25.0 line (`25.0.4.1-graal`), the line Oracle's own `25/latest` download follows. A feature release needs its full version: `java@25.4.4.1-graal`.
+- GraalVM Community's 25.0 line ended with `25.0.2`, and the feature releases are all it still ships. `java@25-graalce` installs the newest of them, `25.4.4.1-graalce` on 2026-10-18.
+- The plugin sets `JAVA_HOME` and `PATH`, and no `GRAALVM_HOME`. A `GRAALVM_HOME` that points at a GraalVM of your own stays as it is, and the native-image build plugins fall back to `JAVA_HOME` when it is unset.
 - There is no Windows ARM64 and no Alpine build, and Intel Macs get nothing after 25.0.1. See [platforms.md](platforms.md#graalvm).
 
 ## Others
 
 ### JetBrains Runtime (`jb`)
 
-The [fork of OpenJDK](https://github.com/JetBrains/JetBrainsRuntime) that JetBrains' IDEs run on. Java 11, 17, 21 and 25. On Windows some releases ship only as tar.gz. The plugin installs those, and `vfox search` lists them. Unreleased: 0.6.1 does not list them.
+The [fork of OpenJDK](https://github.com/JetBrains/JetBrainsRuntime) that JetBrains' IDEs run on. Java 11, 17, 21 and 25. On Windows some releases ship only as tar.gz. The plugin installs those, and `vfox search` lists them.
 
 ### TravaOpenJDK (`trava`)
 

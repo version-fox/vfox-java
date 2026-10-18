@@ -16,7 +16,7 @@ Foojay 在这个平台上没有对应的包：版本、发行版、带不带 Jav
 
 ### `No version in tem; add one, such as 21-tem. Please check available versions with 'vfox search java tem'`
 
-`java@` 后面只有发行版，没有版本。`java@-tem`、`java@temurin-` 和 `java@zulu-fx` 都属于这种情况。未发布：0.6.1 对 `java@tem` 会报 `attempt to index a non-table object(nil) with key 'match'`，对 `java@-tem` 则会装上最新版本。
+`java@` 后面只有发行版，没有版本。`java@-tem`、`java@temurin-` 和 `java@zulu-fx` 都属于这种情况。
 
 ### `Could not extract a valid distribution: 21-foo`
 
@@ -65,7 +65,7 @@ vfox config proxy.url http://127.0.0.1:7890
 - **每次安装都有 `WARNING: Checksum is not provided, skip verify...`。** 插件没有把校验和交给 vfox，所以下载内容没有校验，见 [foojay.md](foojay.md#插件发出的请求)。
 - **安装后的版本名里多了一个你没写的构建号。** `java@21.0.8-tem` 装出来是 `21.0.8+9-tem`。构建号是版本名的一部分，见 [versions.md](versions.md#安装后的版本名)。
 - **`vfox install java@21-tem` 和 `vfox install java tem` 做的是不同的事。** 后者是两个 SDK，`java` 和 `tem`。
-- **你设置的 `GRAALVM_HOME` 不会被改动。** 插件只设置 `JAVA_HOME` 和 `PATH`。未发布：0.6.1 对 GraalVM 会把它替换掉。
+- **你设置的 `GRAALVM_HOME` 不会被改动。** 插件只设置 `JAVA_HOME` 和 `PATH`。
 
 ## JDK 在哪里
 

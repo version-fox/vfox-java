@@ -101,17 +101,17 @@ Mandrel 和 Liberica NIK 在 24 及以前用自己的版本号体系（Mandrel �
 
 ### Oracle GraalVM 与 GraalVM 社区版的行为
 
-- 从 25.1（2026 年 6 月）起，GraalVM 在 25.0 系列之外每月发布一个特性版本（feature release）：`25.1.3`、`25.2.4`、`25.3.4.1`、`25.4.4.1`，每个大约一个月后就被下一个取代。它们基于的 JDK 是 LTS，所以 Foojay 也把它们标成了 LTS，而 `vfox search` 不给它们加 LTS 备注。未发布：0.6.1 仍会加上这个备注。
-- `java@25-graal` 装的是 25.0 系列的最新构建（`25.0.4.1-graal`），Oracle 官方的 `25/latest` 下载链接跟的也是这个系列。特性版本要写全版本号：`java@25.4.4.1-graal`。未发布：0.6.1 装的是 GA 构建 `25-graal`。
-- GraalVM 社区版的 25.0 系列到 `25.0.2` 为止，现在只发布特性版本。`java@25-graalce` 装其中最新的一个，截至 2026-10-18 是 `25.4.4.1-graalce`。未发布：0.6.1 装的是 GA 构建 `25-graalce`。
-- 插件只设置 `JAVA_HOME` 和 `PATH`，不设置 `GRAALVM_HOME`。你设置的、指向自己的 GraalVM 的 `GRAALVM_HOME` 保持原样；没有设置时，native-image 的构建插件会回退到 `JAVA_HOME`。未发布：0.6.1 会为 `graal` 和 `graalce` 设置 `GRAALVM_HOME`，覆盖你原来的值。
+- 从 25.1（2026 年 6 月）起，GraalVM 在 25.0 系列之外每月发布一个特性版本（feature release）：`25.1.3`、`25.2.4`、`25.3.4.1`、`25.4.4.1`，每个大约一个月后就被下一个取代。它们基于的 JDK 是 LTS，所以 Foojay 也把它们标成了 LTS，而 `vfox search` 不给它们加 LTS 备注。
+- `java@25-graal` 装的是 25.0 系列的最新构建（`25.0.4.1-graal`），Oracle 官方的 `25/latest` 下载链接跟的也是这个系列。特性版本要写全版本号：`java@25.4.4.1-graal`。
+- GraalVM 社区版的 25.0 系列到 `25.0.2` 为止，现在只发布特性版本。`java@25-graalce` 装其中最新的一个，截至 2026-10-18 是 `25.4.4.1-graalce`。
+- 插件只设置 `JAVA_HOME` 和 `PATH`，不设置 `GRAALVM_HOME`。你设置的、指向自己的 GraalVM 的 `GRAALVM_HOME` 保持原样；没有设置时，native-image 的构建插件会回退到 `JAVA_HOME`。
 - 没有 Windows ARM64 和 Alpine 的构建，Intel Mac 上 25.0.1 之后的版本也没有。见 [platforms.md](platforms.md#graalvm)。
 
 ## 其他
 
 ### JetBrains Runtime（`jb`）
 
-JetBrains 各 IDE 运行所用的 [OpenJDK 分支](https://github.com/JetBrains/JetBrainsRuntime)。覆盖 Java 11、17、21 和 25。在 Windows 上，有些版本只提供 tar.gz，插件可以安装，`vfox search` 也会列出。未发布：0.6.1 的 `vfox search` 不会列出它们。
+JetBrains 各 IDE 运行所用的 [OpenJDK 分支](https://github.com/JetBrains/JetBrainsRuntime)。覆盖 Java 11、17、21 和 25。在 Windows 上，有些版本只提供 tar.gz，插件可以安装，`vfox search` 也会列出。
 
 ### TravaOpenJDK（`trava`）
 
