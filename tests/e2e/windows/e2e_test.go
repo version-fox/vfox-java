@@ -243,6 +243,9 @@ func runOne(t *testing.T, ctx context.Context, image, platform, arch string, c c
 	box := setupSlotEnv(ctx, t, ctr, c.Slug())
 	setupVfox(ctx, t, ctr, box, c.Vfox)
 	checkMissingVersionRejected(ctx, t, ctr, box, c.Distribution, version, arch)
+	if common.ChecksOracleGraalVM(c.Distribution) {
+		checkGraalVMBareMajor(ctx, t, ctr, box)
+	}
 
 	activation := fetchActivation(ctx, t, ctr, box)
 	installed := installJava(ctx, t, ctr, box, common.Spec(c.Distribution, version))

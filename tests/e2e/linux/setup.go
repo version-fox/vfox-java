@@ -75,3 +75,29 @@ func checkMissingVersionRejected(ctx context.Context, t *testing.T, ctr tc.Conta
 		t.Logf("PASS java@%s is rejected on linux/%s", spec, arch)
 	}
 }
+
+// checkGraalVMBareMajor proves Oracle GraalVM's bare major installs the
+// newest build of its 25.0 line, not one of the monthly feature releases
+// Foojay lists before it (see common.OracleGraalVMSpec). The builds of the
+// major `vfox search java graal` lists are faked as installed first (see
+// common.BareMajorBuilds), so `vfox install` names the one PreInstall picked
+// and downloads nothing.
+func checkGraalVMBareMajor(ctx context.Context, t *testing.T, ctr tc.Container) {
+	t.Helper()
+	spec := common.OracleGraalVMSpec
+	out := execRetry(ctx, t, ctr, "vfox search java graal", "vfox search java graal")
+	builds, want := common.BareMajorBuilds(common.SearchedVersions(out), spec)
+	require.NotEmptyf(t, want, "vfox search java graal lists no %s build but feature releases\n--- output ---\n%s", spec, out)
+	var dirs, javaDirs []string
+	for _, build := range builds {
+		dir := `"${VFOX_HOME:-$HOME/.vfox}"/cache/java/` + shQuote("v-"+build)
+		dirs = append(dirs, dir)
+		javaDirs = append(javaDirs, dir+"/"+shQuote("java-"+build))
+	}
+	execOK(ctx, t, ctr, "mkdir --parents "+strings.Join(javaDirs, " "))
+	out = execRetry(ctx, t, ctr, "vfox install java@"+spec, "vfox install java@"+spec)
+	require.Containsf(t, common.StripANSI(out), "java@"+want+" is already installed",
+		"vfox install java@%s must take %s, the newest build that is no feature release", spec, want)
+	execOK(ctx, t, ctr, "rm --recursive "+strings.Join(dirs, " "))
+	t.Logf("PASS java@%s takes %s out of %s", spec, want, strings.Join(builds, ", "))
+}

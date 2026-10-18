@@ -398,3 +398,34 @@ func TestSearchEntry(t *testing.T) {
 		t.Error("SearchEntry matched a version prefix")
 	}
 }
+
+func TestBareMajorBuilds(t *testing.T) {
+	// Abridged `vfox search java graal` output, observed on 2026-10-18.
+	searched := SearchedVersions("Available versions:\r\n" +
+		" - 25.4.4.1-graal (LTS)\r\n" +
+		" - 25.1.3-graal (LTS)\r\n" +
+		" - 25.0.4.1-graal (LTS)\r\n" +
+		" - 25.0.4-graal (LTS) (installed)\r\n" +
+		" - 25-graal (LTS)\r\n" +
+		" - 24.0.2-graal\r\n" +
+		" - 21.0.12-graal (LTS)\r\n")
+	if want := []string{"25.4.4.1-graal", "25.1.3-graal", "25.0.4.1-graal", "25.0.4-graal", "25-graal", "24.0.2-graal", "21.0.12-graal"}; !slices.Equal(searched, want) {
+		t.Fatalf("SearchedVersions = %q, want %q", searched, want)
+	}
+	builds, want := BareMajorBuilds(searched, OracleGraalVMSpec)
+	// GA 25 is named like the spec, so vfox would find it installed before
+	// asking PreInstall.
+	if expected := []string{"25.4.4.1-graal", "25.1.3-graal", "25.0.4.1-graal", "25.0.4-graal"}; !slices.Equal(builds, expected) {
+		t.Errorf("builds = %q, want %q", builds, expected)
+	}
+	if want != "25.0.4.1-graal" {
+		t.Errorf("want = %q, want 25.0.4.1-graal", want)
+	}
+	// GraalVM Community's versions are not Oracle GraalVM's.
+	if builds, want := BareMajorBuilds([]string{"25.4.4.1-graalce", "25.0.2-graalce"}, OracleGraalVMSpec); len(builds) != 0 || want != "" {
+		t.Errorf("BareMajorBuilds(graalce versions) = %q, %q; want none", builds, want)
+	}
+	if !ChecksOracleGraalVM("graalce") || ChecksOracleGraalVM("tem") {
+		t.Error("only the GraalVM Community combos check Oracle GraalVM's bare major")
+	}
+}

@@ -167,6 +167,9 @@ func runOne(t *testing.T, ctx context.Context, image, platform, arch string, c c
 
 	setupVfox(ctx, t, ctr, c.Vfox)
 	checkMissingVersionRejected(ctx, t, ctr, c.Distribution, version, arch)
+	if common.ChecksOracleGraalVM(c.Distribution) {
+		checkGraalVMBareMajor(ctx, t, ctr)
+	}
 
 	installed := installJava(ctx, t, ctr, common.Spec(c.Distribution, version))
 	verifySearch(ctx, t, ctr, c.Distribution, installed)

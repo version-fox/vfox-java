@@ -38,6 +38,25 @@ local foojay = {
     ["temurin 21.0.8 available"] = { pkg("21.0.12.1+1") },
     ["graalvm 17"] = {},
     ["graalvm 17 available"] = { pkg("17.0.12") },
+    -- Observed on 2026-10-18: Oracle GraalVM's monthly feature releases come
+    -- before its 25.0 line, and so do GraalVM Community's, whose 25.0 line
+    -- ended with 25.0.2.
+    ["graalvm 25 available"] = {
+        pkg("25.4.4.1"),
+        pkg("25.3.4.1"),
+        pkg("25.2.4"),
+        pkg("25.1.3"),
+        pkg("25.0.4.1"),
+        pkg("25.0.4"),
+    },
+    ["graalvm 25.4.4.1"] = { pkg("25.4.4.1") },
+    ["graalvm_community 25 available"] = {
+        pkg("25.4.4.1"),
+        pkg("25.3.4.1"),
+        pkg("25.2.4"),
+        pkg("25.1.3"),
+        pkg("25.0.2"),
+    },
     ["zulu 21"] = { pkg("21+35"), pkg("21+35", true) },
     ["zulu 21 available"] = { pkg("21.0.12.1+1"), pkg("21.0.12.1+1", true) },
     ["openjdk 21"] = { pkg("21+35") },
@@ -56,6 +75,14 @@ local foojay = {
     ["windows jetbrains 21"] = { pkg("21+2121") },
     ["windows jetbrains 21 available"] = { pkg("21.0.11+1163116"), pkg("21.0.11+1163116", false, "zip") },
     ["windows jetbrains 21.0.5"] = { pkg("21.0.5+79248"), pkg("21.0.5+76240") },
+    ["windows graalvm 25 available"] = {
+        pkg("25.4.4.1", false, "zip"),
+        pkg("25.3.4.1", false, "zip"),
+        pkg("25.2.4", false, "zip"),
+        pkg("25.1.3", false, "zip"),
+        pkg("25.0.4.1", false, "zip"),
+        pkg("25.0.4", false, "zip"),
+    },
     ["windows jetbrains"] = {
         pkg("21.0.11+1163116"),
         pkg("21.0.11+1163116", false, "zip"),
@@ -158,6 +185,13 @@ check("21-zulu", "21.0.12.1+1-zulu", true)
 check("21-zulu-fx", "21.0.12.1+1-zulu-fx", true)
 -- Foojay lists no GraalVM 17 GA build, so this found nothing before.
 check("17-graal", "17.0.12-graal", true)
+-- Oracle GraalVM's bare major takes the newest build of its 25.0 line, not a
+-- monthly feature release, which installs when named in full.
+check("25-graal", "25.0.4.1-graal", true)
+check("graalvm-25", "25.0.4.1-graal", true)
+check("25.4.4.1-graal", "25.4.4.1-graal", false)
+-- GraalVM Community's feature releases are the only ones it still updates.
+check("25-graalce", "25.4.4.1-graalce", true)
 -- Anything longer than a major still matches exactly.
 check("21.0.8-tem", "21.0.8+9-tem", false)
 check("28.ea", "28-ea+19", false)
@@ -194,6 +228,7 @@ assert(all["25.0.2+10-tem"] and all["21.0.8+9-tem"], "Available all: Temurin ver
 RUNTIME.osType = "windows"
 assert(check("21-jb", "21.0.11+1163116-jb", true, "zip") == 1, "21-jb: expected one lookup")
 assert(check("21.0.5-jb", "21.0.5+79248-jb", false, "tar.gz") == 1, "21.0.5-jb: expected one lookup")
+check("25-graal", "25.0.4.1-graal", true, "zip")
 local jb = {}
 for _, item in ipairs(PLUGIN:Available({ args = { "jb" } })) do
     table.insert(jb, item.version)
