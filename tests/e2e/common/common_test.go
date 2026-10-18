@@ -290,6 +290,9 @@ func TestDistributionFacts(t *testing.T) {
 	if !JavaFX("librca-fx") || JavaFX("tem") || Base("librca-fx") != "librca" {
 		t.Error("JavaFX/Base mishandle the -fx suffix")
 	}
+	if !GraalVM("graal") || !GraalVM("graalce") || GraalVM("mandrel") || GraalVM("nik") {
+		t.Error("GraalVM must hold for graal and graalce alone")
+	}
 	if SearchArgs("open") != "" || SearchArgs("librca-fx") != " librca" {
 		t.Errorf("SearchArgs = %q, %q", SearchArgs("open"), SearchArgs("librca-fx"))
 	}
@@ -376,6 +379,19 @@ func TestCheckInstalled(t *testing.T) {
 		if got := CheckInstalled(t, "Install java@"+installed+" success! \n", spec); got != installed {
 			t.Errorf("CheckInstalled(%s) = %q, want %q", spec, got, installed)
 		}
+	}
+}
+
+func TestFeatureReleaseEntries(t *testing.T) {
+	out := "Available versions:\r\n" +
+		" - 25.4.4.1-graalce (LTS)\r\n" +
+		" - 25.1.3-graalce\r\n" +
+		" - 25.0.2-graalce (LTS) (installed)\r\n" +
+		" - 25-graalce (LTS)\r\n" +
+		" - 24.0.2-graalce\r\n"
+	want := []string{"25.4.4.1-graalce (LTS)", "25.1.3-graalce"}
+	if got := FeatureReleaseEntries(out); !slices.Equal(got, want) {
+		t.Errorf("FeatureReleaseEntries = %q, want %q", got, want)
 	}
 }
 

@@ -55,7 +55,8 @@ var DefaultVersions = map[string]string{
 	// (vfox-java#72).
 	"jb": "21.0.5",
 	// GraalVM Community: vfox must leave GRAALVM_HOME alone even for
-	// GraalVM (vfox-java#27).
+	// GraalVM (vfox-java#27), and searching must not mark its feature
+	// releases LTS (vfox-java#95).
 	"graalce": "25.0.2",
 }
 
@@ -368,6 +369,16 @@ func PaddedSpecs(distribution, version, installed string) []string {
 	return specs
 }
 
+// GraalVM reports whether the distribution is Oracle GraalVM or GraalVM
+// Community, whose searches list GraalVM's feature releases.
+func GraalVM(distribution string) bool {
+	switch Base(distribution) {
+	case "graal", "graalce":
+		return true
+	}
+	return false
+}
+
 // Vendor returns the java.vendor property the distribution's builds report,
 // when the suite knows it.
 func Vendor(distribution string) (string, bool) {
@@ -504,6 +515,27 @@ func CheckInstalled(t *testing.T, output, spec string) string {
 	require.Equalf(t, spec, buildNumber.ReplaceAllString(installed, ""),
 		"java@%s was installed as %s, not as the requested release plus a build number", spec, installed)
 	return installed
+}
+
+// featureReleaseEntry matches the `vfox search` entry of a GraalVM feature
+// release. GraalVM ships one every month since 25.1, numbered with the
+// feature release train as the minor version (25.4.4.1-graalce), which its
+// other releases keep at zero (25.0.2-graalce).
+var featureReleaseEntry = regexp.MustCompile(`^\d+\.[1-9]`)
+
+// FeatureReleaseEntries returns the entries of GraalVM feature releases in
+// a GraalVM `vfox search`, without the leading " - ". Foojay marks them LTS,
+// as the JDK they build on is, and the Available hook passed that on, though
+// each is superseded within a month (vfox-java#95).
+func FeatureReleaseEntries(output string) []string {
+	var entries []string
+	for _, line := range strings.Split(StripANSI(output), "\n") {
+		entry, ok := strings.CutPrefix(strings.TrimRight(line, "\r"), " - ")
+		if ok && featureReleaseEntry.MatchString(entry) {
+			entries = append(entries, entry)
+		}
+	}
+	return entries
 }
 
 // SearchEntry finds the `vfox search` entry listing exactly version

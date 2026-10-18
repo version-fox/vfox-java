@@ -91,6 +91,16 @@ function distribution_version.convert_version_for_api(version)
     return version
 end
 
+--- Reports whether a GraalVM version is a feature release. Since 25.1, GraalVM
+--- puts one out every month on top of its 25.0 line, numbered in the second
+--- component (25.1.3, 25.4.4.1), which the 25.0 line keeps at 0 (25.0.4.1) or
+--- leaves out (25).
+--- @param version string Foojay java_version
+--- @return boolean
+function distribution_version.is_feature_release(version)
+    return version:match("^%d+%.[1-9]") ~= nil
+end
+
 function distribution_version.parse_version(arg)
     local version_parts = strings.split(arg, "-")
     local version

@@ -43,6 +43,8 @@ const userGraalVMHome = `C:\graalvm-for-native-image`
 // the installed version under the name PreInstall gave it, marked
 // installed, with the JavaFX note for -fx builds. That includes releases
 // shipped only as tar.gz, such as JetBrains Runtime 21.0.5 (vfox-java#72).
+// For GraalVM it must also list feature releases (e.g. 25.4.4.1-graalce),
+// none of them marked LTS (see common.FeatureReleaseEntries).
 func verifySearch(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, distribution, installed string) {
 	t.Helper()
 	cmd := "vfox search java" + common.SearchArgs(distribution)
@@ -54,6 +56,16 @@ func verifySearch(ctx context.Context, t *testing.T, ctr tc.Container, box slotB
 		require.Containsf(t, entry, "JavaFX", "%s must note JavaFX on %s", cmd, installed)
 	}
 	t.Logf("PASS %s lists %s", cmd, entry)
+	if common.GraalVM(distribution) {
+		// Foojay lists every feature release since 25.1.3 on each platform
+		// the suite runs GraalVM on, so the check cannot pass vacuously.
+		features := common.FeatureReleaseEntries(out)
+		require.NotEmptyf(t, features, "%s lists no feature release\n--- output ---\n%s", cmd, out)
+		for _, feature := range features {
+			require.NotContainsf(t, feature, "LTS", "%s must not mark the feature release %s LTS", cmd, feature)
+		}
+		t.Logf("PASS %s marks no feature release LTS: %s", cmd, strings.Join(features, ", "))
+	}
 }
 
 // verifyLegacyFile proves ParseLegacyFile selects the installed JDK from a
