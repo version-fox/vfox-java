@@ -35,6 +35,10 @@ import (
 // `2>&1` would instead wrap every line in an ErrorRecord.
 const showSettings = "-XshowSettings:properties -version"
 
+// userGraalVMHome is a GRAALVM_HOME set before activation: users point it at
+// a GraalVM of their own, apart from JAVA_HOME.
+const userGraalVMHome = `C:\graalvm-for-native-image`
+
 // verifySearch checks `vfox search java` (the plugin's Available hook) lists
 // the installed version under the name PreInstall gave it, marked
 // installed, with the JavaFX note for -fx builds. That includes releases
@@ -124,24 +128,23 @@ func legacyJava(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox
 
 // verifyToolchain runs java and javac through the activate + env hooks and
 // checks the JDK on PATH is the requested release, distribution,
-// architecture and JavaFX flavour; that JAVA_HOME (and GRAALVM_HOME for
-// GraalVM) holds that same JDK; that it compiles and runs a program; and
-// that `vfox current` reports the installed version.
+// architecture and JavaFX flavour; that JAVA_HOME holds that same JDK,
+// while a GRAALVM_HOME set beforehand keeps its value; that it compiles and
+// runs a program; and that `vfox current` reports the installed version.
 func verifyToolchain(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, activation, distribution, version, installed, arch string) {
 	t.Helper()
 	out := execRetry(ctx, t, ctr, "java on PATH", activatedEnv(activation, "java "+showSettings), box.vars...)
 	props := common.CheckJava(t, out, distribution, version, arch, "java on PATH")
 	require.NotEmpty(t, props["java.home"], "java on PATH: java.home")
 
-	homes := []string{"JAVA_HOME"}
-	if common.SetsGraalVMHome(distribution) {
-		homes = append(homes, "GRAALVM_HOME")
-	}
-	for _, name := range homes {
-		viaHome := common.JavaProperties(execOK(ctx, t, ctr, activatedEnv(activation, fmt.Sprintf(
-			`& (Join-Path $env:%s 'bin\java.exe') %s`, name, showSettings)), box.vars...))
-		require.Equalf(t, props["java.home"], viaHome["java.home"], "%s\\bin\\java.exe must be the java on PATH", name)
-	}
+	viaHome := common.JavaProperties(execOK(ctx, t, ctr, activatedEnv(activation,
+		`& (Join-Path $env:JAVA_HOME 'bin\java.exe') `+showSettings), box.vars...))
+	require.Equal(t, props["java.home"], viaHome["java.home"], `JAVA_HOME\bin\java.exe must be the java on PATH`)
+	// The plugin set GRAALVM_HOME to JAVA_HOME for GraalVM, replacing the
+	// user's (vfox-java#27).
+	graalvmHome := strings.TrimSpace(execOK(ctx, t, ctr,
+		"$env:GRAALVM_HOME = "+pwshQuote(userGraalVMHome)+"\r\n"+activatedEnv(activation, "$env:GRAALVM_HOME"), box.vars...))
+	require.Equal(t, userGraalVMHome, graalvmHome, "a GRAALVM_HOME set beforehand must keep its value")
 
 	javac := strings.TrimSpace(execOK(ctx, t, ctr, activatedEnv(activation, "javac -version"), box.vars...))
 	require.Equal(t, "javac "+version, javac, "javac -version")

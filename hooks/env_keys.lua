@@ -12,15 +12,16 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-local strings = require("vfox.strings")
 --- Each SDK may have different environment variable configurations.
 --- This allows plugins to define custom environment variables (including PATH settings)
 --- Note: Be sure to distinguish between environment variable settings for different platforms!
 function PLUGIN:EnvKeys(ctx)
     local mainSdkInfo = ctx.main
     local path = mainSdkInfo.path
-    local shortname = strings.split(mainSdkInfo.version, "-")[2]
-    local envTable = {
+    -- No GRAALVM_HOME, even for GraalVM: users point it at a GraalVM of
+    -- their own, apart from JAVA_HOME, and GraalVM's Native Image build
+    -- plugins fall back to JAVA_HOME when it is unset.
+    return {
         {
             key = "JAVA_HOME",
             value = path,
@@ -30,11 +31,4 @@ function PLUGIN:EnvKeys(ctx)
             value = path .. "/bin",
         },
     }
-    if shortname == "graal" or shortname == "graalce" then
-        table.insert(envTable, {
-            key = "GRAALVM_HOME",
-            value = path,
-        })
-    end
-    return envTable
 end

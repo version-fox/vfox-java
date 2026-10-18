@@ -99,10 +99,12 @@ JDK, so `java` can only come from what vfox installs:
 5. After `vfox use --global`, the JDK on `PATH` reports the requested
    `java.version`, the runner's `os.arch` (`amd64` / `aarch64`, which also
    catches an x64 JDK emulated on Windows ARM64) and the distribution's
-   `java.vendor`. `JAVA_HOME` (and `GRAALVM_HOME` for GraalVM) holds that
-   same JDK, `javac` compiles a program that `java` then runs, the module
-   list carries JavaFX exactly for `-fx` builds, and `vfox current java`
-   reports the installed version.
+   `java.vendor`. `JAVA_HOME` holds that same JDK, `javac` compiles a
+   program that `java` then runs, the module list carries JavaFX exactly for
+   `-fx` builds, and `vfox current java` reports the installed version. A
+   `GRAALVM_HOME` set beforehand keeps its value, as users point it at a
+   GraalVM of their own; for GraalVM, the plugin used to replace it with
+   the JDK in use.
 6. `PreUse` maps the spellings users type to the installed version without
    another download: the bare major (`java@21`, left to vfox core's fuzzy
    matching), the spec the JDK was installed with (`java@21.0.8-tem`, whose
@@ -124,7 +126,7 @@ The default matrix runs every distribution against both vfox channels
 | `tem`        | 21.0.8  | the common path (tar.gz on Linux, zip on Windows)        | ✓     | ✓     |
 | `librca-fx`  | 25.0.4  | JavaFX bundled builds (`-fx`)                            | ✓     | ✓     |
 | `jb`         | 21.0.5  | the tar.gz path on Windows, which has no zip for it      | ✓     | ✓     |
-| `graalce`    | 25.0.2  | `GRAALVM_HOME`                                           | ✓     |       |
+| `graalce`    | 25.0.2  | a `GRAALVM_HOME` set beforehand keeps its value          | ✓     |       |
 
 Every pinned release is published through Foojay for each platform its row
 runs on. OpenJDK and GraalVM Community ship no `windows-aarch64` build, so

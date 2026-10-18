@@ -287,9 +287,6 @@ func TestDistributionFacts(t *testing.T) {
 	if _, ok := Vendor("zulu"); ok {
 		t.Error("Vendor(zulu) is known, want unknown")
 	}
-	if !SetsGraalVMHome("graalce") || SetsGraalVMHome("tem") {
-		t.Error("SetsGraalVMHome must follow hooks/env_keys.lua")
-	}
 	if !JavaFX("librca-fx") || JavaFX("tem") || Base("librca-fx") != "librca" {
 		t.Error("JavaFX/Base mishandle the -fx suffix")
 	}
