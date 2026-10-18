@@ -78,6 +78,20 @@ var distributions = map[string]distribution{
 	"graalce": {longName: "graalvm_community", vendor: "GraalVM Community"},
 }
 
+// OracleGraalVMSpec is Oracle GraalVM's bare major 25. Since 25.1, Oracle
+// GraalVM puts out a feature release every month on top of its 25.0 line
+// (25.1.3 ... 25.4.4.1) and Foojay lists them first, but the bare major must
+// install the newest build of the 25.0 line, the one Oracle's own 25/latest
+// download follows (vfox-java#97).
+const OracleGraalVMSpec = "25-graal"
+
+// ChecksOracleGraalVM reports whether a combo also checks Oracle GraalVM's
+// bare major (see OracleGraalVMSpec), which downloads nothing. GraalVM
+// Community's combos do: Foojay publishes both for the same platforms.
+func ChecksOracleGraalVM(distribution string) bool {
+	return Base(distribution) == "graalce"
+}
+
 // PassThroughEnvs are host env knobs recorded in each target container's
 // environment, so `docker inspect` shows what a combo ran with. Forwarded
 // only when set, so unset stays default.
@@ -559,6 +573,44 @@ func SearchEntry(output, version string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// SearchedVersions extracts the versions `vfox search` lists, in its order.
+func SearchedVersions(output string) []string {
+	var versions []string
+	for _, line := range strings.Split(StripANSI(output), "\n") {
+		if entry, ok := strings.CutPrefix(strings.TrimRight(line, "\r"), " - "); ok {
+			version, _, _ := strings.Cut(entry, " ")
+			versions = append(versions, version)
+		}
+	}
+	return versions
+}
+
+// featureRelease matches a GraalVM feature release, numbered in the second
+// component (25.4.4.1), which the 25.0 line keeps at 0 or leaves out
+// (25.0.4.1, 25).
+var featureRelease = regexp.MustCompile(`^\d+\.[1-9]`)
+
+// BareMajorBuilds picks out of the versions `vfox search` lists, newest
+// first, the builds of a bare major spec's major and distribution
+// (25.4.4.1-graal ... 25.0.1-graal for 25-graal), and the one the spec must
+// install: the newest that is no feature release (25.0.4.1-graal). The
+// build named like the spec (25-graal, GA 25) is left out: vfox reports a
+// spec naming an installed version as installed without calling PreInstall.
+func BareMajorBuilds(searched []string, spec string) (builds []string, want string) {
+	major, distribution, _ := strings.Cut(spec, "-")
+	for _, version := range searched {
+		core, ok := strings.CutSuffix(version, "-"+distribution)
+		if !ok || Major(core) != major || version == spec {
+			continue
+		}
+		builds = append(builds, version)
+		if want == "" && !featureRelease.MatchString(core) {
+			want = version
+		}
+	}
+	return builds, want
 }
 
 // ContainerName returns a unique container name per run: the combo slug stays

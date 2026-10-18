@@ -314,3 +314,30 @@ func checkMissingVersionRejected(ctx context.Context, t *testing.T, ctr tc.Conta
 		t.Logf("PASS java@%s is rejected on windows/%s", spec, arch)
 	}
 }
+
+// checkGraalVMBareMajor proves Oracle GraalVM's bare major installs the
+// newest build of its 25.0 line, not one of the monthly feature releases
+// Foojay lists before it (see common.OracleGraalVMSpec). The builds of the
+// major `vfox search java graal` lists are faked as installed first (see
+// common.BareMajorBuilds), so `vfox install` names the one PreInstall picked
+// and downloads nothing.
+func checkGraalVMBareMajor(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox) {
+	t.Helper()
+	spec := common.OracleGraalVMSpec
+	out := execRetry(ctx, t, ctr, "vfox search java graal", "vfox search java graal", box.vars...)
+	builds, want := common.BareMajorBuilds(common.SearchedVersions(out), spec)
+	require.NotEmptyf(t, want, "vfox search java graal lists no %s build but feature releases\n--- output ---\n%s", spec, out)
+	var create, remove []string
+	for _, build := range builds {
+		dir := fmt.Sprintf("(Join-Path $env:VFOX_HOME %s)", pwshQuote(`cache\java\v-`+build))
+		create = append(create, fmt.Sprintf("New-Item -ItemType Directory -Force -Path (Join-Path %s %s) | Out-Null",
+			dir, pwshQuote("java-"+build)))
+		remove = append(remove, fmt.Sprintf("Remove-Item -LiteralPath %s -Recurse -Force", dir))
+	}
+	execOK(ctx, t, ctr, strings.Join(create, "; "), box.vars...)
+	out = execRetry(ctx, t, ctr, "vfox install java@"+spec, "vfox install "+pwshQuote("java@"+spec), box.vars...)
+	require.Containsf(t, common.StripANSI(out), "java@"+want+" is already installed",
+		"vfox install java@%s must take %s, the newest build that is no feature release", spec, want)
+	execOK(ctx, t, ctr, strings.Join(remove, "; "), box.vars...)
+	t.Logf("PASS java@%s takes %s out of %s", spec, want, strings.Join(builds, ", "))
+}

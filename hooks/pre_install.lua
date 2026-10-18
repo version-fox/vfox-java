@@ -72,6 +72,22 @@ function PLUGIN:PreInstall(ctx)
         )
     end
 
+    -- For Oracle GraalVM, latest=available lists the monthly feature releases
+    -- (25.4.4.1) before the 25.0 line, which Oracle's own 25/latest download
+    -- tracks; a bare major takes the newest 25.0 build instead.
+    if distribution_version.distribution.name == "graalvm" and distribution_version.version:match("^%d+$") then
+        local releases = {}
+        for _, candidate in ipairs(filtered_jdks) do
+            if not distribution_version_parser.is_feature_release(candidate.java_version) then
+                table.insert(releases, candidate)
+            end
+        end
+        -- A major with feature releases only keeps them.
+        if #releases > 0 then
+            filtered_jdks = releases
+        end
+    end
+
     local jdk = filtered_jdks[1]
     -- Windows lists a version's zip and tar.gz packages in either order;
     -- install the zip where there is one.

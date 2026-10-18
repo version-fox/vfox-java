@@ -75,7 +75,15 @@ JDK, so `java` can only come from what vfox installs:
    (`<version>+99`, e.g. `21.0.8+99-tem`), proving the lookup keeps the
    build number: Foojay reads an unencoded `+` as a space and drops the
    build, and the release's newest build would install instead.
-3. The pinned release installs under the name `PreInstall` gives it: the
+3. On the GraalVM Community rows, Oracle GraalVM's bare major `25-graal`
+   installs the newest build of its 25.0 line (`25.0.4.1-graal`), the line
+   Oracle's own `25/latest` download follows, not one of the monthly feature
+   releases Foojay lists before it (`25.4.4.1-graal`). The builds of 25 that
+   `vfox search java graal` lists are faked as installed first, so
+   `vfox install` names the one `PreInstall` picked and nothing downloads.
+   GA 25 is left out, as vfox would find `25-graal` itself installed without
+   asking `PreInstall`.
+4. The pinned release installs under the name `PreInstall` gives it: the
    requested version plus the build number (`21.0.8-tem` installs as
    `21.0.8+9-tem`). `vfox search java <distribution>` (the `Available` hook)
    lists that same name as installed, noting JavaFX on `-fx` builds. For
@@ -84,7 +92,7 @@ JDK, so `java` can only come from what vfox installs:
    marks them LTS, as the JDK they build on is; each lasts about a month.
    On Windows the list includes JetBrains Runtime 21.0.5, which ships only as
    tar.gz there.
-4. Before any `vfox use`, a `.sdkmanrc` holding the SDKMAN identifier
+5. Before any `vfox use`, a `.sdkmanrc` holding the SDKMAN identifier
    without the build number selects the JDK through `ParseLegacyFile`:
    `java=21.0.8-tem`, `java=21.0.5-jbr` (SDKMAN's name for JetBrains) or
    `java=25.0.4.fx-librca` (its spelling of JavaFX builds). So does one
@@ -107,7 +115,7 @@ JDK, so `java` can only come from what vfox installs:
    weeks, so that install is faked: its `bin` holds a stand-in `java` that
    only prints the name. On Windows the file is written with CRLF line
    endings.
-5. After `vfox use --global`, the JDK on `PATH` reports the requested
+6. After `vfox use --global`, the JDK on `PATH` reports the requested
    `java.version`, the runner's `os.arch` (`amd64` / `aarch64`, which also
    catches an x64 JDK emulated on Windows ARM64) and the distribution's
    `java.vendor`. `JAVA_HOME` holds that same JDK, `javac` compiles a
@@ -116,7 +124,7 @@ JDK, so `java` can only come from what vfox installs:
    `GRAALVM_HOME` set beforehand keeps its value, as users point it at a
    GraalVM of their own; for GraalVM, the plugin used to replace it with
    the JDK in use.
-6. `PreUse` maps the spellings users type to the installed version without
+7. `PreUse` maps the spellings users type to the installed version without
    another download: the bare major (`java@21`, left to vfox core's fuzzy
    matching), the spec the JDK was installed with (`java@21.0.8-tem`, whose
    build number `PreUse` finds among the installed versions) and the
@@ -131,13 +139,13 @@ JDK, so `java` can only come from what vfox installs:
 The default matrix runs every distribution against both vfox channels
 (`latest`, `main`):
 
-| Distribution | Release | Covers                                                   | amd64 | arm64 |
-| ------------ | ------- | -------------------------------------------------------- | ----- | ----- |
-| `open`       | 25.0.2  | the default distribution, versions without a suffix      | ✓     |       |
-| `tem`        | 21.0.8  | the common path (tar.gz on Linux, zip on Windows)        | ✓     | ✓     |
-| `librca-fx`  | 25.0.4  | JavaFX bundled builds (`-fx`)                            | ✓     | ✓     |
-| `jb`         | 21.0.5  | the tar.gz path on Windows, which has no zip for it      | ✓     | ✓     |
-| `graalce`    | 25.0.2  | a `GRAALVM_HOME` set beforehand keeps its value          | ✓     |       |
+| Distribution | Release | Covers                                                                       | amd64 | arm64 |
+| ------------ | ------- | ---------------------------------------------------------------------------- | ----- | ----- |
+| `open`       | 25.0.2  | the default distribution, versions without a suffix                          | ✓     |       |
+| `tem`        | 21.0.8  | the common path (tar.gz on Linux, zip on Windows)                            | ✓     | ✓     |
+| `librca-fx`  | 25.0.4  | JavaFX bundled builds (`-fx`)                                                | ✓     | ✓     |
+| `jb`         | 21.0.5  | the tar.gz path on Windows, which has no zip for it                          | ✓     | ✓     |
+| `graalce`    | 25.0.2  | a `GRAALVM_HOME` set beforehand keeps its value; Oracle GraalVM's `25-graal` | ✓     |       |
 
 Every pinned release is published through Foojay for each platform its row
 runs on. OpenJDK and GraalVM Community ship no `windows-aarch64` build, so
