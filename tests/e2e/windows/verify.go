@@ -65,8 +65,9 @@ func verifySearch(ctx context.Context, t *testing.T, ctr tc.Container, box slotB
 // endings, while vfox lists an empty install of another release first (see
 // common.Decoy). SDKMAN's identifier of an early-access build (e.g.
 // java=21.0.0.0+ea.1-tem) must then select a faked install of that build
-// (see common.EarlyAccess), not the release. It runs before any `vfox use`,
-// so java can only come from the legacy file.
+// (see common.EarlyAccess), not the release, and so must its installed name
+// (e.g. java=21-ea+1-tem). It runs before any `vfox use`, so java can only
+// come from the legacy file.
 func verifyLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, distribution, version, installed, arch string) {
 	t.Helper()
 	// vfox counts a version as installed once its directory holds
@@ -98,10 +99,13 @@ func verifyLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, box s
 		"$bin = Join-Path %s %s; New-Item -ItemType Directory -Force -Path $bin | Out-Null; "+
 			"Set-Content -Path (Join-Path $bin 'java.cmd') -Value %s",
 		eaDir, pwshQuote(`java-`+ea+`\bin`), pwshQuote("@echo "+ea)), box.vars...)
-	identifier := common.EarlyAccessIdentifier(distribution, version)
-	out := legacyJava(ctx, t, ctr, box, identifier)
-	require.Containsf(t, out, ea, ".sdkmanrc java=%s must select %s, not %s", identifier, ea, installed)
-	t.Logf("PASS .sdkmanrc java=%s selects %s, not %s", identifier, ea, installed)
+	// ParseLegacyFile could not parse the installed name, so it selected
+	// nothing for it, while `vfox use` selects it (vfox-java#91).
+	for _, identifier := range []string{common.EarlyAccessIdentifier(distribution, version), ea} {
+		out := legacyJava(ctx, t, ctr, box, identifier)
+		require.Containsf(t, out, ea, ".sdkmanrc java=%s must select %s, not %s", identifier, ea, installed)
+		t.Logf("PASS .sdkmanrc java=%s selects %s, not %s", identifier, ea, installed)
+	}
 	execOK(ctx, t, ctr, fmt.Sprintf("Remove-Item -LiteralPath %s -Recurse -Force", eaDir), box.vars...)
 }
 

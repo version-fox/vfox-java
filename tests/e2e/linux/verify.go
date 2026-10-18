@@ -62,8 +62,9 @@ func verifySearch(ctx context.Context, t *testing.T, ctr tc.Container, distribut
 // itself (e.g. java=21.0.8+9-tem), while vfox lists an empty install of
 // another release first (see common.Decoy). SDKMAN's identifier of an
 // early-access build (e.g. java=21.0.0.0+ea.1-tem) must then select a faked
-// install of that build (see common.EarlyAccess), not the release. It runs
-// before any `vfox use`, so java can only come from the legacy file.
+// install of that build (see common.EarlyAccess), not the release, and so
+// must its installed name (e.g. java=21-ea+1-tem). It runs before any
+// `vfox use`, so java can only come from the legacy file.
 func verifyLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, distribution, version, installed, arch string) {
 	t.Helper()
 	// vfox counts a version as installed once its directory holds
@@ -93,10 +94,13 @@ func verifyLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, distr
 	bin := eaDir + "/" + shQuote("java-"+ea) + "/bin"
 	execOK(ctx, t, ctr, fmt.Sprintf("mkdir --parents %s && printf '%%s' %s > %s/java && chmod +x %s/java",
 		bin, shQuote("#!/bin/sh\necho "+shQuote(ea)+"\n"), bin, bin))
-	identifier := common.EarlyAccessIdentifier(distribution, version)
-	out := legacyJava(ctx, t, ctr, identifier)
-	require.Containsf(t, out, ea, ".sdkmanrc java=%s must select %s, not %s", identifier, ea, installed)
-	t.Logf("PASS .sdkmanrc java=%s selects %s, not %s", identifier, ea, installed)
+	// ParseLegacyFile could not parse the installed name, so it selected
+	// nothing for it, while `vfox use` selects it (vfox-java#91).
+	for _, identifier := range []string{common.EarlyAccessIdentifier(distribution, version), ea} {
+		out := legacyJava(ctx, t, ctr, identifier)
+		require.Containsf(t, out, ea, ".sdkmanrc java=%s must select %s, not %s", identifier, ea, installed)
+		t.Logf("PASS .sdkmanrc java=%s selects %s, not %s", identifier, ea, installed)
+	}
 	execOK(ctx, t, ctr, "rm --recursive "+eaDir)
 }
 
