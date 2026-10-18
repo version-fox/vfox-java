@@ -2,239 +2,97 @@
 
 [中文](README_CN.md) | [English](README.md)
 
-> Java plugin for [vfox](https://github.com/version-fox/vfox)
+Java plugin for [vfox](https://vfox.dev/).
 
-Support for multiple JDK distributions, such as: Oracle, Graalvm, Eclipse & more.
+It installs JDKs from 18 distributions, among them Temurin, Zulu, Liberica, Corretto, Microsoft and GraalVM, looked up through [Foojay](https://foojay.io/). On Linux loong64 it installs from the Loongnix archive instead.
 
+## Install
 
-# Usage
+After installing [vfox](https://github.com/version-fox/vfox), install the plugin by running:
 
-**Parameter Format**: `x.y.z-distribution` or `x.y.z-distribution-fx` (for JavaFX bundled versions)
-
-```shell
-# add plugin for vfox
+```bash
 vfox add java
-
-# install specific version (openjdk is default)
-vfox install java@17.0.17
-vfox install java@17.0.17-tem      # Temurin
-vfox install java@17.0.17-zulu     # Zulu
-vfox install java@17-graal         # GraalVM (latest 17.x)
-
-# install JavaFX bundled versions (use -fx suffix after distribution)
-vfox install java@21.0.5-zulu-fx   # Zulu with JavaFX
-vfox install java@21.0.5-librca-fx # Liberica with JavaFX
-
-# view all available versions
-vfox search java           # view all openjdk versions
-vfox search java tem       # view all temurin versions
-vfox search java zulu      # view all zulu versions
-vfox search java graal     # view all graalvm versions
 ```
 
-## Select and install a distribution
+vfox has to be hooked into your shell for `java` to be on the `PATH`, see its [quick start](https://vfox.dev/guides/quick-start.html).
 
-In an interactive terminal, run `vfox search java tem` to select and install a version from the Temurin list. In a non-interactive terminal, this command only prints the versions. Replace `tem` with another distribution identifier, such as `zulu`, as needed.
+### Example
 
-For a known version, use `vfox install java@17.0.17-tem`. Space-separated arguments to `install` identify multiple SDKs, so `vfox install java tem` does not pass `tem` as a Java distribution filter.
-
-## LoongArch (Linux)
-
-On Linux `loong64`, `vfox search java` (or `vfox search java loongnix`) lists JDKs from the [Loongnix official archive](https://ftp.loongnix.cn/Java/). Other architectures continue to use Foojay.
-
-Choose the ABI matching your operating system; the plugin does not guess it:
-
-- `lnxabi1` / `loongnix_abi1`: Linux 4.19 UAPI builds, intended for systems such as Loongnix 20 and Loongnix Server 8.4.
-- `lnxabi2` / `loongnix_abi2`: Linux 5.10 UAPI builds, named `glibc2.34` upstream, intended for systems such as Debian 12 and openEuler.
-
-See the [upstream compatibility notes](https://www.loongnix.cn/zh/api/java/) for your system. Do not choose solely from the running kernel version. This source provides glibc builds, not musl builds.
-
-```shell
-vfox search java lnxabi2
-vfox install java@21-lnxabi2-fx  # latest matching Java 21 with JavaFX, ABI2
-vfox install java@21.0.12+8-lnxabi2-fx
+```bash
+vfox add java
+vfox install java@21-tem
+vfox use --global java@21-tem
 ```
 
-Versions use the Java version and build number, not the Loongson release number. ABI and JavaFX suffixes are preserved when switching versions. Only GA LoongArch tarballs listed in the archive are supported; MIPS packages are excluded. Select `-fx` only for JavaFX builds. Bare installation requests require an explicit ABI; selecting a search result supplies it automatically.
+Unreleased: release 0.6.1, the newest when this was written, installs `21+35-tem` here, and `vfox use --global java@21-tem` then fails with `java@21-tem is not installed`. Use the name that `vfox install` prints, or [install from source](docs/install-from-source.md).
 
-## JavaFX Support
+You can verify this using the following command:
 
-Some distributions provide JDK versions bundled with JavaFX. These versions are displayed with the `-fx` suffix after the distribution name in the version list and marked with "JavaFX" in the notes. To install a JavaFX bundled version, add `-fx` after the distribution name:
-
-```shell
-# List versions (JavaFX versions will show -fx suffix)
-vfox search java zulu
-# Example output:
-# 21.0.5-zulu
-# 21.0.5-zulu-fx    # JavaFX
-# 17.0.13-zulu
-# 17.0.13-zulu-fx   # JavaFX
-
-# Install JavaFX bundled version
-vfox install java@21.0.5-zulu-fx
+```bash
+java -version
 ```
 
-# Supported JDK Distributions
+`vfox search java tem` lists the Temurin releases, and in an interactive terminal it lets you pick one and installs it.
 
-> Thanks [SDKMAN](https://sdkman.io/jdks)!
+Behavior that only exists on `main` and not in the latest release is marked "Unreleased" in the pages below. [docs/changes.md](docs/changes.md) lists it, and [docs/install-from-source.md](docs/install-from-source.md) gets you `main`.
 
-## Bisheng (Huawei)
-BiSheng JDK, an open-source adaptation of Huawei JDK derived from OpenJDK, is utilized across 500+ Huawei products, benefitting from the R&D team's extensive experience in addressing service-related challenges. As a downstream product of OpenJDK, it serves as a high-performance distribution for production environments, specifically addressing performance and stability issues in Huawei applications. BiSheng JDK excels in optimizing ARM architecture performance and stability, delivering enhanced results in big data scenarios. Its primary goal is to offer Java developers a stable, high-performance JDK, particularly excelling on the ARM architecture.
+## Versions and names
 
-```shell
-$ vfox install java@x.y.z-bsg
-$ vfox search java bsg
-```
+A version is `<version>-<distribution>`, such as `21.0.8-tem`, with `-fx` after it for JavaFX. Without a distribution you get OpenJDK from jdk.java.net, which has nothing newer than 17.0.2 for 17 and 21.0.2 for 21. See [docs/versions.md](docs/versions.md) for details.
 
-## Corretto (Amazon)
-Amazon Corretto is a no-cost, multiplatform, production-ready distribution of the Open Java Development Kit (OpenJDK). Corretto comes with long-term support that will include performance enhancements and security fixes. Amazon runs Corretto internally on thousands of production services and Corretto is certified as compatible with the Java SE standard. With Corretto, you can develop and run Java applications on popular operating systems, including Linux, Windows, and macOS.
+## Distributions
 
-```shell
-$ vfox install java@x.y.z-amzn
-$ vfox search java amzn
-```
+| Short name | Distribution |
+| --- | --- |
+| `open` | OpenJDK builds from jdk.java.net, the default |
+| `tem` | Temurin (Eclipse Adoptium) |
+| `zulu` | Zulu (Azul) |
+| `librca` | Liberica (BellSoft) |
+| `amzn` | Corretto (Amazon) |
+| `ms` | Microsoft Build of OpenJDK |
+| `oracle` | Oracle JDK |
+| `sem` | Semeru (IBM) |
+| `sapmchn` | SapMachine (SAP) |
+| `kona` | Kona (Tencent) |
+| `albba` | Dragonwell (Alibaba) |
+| `bsg` | BiSheng (Huawei) |
+| `graal` | Oracle GraalVM |
+| `graalce` | GraalVM Community Edition |
+| `nik` | Liberica Native Image Kit (BellSoft) |
+| `mandrel` | Mandrel (Red Hat) |
+| `jb` | JetBrains Runtime |
+| `trava` | TravaOpenJDK |
+| `lnxabi1`, `lnxabi2` | Loongnix, Linux loong64 only |
 
-## Dragonwell (Alibaba)
-Dragonwell, as a downstream version of OpenJDK, is the in-house OpenJDK implementation at Alibaba. It is optimized for online e-commerce, financial and logistics applications running on 100,000+ servers. Alibaba Dragonwell is the engine that runs these distributed Java applications in extreme scaling.
+See [docs/distributions.md](docs/distributions.md) for what each one is, and [docs/loongnix.md](docs/loongnix.md) for the last row.
 
-```shell
-$ vfox install java@x.y.z-albba
-$ vfox search java albba
-```
+## Platforms
 
-## GraalVM (Oracle)
-Oracle GraalVM is the free GraalVM distribution from Oracle, based on Oracle JDK, and includes the high-performance Graal JIT compiler. GraalVM can compile Java applications ahead of time into standalone binaries that start instantly, scale fast, and use fewer compute resources. Oracle GraalVM Native Image provides advanced features including G1 GC, SBOM, as well as performance and size optimizations. It also makes it possible to embed Python, JavaScript, Ruby, and other languages into Java applications.
+Not every distribution has builds for arm64, Alpine or Windows on ARM. Only Temurin, Zulu, Liberica, Microsoft and JetBrains Runtime have Windows ARM64 builds, 10 of the 18 have Alpine x64 builds and 7 have Alpine arm64. GraalVM has neither Windows ARM64 nor Alpine. See [docs/platforms.md](docs/platforms.md) for the table.
 
-```shell
-$ vfox install java@x.y.z-graal
-$ vfox search java graal
-```
+## JavaFX
 
-## GraalVM (GraalVM Community)
-GraalVM CE is the open source distribution of GraalVM, based on OpenJDK, and includes the high-performance Graal JIT compiler. GraalVM can compile Java applications ahead of time into standalone binaries that start instantly, scale fast, and use fewer compute resources. It also makes it possible to embed Python, JavaScript, Ruby, and other languages into Java applications.
+Zulu, Liberica, Liberica NIK and Corretto (Java 8 only) have builds with JavaFX bundled. Add `-fx` after the distribution, as in `java@21-zulu-fx`. See [docs/javafx.md](docs/javafx.md) for details.
 
-```shell
-$ vfox install java@x.y.z-graalce
-$ vfox search java graalce
-```
+## `.sdkmanrc`
 
-## Java SE Development Kit (Oracle)
-This proprietary Java Development Kit is an implementation of the Java Platform, Standard Edition released by Oracle Corporation in the form of a binary product aimed at Java developers on Linux, macOS or Windows. The JDK includes a private JVM and a few other resources to finish the development of a Java application. It is distributed under the Oracle No-Fee Terms and Conditions License
+vfox reads the `java=` line of SDKMAN's `.sdkmanrc` through this plugin and selects a JDK that is already installed. See [docs/sdkmanrc.md](docs/sdkmanrc.md) for details.
 
+## Querying Foojay
 
-```shell
-$ vfox install java@x.y.z-oracle
-$ vfox search java oracle
-```
+To see which JDKs exist for your platform, ask Foojay yourself. [docs/foojay.md](docs/foojay.md) has the Swagger UI and the commands.
 
-## Kona (Tencent)
-Tencent Kona is a free, multi-platform, and production-ready distribution of OpenJDK, featuring Long-Term Support (LTS) releases. It serves as the default JDK within Tencent for cloud computing, big data, and numerous other Java applications.
+## Troubleshooting
 
-```shell
-$ vfox install java@x.y.z-kona
-$ vfox search java kona
-```
+See [docs/troubleshooting.md](docs/troubleshooting.md) for the messages the plugin prints, proxies and where the JDK is.
 
-## Liberica (Bellsoft)
-Liberica is a 100% open-source Java implementation. It is built from OpenJDK which BellSoft contributes to, is thoroughly tested and passed the JCK provided under the license from OpenJDK. All supported versions of Liberica also contain JavaFX.
+## Install from source
 
+See [docs/install-from-source.md](docs/install-from-source.md) for details.
 
-```shell
-$ vfox install java@x.y.z-librca
-$ vfox search java librca
-```
+## Development
 
-## Liberica NIK (Bellsoft)
-Liberica Native Image Kit is a utility that converts your JVM-based application into a fully compiled native executable ahead-of-time under the closed-world assumption with an almost instant startup time. Being compatible with various platforms, including lightweight musl-based Alpine Linux, it optimizes resource consumption and minimizes the static footprint.
-
-
-```shell
-$ vfox install java@x.y.z-nik
-$ vfox search java nik
-```
-
-## Mandrel (Red Hat)
-Mandrel focuses on GraalVM's native-image component in order to provide an easy way for Quarkus users to generate native images for their applications. Developers using Quarkus should be able to go all the way from Java source code to lean, native, platform-dependent applications running on Linux. This capability is vital for deploying to containers in a cloud-native application development model.
-
-
-```shell
-$ vfox install java@x.y.z-mandrel
-$ vfox search java mandrel
-```
-
-
-## OpenJDK (jdk.java.net)
-OpenJDK (Open Java Development Kit) is a free and open-source implementation of the Java Platform, Standard Edition (Java SE). It is the result of an effort Sun Microsystems began in 2006. The implementation is licensed under the GNU General Public License (GNU GPL) version 2 with a linking exception. Were it not for the GPL linking exception, components that linked to the Java class library would be subject to the terms of the GPL license. OpenJDK is the official reference implementation of Java SE since version 7.
-
-```shell
-$ vfox install java@x.y.z-open
-$ vfox search java open
-```
-
-## OpenJDK (Microsoft)
-The Microsoft Build of OpenJDK is a no-cost distribution of OpenJDK that's open source and available for free for anyone to deploy anywhere. It includes Long-Term Support (LTS) binaries for Java 11 on x64 server and desktop environments on macOS, Linux, and Windows, and AArch64/ARM64 on Linux and Windows. Microsoft also publishes Java 16 binaries for all three major Operating Systems and both x64 and AArch64 (M1/ARM64) architectures.
-
-```shell
-$ vfox install java@x.y.z-ms
-$ vfox search java ms
-```
-## SapMachine (SAP)
-SapMachine is a downstream version of the OpenJDK project. It is used to build and maintain a SAP supported version of OpenJDK for SAP customers and partners who wish to use OpenJDK to run their applications. SAP is committed to ensuring the continued success of the Java platform.
-
-
-```shell
-$ vfox install java@x.y.z-sapmchn
-$ vfox search java sapmchn
-```
-
-## Semeru (IBM)
-Semeru Runtimes use the class libraries from OpenJDK, along with the Eclipse OpenJ9 Java Virtual Machine to enable developers to build and deploy Java applications that will start quickly, deliver great performance, all while using less memory.
-
-```shell
-$ vfox install java@x.y.z-sem
-$ vfox search java sem
-```
-
-## Temurin (Eclipse)
-Formerly AdoptOpenJDK, the Eclipse Adoptium Temurin™ project provides code and processes that support the building of runtime binaries and associated technologies that are high performance, enterprise-caliber, cross-platform, open-source licensed, and Java SE TCK-tested for general use across the Java ecosystem.
-
-```shell
-$ vfox install java@x.y.z-tem
-$ vfox search java tem
-```
-
-## Trava (Trava)
-TravaOpenJDK is OpenJDK for developers. It is based on dcevm and uses an integrated HotswapAgent, so allowing advanced hotswapping of classes by method and field addition or updates at runtime.
-
-```shell
-$ vfox install java@x.y.z-trava
-$ vfox search java trava
-```
-
-## Zulu (Azul Systems)
-Azul Zulu Builds of OpenJDK are no-cost, production-ready open-source, TCK-tested, and certified OpenJDK distributions. They are available for a wide range of hardware platforms and operating systems and are compatible with special requirements, such as stripped-down JREs and builds, including OpenJFX and Coordinated Restore at Checkpoint (CRaC). They are supported as part of Azul Platform Core, which provides stabilized security updates for rapid, assured deployment into production and solution-oriented engineering assistance.
-
-```shell
-$ vfox install java@x.y.z-zulu
-$ vfox search java zulu
-```
-
-## Jetbrains
-
-```shell
-$ vfox install java@x.y.z-jb
-$ vfox search java jb
-```
-
-
-# Thanks
-
-- [SDKMAN](https://github.com/sdkman/)
-- [foojayio](https://github.com/foojayio/discoapi)
-
-## Testing
-
-See [docs/e2e.md](docs/e2e.md) for details.
+See [docs/development.md](docs/development.md) for how the plugin works and how to change it, and [docs/e2e.md](docs/e2e.md) for the container tests.
 
 ## Releasing this plugin
 
@@ -250,3 +108,8 @@ the tag. If publication fails, re-run the original failed job to resume it.
 The workflow follows the shared `@v1` release-tool version. Updating the tool does
 not release this plugin. See the [shared workflow documentation](https://github.com/version-fox/plugin-manifest-action)
 for the package contract and first-rollout requirements.
+
+## Thanks
+
+- [SDKMAN](https://github.com/sdkman/), whose identifiers the short names and `.sdkmanrc` support follow
+- [Foojay](https://github.com/foojayio/discoapi), where the JDK data comes from

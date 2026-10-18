@@ -2,266 +2,107 @@
 
 [中文](README_CN.md) | [English](README.md)
 
-> Java plugin for [vfox](https://github.com/version-fox/vfox)
+[vfox](https://vfox.dev/) 的 Java 插件。
 
-支持多种JDK发行版，如：Oracle、Graalvm、Eclipse等。
+它通过 [Foojay](https://foojay.io/) 查找并安装 18 个发行版的 JDK，包括 Temurin、Zulu、Liberica、Corretto、Microsoft、GraalVM 等。在 Linux loong64 上，则改从 Loongnix 归档安装。
 
-# 使用
+## 安装
 
-**参数格式**:  `x.y.z-distribution` 或 `x.y.z-distribution-fx` (带 JavaFX 的版本)
+先安装 [vfox](https://github.com/version-fox/vfox)，然后执行下面的命令安装插件：
 
-```shell
-# 添加插件
+```bash
 vfox add java
-
-# 添加运行时
-vfox install java@x.y.z  # 默认使用openjdk
-vfox install java@x.y.z-graal # 使用graalvm
-
-# 安装带 JavaFX 的版本 (在发行版名称后添加 -fx 后缀)
-vfox install java@21.0.5-zulu-fx   # 带 JavaFX 的 Zulu
-vfox install java@21.0.5-librca-fx # 带 JavaFX 的 Liberica
-
-# 查看所有可用版本
-vfox search java all # 查看所有sdk版本
-vfox search java # 查看所有openjdk版本
-vfox search java graal # 查看所有graalvm版本
 ```
 
-## 按发行版选择并安装
+要让 `java` 出现在 `PATH` 里，需要先把 vfox 挂载到 Shell，见 vfox 的[快速入门](https://vfox.dev/zh-hans/guides/quick-start.html)。
 
-在交互终端中运行 `vfox search java tem`，即可从 Temurin 版本列表中选择一个版本并安装；在非交互终端中，该命令只输出版本列表。也可以将 `tem` 替换为 `zulu` 等发行版标识。
+### 示例
 
-已知版本时，使用 `vfox install java@17.0.17-tem`。`install` 的空格分隔参数用于指定多个 SDK，因此 `vfox install java tem` 不会将 `tem` 作为 Java 发行版筛选条件。
-
-## 龙架构（Linux）
-
-在 Linux `loong64` 上，`vfox search java`（或 `vfox search java loongnix`）从 [Loongnix 官方归档](https://ftp.loongnix.cn/Java/)列出 JDK。其他架构继续使用 Foojay。
-
-请按操作系统选择 ABI，插件不会自动猜测：
-
-- `lnxabi1` / `loongnix_abi1`：Linux 4.19 UAPI 构建，适用于 Loongnix 20、Loongnix Server 8.4 等系统。
-- `lnxabi2` / `loongnix_abi2`：Linux 5.10 UAPI 构建，上游文件名标记为 `glibc2.34`，适用于 Debian 12、openEuler 等系统。
-
-请核对[上游兼容性说明](https://www.loongnix.cn/zh/api/java/)，不能仅凭当前内核版本选择 ABI。该源提供 glibc 构建，不提供 musl 构建。
-
-```shell
-vfox search java lnxabi2
-vfox install java@21-lnxabi2-fx  # 匹配最新的 Java 21，带 JavaFX，使用 ABI2
-vfox install java@21.0.12+8-lnxabi2-fx
+```bash
+vfox add java
+vfox install java@21-tem
+vfox use --global java@21-tem
 ```
 
-版本号采用 Java 版本及构建号，不是 Loongson 发行版本号。切换版本时保留 ABI 和 JavaFX 后缀。仅支持归档中的正式版 LoongArch tar 包，排除 MIPS 包；JavaFX 构建需使用 `-fx`。直接安装时必须明确 ABI，从搜索结果选择安装则会自动带上该标识。
+未发布：0.6.1（写这篇文档时最新的发布版）在这里装的是 `21+35-tem`，随后 `vfox use --global java@21-tem` 会报 `java@21-tem is not installed`。请改用 `vfox install` 打印出的名字，或者[从源码安装](docs/zh-CN/install-from-source.md)。
 
-## JavaFX 支持
+可以用下面的命令验证：
 
-部分发行版提供了捆绑 JavaFX 的 JDK 版本。这些版本在版本列表中会在发行版名称后显示 `-fx` 后缀，并在备注中标注 "JavaFX"。安装带 JavaFX 的版本时，需要在发行版名称后添加 `-fx`：
-
-```shell
-# 查看版本列表 (带 JavaFX 的版本会显示 -fx 后缀)
-vfox search java zulu
-# 示例输出:
-# 21.0.5-zulu
-# 21.0.5-zulu-fx    # JavaFX
-# 17.0.13-zulu
-# 17.0.13-zulu-fx   # JavaFX
-
-# 安装带 JavaFX 的版本
-vfox install java@21.0.5-zulu-fx
+```bash
+java -version
 ```
 
-# 支持的JDK发行版
+`vfox search java tem` 会列出 Temurin 的各个版本，在交互式终端里还可以直接选一个并安装。
 
-> Thanks [SDKMAN](https://sdkman.io/jdks)!
+只存在于 `main`、还没进入最新发布版的行为，在下面各页里标有“未发布”。完整列表见 [docs/zh-CN/changes.md](docs/zh-CN/changes.md)，想直接用上 `main`，见 [docs/zh-CN/install-from-source.md](docs/zh-CN/install-from-source.md)。
 
-## Bisheng (Huawei)
+## 版本与命名
 
-BiSheng JDK 是华为 JDK 的开源版本，源自 OpenJDK，受益于华为研发团队在解决服务相关挑战方面的丰富经验，已在 500 多款华为产品中使用。作为
-OpenJDK 的下游产品，它是面向生产环境的高性能发行版，专门解决华为应用中的性能和稳定性问题。毕升JDK在优化ARM架构性能和稳定性方面表现出色，在大数据应用场景中效果更佳。其主要目标是为
-Java 开发人员提供一个稳定、高性能的 JDK，尤其是在 ARM 架构上表现出色。
+版本写成 `<版本>-<发行版>`，例如 `21.0.8-tem`，后面加 `-fx` 表示带 JavaFX。不写发行版时得到的是 jdk.java.net 上的 OpenJDK，它的 17 只到 17.0.2，21 只到 21.0.2。详见 [docs/zh-CN/versions.md](docs/zh-CN/versions.md)。
 
-```shell
-$ vfox install java@x.y.z-bsg
-$ vfox search java bsg
-```
+## 发行版
 
-## Corretto (Amazon)
+| 简称 | 发行版 |
+| --- | --- |
+| `open` | jdk.java.net 上的 OpenJDK 构建，默认 |
+| `tem` | Temurin（Eclipse Adoptium） |
+| `zulu` | Zulu（Azul） |
+| `librca` | Liberica（BellSoft） |
+| `amzn` | Corretto（Amazon） |
+| `ms` | Microsoft Build of OpenJDK |
+| `oracle` | Oracle JDK |
+| `sem` | Semeru（IBM） |
+| `sapmchn` | SapMachine（SAP） |
+| `kona` | Kona（腾讯） |
+| `albba` | Dragonwell（阿里巴巴） |
+| `bsg` | 毕昇 JDK（华为） |
+| `graal` | Oracle GraalVM |
+| `graalce` | GraalVM 社区版 |
+| `nik` | Liberica Native Image Kit（BellSoft） |
+| `mandrel` | Mandrel（Red Hat） |
+| `jb` | JetBrains Runtime |
+| `trava` | TravaOpenJDK |
+| `lnxabi1`、`lnxabi2` | Loongnix，仅限 Linux loong64 |
 
-亚马逊 Corretto 是开放 Java 开发工具包（OpenJDK）的无成本、多平台、生产就绪发行版。Corretto
-提供长期支持，包括性能增强和安全修复。亚马逊内部在数千个生产服务上运行 Corretto，Corretto 已通过认证，与 Java SE 标准兼容。使用
-Corretto，您可以在 Linux、Windows 和 macOS 等流行的操作系统上开发和运行 Java 应用程序。
+每个发行版是什么，见 [docs/zh-CN/distributions.md](docs/zh-CN/distributions.md)；最后一行见 [docs/zh-CN/loongnix.md](docs/zh-CN/loongnix.md)。
 
-```shell
-$ vfox install java@x.y.z-amzn
-$ vfox search java amzn
-```
+## 平台
 
-## Dragonwell (Alibaba)
+并非每个发行版都有 arm64、Alpine 或 Windows ARM 的构建。只有 Temurin、Zulu、Liberica、Microsoft 和 JetBrains Runtime 有 Windows ARM64 的构建，18 个发行版里有 10 个有 Alpine x64 的构建，7 个有 Alpine arm64 的构建。GraalVM 既没有 Windows ARM64，也没有 Alpine。完整的表格见 [docs/zh-CN/platforms.md](docs/zh-CN/platforms.md)。
 
-作为 OpenJDK 的下游版本，Dragonwell 是阿里巴巴内部的 OpenJDK 实现。它针对在 10 万台以上服务器上运行的在线电子商务、金融和物流应用程序进行了优化。阿里巴巴
-Dragonwell 是在极端扩展条件下运行这些分布式 Java 应用程序的引擎。
+## JavaFX
 
-```shell
-$ vfox install java@x.y.z-albba
-$ vfox search java albba
-```
+Zulu、Liberica、Liberica NIK 和 Corretto（只有 Java 8）提供内置 JavaFX 的构建，在发行版后面加 `-fx` 即可，比如 `java@21-zulu-fx`。详见 [docs/zh-CN/javafx.md](docs/zh-CN/javafx.md)。
 
-## GraalVM (Oracle)
+## `.sdkmanrc`
 
-Oracle GraalVM 是 Oracle 推出的免费 GraalVM 发行版，基于 Oracle JDK，包含高性能 Graal JIT 编译器。GraalVM 可将 Java
-应用程序提前编译成独立的二进制文件，这些二进制文件可立即启动、快速扩展并使用更少的计算资源。Oracle GraalVM Native Image
-提供的高级功能包括 G1 GC、SBOM 以及性能和大小优化。它还使在 Java 应用程序中嵌入 Python、JavaScript、Ruby 和其他语言成为可能。
+vfox 通过这个插件读取 SDKMAN 的 `.sdkmanrc` 里的 `java=` 一行，并选中已经安装的 JDK。详见 [docs/zh-CN/sdkmanrc.md](docs/zh-CN/sdkmanrc.md)。
 
-```shell
-$ vfox install java@x.y.z-graal
-$ vfox search java graal
-```
+## 查询 Foojay
 
-## GraalVM (GraalVM Community)
+想知道你的平台上有哪些 JDK，可以自己去问 Foojay。[docs/zh-CN/foojay.md](docs/zh-CN/foojay.md) 里有 Swagger UI 和查询命令。
 
-GraalVM CE 是 GraalVM 的开源发行版，基于 OpenJDK，包含高性能 Graal JIT 编译器。GraalVM 可以将 Java
-应用程序提前编译成独立的二进制文件，这些二进制文件可以立即启动、快速扩展并使用更少的计算资源。它还可以将
-Python、JavaScript、Ruby 和其他语言嵌入 Java 应用程序。
+## 问题排查
 
-```shell
-$ vfox install java@x.y.z-graalce
-$ vfox search java graalce
-```
+插件的各种提示、代理设置和 JDK 的位置，见 [docs/zh-CN/troubleshooting.md](docs/zh-CN/troubleshooting.md)。
 
-## Java SE Development Kit (Oracle)
+## 从源码安装
 
-这个专有的 Java 开发工具包是 Oracle 公司以二进制产品形式发布的 Java 平台标准版的实现，面向 Linux、macOS 或 Windows 上的
-Java 开发人员。JDK 包括一个私有 JVM 和其他一些资源，用于完成 Java 应用程序的开发。它根据 Oracle 免收费条款和条件许可证发布。
+详见 [docs/zh-CN/install-from-source.md](docs/zh-CN/install-from-source.md)。
 
-```shell
-$ vfox install java@x.y.z-oracle
-$ vfox search java oracle
-```
+## 开发
 
-## Kona (Tencent)
+插件的工作方式和修改方法见 [docs/zh-CN/development.md](docs/zh-CN/development.md)，容器测试见 [docs/zh-CN/e2e.md](docs/zh-CN/e2e.md)。
 
-Tencent Kona 是 OpenJDK 的免费、多平台和生产就绪发行版，提供长期支持（LTS）版本。它是腾讯内部默认的 JDK，用于云计算、大数据和其他众多
-Java 应用程序。
+## 发布这个插件
 
-```shell
-$ vfox install java@x.y.z-kona
-$ vfox search java kona
-```
+维护者在默认分支上执行 **Actions → Plugin → Run workflow**，填入不带 `v` 前缀的稳定版插件版本号即可发布。共享工作流会更新 `metadata.lua`，创建版本提交和标签，并把 ZIP 包和 manifest 发布到本仓库；不需要在本地打标签，也不需要额外的发布令牌。PR 只运行检查，PR 标题不再触发发布。
 
-## Liberica (Bellsoft)
+直接推送版本标签也可以发布，前提是 `PLUGIN.version` 已经与标签一致。发布失败时，重新运行失败的那个作业即可接着发布。
 
-Liberica 是 100% 的开源 Java 实现。它由 BellSoft 参与开发的 OpenJDK 构建，经过全面测试，并通过了 OpenJDK 许可提供的
-JCK。Liberica 的所有支持版本还包含 JavaFX。
+工作流引用的是共享的 `@v1` 发布工具，升级这个工具不会发布本插件。包的约定和首次接入的要求，见[共享工作流的文档](https://github.com/version-fox/plugin-manifest-action)。
 
-```shell
-$ vfox install java@x.y.z-librca
-$ vfox search java librca
-```
+## 致谢
 
-## Liberica NIK (Bellsoft)
-
-Liberica Native Image Kit 是一款实用工具，可在封闭世界假设下将基于 JVM 的应用程序提前转换为完全编译的本地可执行文件，启动时间几乎为瞬间。该工具兼容各种平台，包括基于轻量级
-musl 的 Alpine Linux，可优化资源消耗并最大限度地减少静态占用空间。
-
-```shell
-$ vfox install java@x.y.z-nik
-$ vfox search java nik
-```
-
-## Mandrel (Red Hat)
-
-Mandrel 专注于 GraalVM 的本地镜像组件，目的是为 Quarkus 用户提供为其应用程序生成本地镜像的简便方法。使用 Quarkus
-的开发人员应该能够从 Java 源代码一路开发到在 Linux 上运行的精益、原生、依赖平台的应用程序。这种能力对于在云原生应用程序开发模型中部署到容器中至关重要。
-
-```shell
-$ vfox install java@x.y.z-mandrel
-$ vfox search java mandrel
-```
-
-## OpenJDK (jdk.java.net)
-
-OpenJDK（开放式 Java 开发工具包）是 Java 平台标准版（Java SE）的免费开源实现。它是 Sun Microsystems 于 2006 年开始努力的成果。该实现采用
-GNU 通用公共许可证（GNU GPL）第 2 版许可，但有一个链接例外。如果没有 GPL 链接例外，链接到 Java 类库的组件将受 GPL
-许可证条款的约束。OpenJDK 是 Java SE 自第 7 版起的官方参考实现。
-
-```shell
-$ vfox install java@x.y.z-open
-$ vfox search java open
-```
-
-## OpenJDK (Microsoft)
-
-OpenJDK 的 Microsoft Build 是 OpenJDK 的免费发行版，它是开源的，任何人都可以免费在任何地方部署。它包括 MacOS、Linux 和
-Windows x64 服务器和桌面环境上 Java 11 的长期支持 (LTS) 二进制文件，以及 Linux 和 Windows 上的
-AArch64/ARM64。微软还发布了适用于所有三大操作系统以及 x64 和 AArch64 (M1/ARM64) 体系结构的 Java 16 二进制文件。
-
-```shell
-$ vfox install java@x.y.z-ms
-$ vfox search java ms
-```
-
-## SapMachine (SAP)
-
-SapMachine 是 OpenJDK 项目的下游版本。它用于为希望使用 OpenJDK 运行其应用程序的 SAP 客户和合作伙伴构建和维护 SAP 支持版本的
-OpenJDK。SAP 致力于确保 Java 平台的持续成功。
-
-```shell
-$ vfox install java@x.y.z-sapmchn
-$ vfox search java sapmchn
-```
-
-## Semeru (IBM)
-
-Semeru Runtimes 使用 OpenJDK 的类库和 Eclipse OpenJ9 Java 虚拟机，使开发人员能够构建和部署 Java
-应用程序，这些应用程序启动迅速，性能卓越，同时占用内存较少。
-
-```shell
-$ vfox install java@x.y.z-sem
-$ vfox search java sem
-```
-
-## Temurin (Eclipse)
-
-Eclipse Adoptium Temurin™ 项目的前身是 AdoptOpenJDK，该项目提供代码和流程，支持构建运行时二进制文件和相关技术，这些二进制文件和技术具有高性能、企业级、跨平台、开源许可和经过
-Java SE TCK 测试，可在整个 Java 生态系统中普遍使用。
-
-```shell
-$ vfox install java@x.y.z-tem
-$ vfox search java tem
-```
-
-## Trava (Trava)
-
-TravaOpenJDK 是专为开发人员设计的 OpenJDK。它基于 dcevm 并使用集成的 HotswapAgent，因此允许在运行时通过方法和字段的添加或更新对类进行高级热交换。
-
-```shell
-$ vfox install java@x.y.z-trava
-$ vfox search java trava
-```
-
-## Zulu (Azul Systems)
-
-Azul Zulu Builds of OpenJDK 是无成本、生产就绪的开源、经过 TCK 测试和认证的 OpenJDK 发行版。它们适用于各种硬件平台和操作系统，并与特殊要求兼容，如精简版
-JRE 和构建，包括 OpenJFX 和 Coordinated Restore at Checkpoint (CRaC)。它们作为 Azul Platform Core 的一部分得到支持，Azul
-Platform Core 可提供稳定的安全更新，以便快速、可靠地部署到生产中，并提供以解决方案为导向的工程协助。
-
-```shell
-$ vfox install java@x.y.z-zulu
-$ vfox search java zulu
-```
-
-## Jetbrains
-
-```shell
-$ vfox install java@x.y.z-jb
-$ vfox search java jb
-```
-
-# 感谢
-
-- [SDKMAN](https://github.com/sdkman/)
-- [foojayio](https://github.com/foojayio/discoapi)
-
-## 测试
-
-详见 [docs/e2e.md](docs/e2e.md)。
+- [SDKMAN](https://github.com/sdkman/)，简称和 `.sdkmanrc` 的支持都沿用了它的标识符
+- [Foojay](https://github.com/foojayio/discoapi)，JDK 数据的来源
