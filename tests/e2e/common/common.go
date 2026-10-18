@@ -54,7 +54,8 @@ var DefaultVersions = map[string]string{
 	// installs from a tar.gz (vfox-java#58), and searching must list it too
 	// (vfox-java#72).
 	"jb": "21.0.5",
-	// GraalVM Community: the GRAALVM_HOME branch of hooks/env_keys.lua.
+	// GraalVM Community: vfox must leave GRAALVM_HOME alone even for
+	// GraalVM (vfox-java#27).
 	"graalce": "25.0.2",
 }
 
@@ -372,16 +373,6 @@ func PaddedSpecs(distribution, version, installed string) []string {
 func Vendor(distribution string) (string, bool) {
 	d, ok := distributions[Base(distribution)]
 	return d.vendor, ok
-}
-
-// SetsGraalVMHome mirrors hooks/env_keys.lua: GraalVM distributions also
-// export GRAALVM_HOME.
-func SetsGraalVMHome(distribution string) bool {
-	switch Base(distribution) {
-	case "graal", "graalce":
-		return true
-	}
-	return false
 }
 
 // SearchArgs renders the `vfox search java` arguments listing the

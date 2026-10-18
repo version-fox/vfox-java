@@ -34,6 +34,10 @@ import (
 // to stderr.
 const showSettings = "java -XshowSettings:properties -version 2>&1"
 
+// userGraalVMHome is a GRAALVM_HOME set before activation: users point it at
+// a GraalVM of their own, apart from JAVA_HOME.
+const userGraalVMHome = "/opt/graalvm-for-native-image"
+
 // verifySearch checks `vfox search java` (the plugin's Available hook) lists
 // the installed version under the name PreInstall gave it, marked
 // installed, with the JavaFX note for -fx builds.
@@ -111,9 +115,9 @@ func legacyJava(ctx context.Context, t *testing.T, ctr tc.Container, identifier 
 
 // verifyToolchain runs java and javac through the activate hook and checks
 // the JDK on PATH is the requested release, distribution, architecture and
-// JavaFX flavour; that JAVA_HOME (and GRAALVM_HOME for GraalVM) resolves to
-// that same JDK; that it compiles and runs a program; and that `vfox
-// current` reports the installed version.
+// JavaFX flavour; that JAVA_HOME resolves to that same JDK, while a
+// GRAALVM_HOME set beforehand keeps its value; that it compiles and runs a
+// program; and that `vfox current` reports the installed version.
 func verifyToolchain(ctx context.Context, t *testing.T, ctr tc.Container, distribution, version, installed, arch string) {
 	t.Helper()
 	out := execRetry(ctx, t, ctr, "java on PATH", activated(showSettings))
@@ -123,15 +127,13 @@ func verifyToolchain(ctx context.Context, t *testing.T, ctr tc.Container, distri
 	// symlinks, while JAVA_HOME names vfox's link (~/.vfox/sdks/java).
 	viaHome := common.JavaProperties(execOK(ctx, t, ctr, activated(`"$JAVA_HOME"/bin/`+showSettings)))
 	require.Equal(t, props["java.home"], viaHome["java.home"], "$JAVA_HOME/bin/java must be the java on PATH")
-	homes := []string{"JAVA_HOME"}
-	if common.SetsGraalVMHome(distribution) {
-		homes = append(homes, "GRAALVM_HOME")
-	}
-	for _, name := range homes {
-		home := strings.TrimSpace(execOK(ctx, t, ctr, activated(fmt.Sprintf(
-			`test -n "$%s" && readlink --canonicalize "$%s"`, name, name))))
-		require.Equalf(t, props["java.home"], home, "%s must resolve to the JDK root", name)
-	}
+	home := strings.TrimSpace(execOK(ctx, t, ctr, activated(`test -n "$JAVA_HOME" && readlink --canonicalize "$JAVA_HOME"`)))
+	require.Equal(t, props["java.home"], home, "JAVA_HOME must resolve to the JDK root")
+	// The plugin set GRAALVM_HOME to JAVA_HOME for GraalVM, replacing the
+	// user's (vfox-java#27).
+	graalvmHome := strings.TrimSpace(execOK(ctx, t, ctr,
+		"export GRAALVM_HOME="+shQuote(userGraalVMHome)+"; "+activated(`echo "$GRAALVM_HOME"`)))
+	require.Equal(t, userGraalVMHome, graalvmHome, "a GRAALVM_HOME set beforehand must keep its value")
 
 	javac := strings.TrimSpace(execOK(ctx, t, ctr, activated("javac -version 2>&1")))
 	require.Equal(t, "javac "+version, javac, "javac -version")
