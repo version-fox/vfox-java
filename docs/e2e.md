@@ -1,5 +1,7 @@
 # E2E
 
+[中文](zh-CN/e2e.md) | [English](e2e.md)
+
 The offline Lua hook tests (`tests/*_test.lua`) run in the **Test Plugin**
 workflow. The end-to-end suite runs in containers against real vfox on Linux
 and Windows; each `vfox` x `distribution` combination gets its own throwaway

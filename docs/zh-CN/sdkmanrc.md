@@ -1,0 +1,76 @@
+# `.sdkmanrc`
+
+[中文](sdkmanrc.md) | [English](../sdkmanrc.md)
+
+vfox 可以通过这个插件，把 [SDKMAN](https://sdkman.io/) 的项目文件 `.sdkmanrc` 当作兼容版本文件来读取（插件在 `PLUGIN.legacyFilenames` 里声明了它）。已经为 SDKMAN 固定了 JDK 版本的项目，不需要再为 vfox 另写一个文件：
+
+```
+# .sdkmanrc
+java=21.0.8-tem
+```
+
+只读取 `java=` 这一行。其他行，例如 `maven=3.9.9`，与这个插件无关。
+
+> 未发布：0.6.1 在 vfox 1.x 下读不了 `.sdkmanrc`。它的钩子调用了 `ctx:getInstalledVersions()`，所有 vfox 1.x 都会拒绝这种调用（测试过 1.0.12 和 1.0.13），报 `expected 0 arguments for func() []string, got 1`，而 vfox 又不会显示这个错误，所以看上去什么都没发生。`main` 已修复，并且支持 SDKMAN 更多的写法（`jbr`、JavaFX、补零、EA），也能在同一大版本装了多个 JDK 时选对。可以用 [install-from-source.md](install-from-source.md) 先试用，详情见 [changes.md](changes.md)。
+
+## 使用方法
+
+```bash
+eval "$(vfox activate bash)"       # 只需配置一次，写进 ~/.bashrc；其他 Shell 见 vfox 的快速入门
+
+vfox install java@21.0.8-tem       # .sdkmanrc 不会帮你安装任何东西
+cd my-project                      # 里面有上面那个 .sdkmanrc
+java -version                      # Temurin 21.0.8
+```
+
+vfox 挂载到 Shell 之后，进入目录时会读取这个文件，并选中其中指定的 JDK，不需要 `vfox use`。zsh、fish、PowerShell 等其他 Shell 的挂载方式见 vfox 的[快速入门](https://vfox.dev/zh-hans/guides/quick-start.html)。
+
+- 只读取当前目录下的文件。进入项目的子目录就找不到它了，SDKMAN 的 `sdk env` 也是这样。
+- 同一目录里的 `.vfox.toml` 如果写了 `java`，优先于 `.sdkmanrc`。`vfox use --project` 会写出这个文件。
+- 在这个目录里，这个文件还优先于不带 `--project` 的 `vfox use`：下一个提示符就会切回来，而 `vfox current java` 仍然显示会话里选的那个。
+- vfox 会在这个目录里创建 `.vfox/sdks/java`，并且不会把 `.vfox/` 加进 `.gitignore`，所以 `git status` 会列出它，需要你自己忽略。
+- JDK 必须已经安装。没有任何已安装的版本匹配时，这个文件会被忽略，也不会有任何提示。`vfox list java` 可以看到已有哪些。
+- `vfox config legacyVersionFile.enable false` 会关闭所有兼容版本文件。`legacyVersionFile.strategy` 对这个插件没有作用：以文件里写的版本为准。
+
+## 标识符会选中什么
+
+插件把标识符与已安装的 JDK 按下面的顺序匹配：
+
+1. 原样写出的已安装版本名：`java=21.0.8+9-tem`、`java=28-ea+19`。
+2. 你写的那个版本，取它已安装的最新构建：`21.0.8-tem` 选中 `21.0.8+9-tem`。
+3. 不行的话，取同一大版本里已安装的最新版本。`21-tem` 直接走这一步。
+
+第 3 步不检查已装的版本是否低于你写的版本。只装了 `21.0.8+9-tem` 时，`java=21.0.12-tem` 会选中它，`java=21.0.3-tem` 也一样。写了没装的构建号，会退到这个版本已安装的最新构建（`21.0.8+7-tem` 选中 `21.0.8+9-tem`）。如果这个大版本根本没装，就什么也不选。
+
+它不会跨发行版，不会在带 JavaFX 和不带 JavaFX 的构建之间串用，也不会在 EA 构建和 GA 版本之间串用。
+
+## SDKMAN 的写法
+
+`sdk list java` 里同时存在两代标识符。插件两种都认，也认自己的写法：
+
+| `.sdkmanrc` 里写 | 选中 |
+| --- | --- |
+| `21.0.8-tem` | Temurin 21.0.8，安装后叫 `21.0.8+9-tem` |
+| `21.0.5-jbr` | JetBrains Runtime（`jb`），SDKMAN 叫它 `jbr` |
+| `21.0.12.fx-zulu` | 带 JavaFX 的 Zulu，`21.0.12+8-zulu-fx`（较旧的写法） |
+| `21.0.12-fx+1.1-librca` | 带 JavaFX 的 Liberica（较新的写法） |
+| `21.0.8+1.1-tem` | Temurin 21.0.8，见下文 |
+| `27.0.0+36-librca`、`25.0.1.0+8-open` | `27+36-librca`、`25.0.1+8`：补的零会被去掉 |
+| `28.ea.19-open`、`28.0.0+ea.19-open` | EA 构建 `28-ea+19` |
+
+SDKMAN 新写法里 `+` 后面的数字（`21.0.8+1.1-tem`）是 SDKMAN 自己重新构建的次数，不是厂商的构建号，所以插件不会去找这个构建，而是按版本匹配。Foojay 和安装后的版本名都不补零，所以 `27.0.0` 指的就是 `27`。`sdk list java` 里补一个 `.0` 很常见（`25.0.1.0+8-open`、`21.0.9.0+116386-jbr`），插件同样能读。
+
+## 没有生效怎么办
+
+JDK 没有切换时，依次检查：
+
+- vfox 没有挂载到当前的 Shell。`eval "$(vfox activate bash)"` 要在当前 Shell 里执行过，只在别处执行过不算。
+- 当前目录是 `.sdkmanrc` 所在目录的子目录。
+- JDK 没有安装，或者只装了另一种构建（带或不带 JavaFX）。`java=21.0.8-zulu` 不会选中带 JavaFX 的构建，`java=21.0.8.fx-zulu` 也不会选中不带的。请安装文件里指明的那种，比如 `vfox install java@21.0.8-zulu-fx`。
+- 被 `.vfox.toml` 挡住了，或者 `legacyVersionFile.enable` 是 `false`。
+
+`vfox --debug env -s bash` 会打印文件的解析过程。
+
+## 与 SDKMAN 的区别
+
+`sdk env install` 会安装 `.sdkmanrc` 里指明的 JDK。vfox 只在已安装的版本里选择，安装要用 `vfox install java@<版本>`。从文件里复制的标识符不一定能直接给 `vfox install` 用：`21.0.8-tem` 可以，`21.0.12.fx-zulu` 不行，`21.0.12-zulu-fx` 可以。
