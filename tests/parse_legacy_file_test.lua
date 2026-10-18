@@ -112,6 +112,14 @@ local cases = {
     -- Never a release for an early-access build, nor the other way round.
     { "java=28.0.0.0+ea.19-open\n", { "28+36", "28.0.1+3" }, nil },
     { "java=28.0.0+36-open\n", { "28-ea+19" }, nil },
+    -- The installed name of an early-access build selects it, as in vfox use,
+    -- although parse_version cannot read it (vfox-java#91). Not installed, it
+    -- selects nothing, as vfox use reports it not installed.
+    { "java=28-ea+19\n", { "21.0.8+9-tem", "28-ea+19", "28-ea+18-zulu" }, "28-ea+19" },
+    { "java=28-ea+18-zulu\n", { "21.0.8+9-tem", "28-ea+19", "28-ea+18-zulu" }, "28-ea+18-zulu" },
+    { "java=28-ea+19-zulu-fx\n", { "28-ea+19-zulu", "28-ea+19-zulu-fx" }, "28-ea+19-zulu-fx" },
+    { "java=26-ea+13-graal\n", { "26-ea+2-graal", "26-ea+13-graal" }, "26-ea+13-graal" },
+    { "java=28-ea+20\n", { "28-ea+18", "28-ea+19" }, nil },
     -- No java line at all selects nothing.
     { "maven=3.9.9\n", { "21.0.8+9-tem" }, nil },
 }

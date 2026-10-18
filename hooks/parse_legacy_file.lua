@@ -54,7 +54,7 @@ function PLUGIN:ParseLegacyFile(ctx)
 
     for line in io.lines(filepath) do
         if strings.has_prefix(line, "java=") then
-            javaVersion = plugin_spelling(strings.trim_prefix(line, "java="))
+            javaVersion = strings.trim_prefix(line, "java=")
             break
         end
     end
@@ -63,7 +63,23 @@ function PLUGIN:ParseLegacyFile(ctx)
         return {}
     end
 
-    local distributionVersion = distribution_version_parser.parse_version(javaVersion)
+    --- Get the list of versions of the current plugin installed
+    --- (a plain call: vfox 1.x rejects the extra ctx argument of ctx:...).
+    --- vfox sorts it as strings, descending (21.0.8+9-tem, 21.0.12+8-tem,
+    --- 21.0.1+12-tem), so the first match is not the one to take.
+    local installed = {}
+    for _, v in ipairs(ctx.getInstalledVersions()) do
+        installed[v] = true
+    end
+
+    --- An installed version written as vfox lists it selects itself, as in
+    --- vfox use, even one that parse_version cannot read: an early-access
+    --- build (28-ea+19, 28-ea+18-zulu).
+    if installed[javaVersion] then
+        return { version = javaVersion }
+    end
+
+    local distributionVersion = distribution_version_parser.parse_version(plugin_spelling(javaVersion))
     if not distributionVersion then
         return {}
     end
@@ -81,15 +97,6 @@ function PLUGIN:ParseLegacyFile(ctx)
     --- Installed versions end in -<vendor> (OpenJDK's in nothing), then -fx for
     --- JavaFX builds: 21.0.8+9-tem, 21.0.12+7-zulu-fx, 25.0.2+10.
     local suffix = (vendor == "open" and "" or "-" .. vendor) .. (distributionVersion.javafx_bundled and "-fx" or "")
-
-    --- Get the list of versions of the current plugin installed
-    --- (a plain call: vfox 1.x rejects the extra ctx argument of ctx:...).
-    --- vfox sorts it as strings, descending (21.0.8+9-tem, 21.0.12+8-tem,
-    --- 21.0.1+12-tem), so the first match is not the one to take.
-    local installed = {}
-    for _, v in ipairs(ctx.getInstalledVersions()) do
-        installed[v] = true
-    end
 
     --- The version itself (21.0.5+63130-jb), else the release itself or its
     --- newest build, as SDKMAN's build numbers count its own rebuilds

@@ -93,9 +93,12 @@ JDK, so `java` can only come from what vfox installs:
    OpenJDK's (`28.0.0.0+ea.20-open`), must select that build:
    `java=21.0.0.0+ea.1-tem` selects `21-ea+1-tem`, not the release, which
    `ParseLegacyFile` took while it understood only SDKMAN's older
-   `21.ea.1-tem`. jdk.java.net removes each early-access build within weeks,
-   so that install is faked: its `bin` holds a stand-in `java` that only
-   prints the name. On Windows the file is written with CRLF line endings.
+   `21.ea.1-tem`. So must the installed name itself (`java=21-ea+1-tem`),
+   for which `ParseLegacyFile`, unable to parse it, selected nothing, while
+   `vfox use` selects it. jdk.java.net removes each early-access build within
+   weeks, so that install is faked: its `bin` holds a stand-in `java` that
+   only prints the name. On Windows the file is written with CRLF line
+   endings.
 5. After `vfox use --global`, the JDK on `PATH` reports the requested
    `java.version`, the runner's `os.arch` (`amd64` / `aarch64`, which also
    catches an x64 JDK emulated on Windows ARM64) and the distribution's
