@@ -63,7 +63,12 @@ JDK, so `java` can only come from what vfox installs:
    registered from this checkout. On Windows, the runner builds `main` once,
    while the `latest` combinations run, and the `main` containers start from
    the e2e image plus that `vfox.exe`.
-2. A release no distribution has published (`<major>.0.99`) fails to install,
+2. A distribution without a version, alone or after an empty one
+   (`java@tem`, `java@-tem`), fails both `vfox install` and `vfox use` with
+   an error asking for one. The hooks stopped with a Lua error on the first,
+   while `PreInstall` sent the empty version to Foojay, which lists every
+   release, and installed the newest one.
+   A release no distribution has published (`<major>.0.99`) fails to install,
    with `PreInstall` naming the platform it searched (`linux/amd64`,
    `windows/arm64`, ...), so the Foojay lookup is checked to target the
    runner. So does a build of the pinned release that was never published

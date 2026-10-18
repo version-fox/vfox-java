@@ -204,4 +204,28 @@ assert(
 )
 RUNTIME.osType = "linux"
 
+-- A distribution without a version, alone or after an empty one, asks for a
+-- version before any lookup (vfox-java#98). Alone it failed with a Lua error;
+-- the empty version reached Foojay, which listed every release, and the newest
+-- one installed. Once pcall has caught an error, gopher-lua's http stub keeps
+-- the requests table it saw, so it is emptied in place.
+for _, case in ipairs({
+    {
+        "tem",
+        "No version in tem; add one, such as 21-tem. Please check available versions with 'vfox search java tem'",
+    },
+    { "temurin", "No version in temurin; add one, such as 21-tem." },
+    { "-tem", "No version in -tem; add one, such as 21-tem." },
+    { "temurin-", "No version in temurin-; add one, such as 21-tem." },
+    { "zulu-fx", "such as 21-zulu-fx. Please check available versions with 'vfox search java zulu'" },
+    { "openjdk", "such as 21-open. Please check available versions with 'vfox search java open'" },
+}) do
+    for i = #requests, 1, -1 do
+        requests[i] = nil
+    end
+    local ok, err = pcall(PLUGIN.PreInstall, PLUGIN, { version = case[1] })
+    assert(not ok and tostring(err):find(case[2], 1, true), case[1] .. ": unexpected " .. tostring(err))
+    assert(#requests == 0, case[1] .. ": unexpected lookup " .. tostring(requests[1]))
+end
+
 print("PASS: " .. cases .. " PreInstall Foojay lookup cases")

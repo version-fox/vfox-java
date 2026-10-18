@@ -121,4 +121,14 @@ for _, case in ipairs(cases) do
     local version = result and result.version
     assert(version == case[2], case[1] .. ": expected " .. tostring(case[2]) .. ", got " .. tostring(version))
 end
-print("PASS: " .. #cases .. " PreUse regression cases")
+
+-- A distribution without a version names no installed version, so PreUse asks
+-- for one, as PreInstall does (vfox-java#98). Alone it failed with a Lua error;
+-- after an empty version, vfox reported -tem not installed.
+local rejected = { "tem", "temurin", "-tem", "temurin-", "zulu-fx", "open", "lnxabi2-fx" }
+for _, version in ipairs(rejected) do
+    local ok, err = pcall(PLUGIN.PreUse, PLUGIN, { version = version, installedSdks = installed })
+    local message = "No version in " .. version .. "; add one"
+    assert(not ok and tostring(err):find(message, 1, true), version .. ": unexpected " .. tostring(err))
+end
+print("PASS: " .. #cases + #rejected .. " PreUse regression cases")

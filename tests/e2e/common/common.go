@@ -260,6 +260,16 @@ func MissingBuildSpec(distribution, version string) string {
 	return Spec(distribution, version+"+99")
 }
 
+// VersionlessSpecs renders the distribution without a version, alone and
+// after an empty one ("tem" and "-tem", "librca-fx" and "-librca-fx", "open"
+// and "-open" for OpenJDK). PreInstall and PreUse must reject both, asking
+// for a version: they failed with a Lua error on the first (vfox-java#98),
+// while PreInstall sent the empty version to Foojay, which lists every
+// release, and installed the newest one.
+func VersionlessSpecs(distribution string) []string {
+	return []string{distribution, "-" + distribution}
+}
+
 // Decoy renders the installed name of another release whose version starts
 // with the pinned one (<version>0+1, e.g. 21.0.80+1-tem). vfox lists the
 // installed versions sorted as strings, descending, so it comes before the

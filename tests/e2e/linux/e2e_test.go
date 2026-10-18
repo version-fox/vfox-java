@@ -166,6 +166,7 @@ func runOne(t *testing.T, ctx context.Context, image, platform, arch string, c c
 	t.Logf("=== vfox %s, java@%s, %s (%s) ===", c.Vfox, common.Spec(c.Distribution, version), platform, machine)
 
 	setupVfox(ctx, t, ctr, c.Vfox)
+	checkVersionlessRejected(ctx, t, ctr, c.Distribution)
 	checkMissingVersionRejected(ctx, t, ctr, c.Distribution, version, arch)
 
 	installed := installJava(ctx, t, ctr, common.Spec(c.Distribution, version))

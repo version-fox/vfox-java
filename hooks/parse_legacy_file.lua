@@ -83,7 +83,11 @@ function PLUGIN:ParseLegacyFile(ctx)
     if not distributionVersion then
         return {}
     end
+    --- A distribution alone (java=tem) selects nothing, as vfox use rejects it.
     local fullVersion = distributionVersion.version
+    if not fullVersion then
+        return {}
+    end
     local vendor = distributionVersion.distribution.short_name
     if not vendor then
         return {}

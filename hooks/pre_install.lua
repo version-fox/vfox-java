@@ -30,6 +30,9 @@ function PLUGIN:PreInstall(ctx)
     if not distribution_version then
         error("Could not extract a valid distribution: " .. ctx.version)
     end
+    if not distribution_version.version then
+        error(distribution_version_parser.missing_version_error(ctx.version, distribution_version))
+    end
     if loongnix.supported() or loongnix.is_distribution(distribution_version.distribution.name) then
         return loongnix.pre_install(distribution_version)
     end
