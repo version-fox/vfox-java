@@ -29,6 +29,9 @@ function PLUGIN:PreUse(ctx)
     end
 
     if distribution_version then
+        if not distribution_version.version then
+            error(distribution_version_parser.missing_version_error(input_version, distribution_version))
+        end
         -- OpenJDK versions are installed without a distribution suffix, so
         -- 25.0.2+10-open and openjdk-25.0.2+10 both name 25.0.2+10.
         local suffix = distribution_version.javafx_bundled and "-fx" or ""

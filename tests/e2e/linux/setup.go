@@ -51,6 +51,26 @@ func setupVfox(ctx context.Context, t *testing.T, ctr tc.Container, vfoxVersion 
 	t.Logf("PASS %s with the local java plugin", strings.TrimSpace(execOK(ctx, t, ctr, "vfox --version")))
 }
 
+// checkVersionlessRejected proves a distribution without a version (e.g.
+// java@tem, java@-tem, see common.VersionlessSpecs) fails both `vfox
+// install` and `vfox use` with an error asking for one. The hooks raise it
+// before any Foojay lookup, so nothing is retried.
+func checkVersionlessRejected(ctx context.Context, t *testing.T, ctr tc.Container, distribution string) {
+	t.Helper()
+	for _, spec := range common.VersionlessSpecs(distribution) {
+		want := "No version in " + spec + ";"
+		for _, c := range []struct{ label, script string }{
+			{"vfox install java@" + spec, "vfox install java@" + spec},
+			{"vfox use --global java@" + spec, activated("vfox use --global java@" + spec)},
+		} {
+			code, out := execRun(ctx, t, ctr, c.script)
+			require.NotZerof(t, code, "%s must fail\n--- output ---\n%s", c.label, out)
+			require.Containsf(t, common.StripANSI(out), want, "%s must ask for a version", c.label)
+		}
+		t.Logf("PASS java@%s is rejected by vfox install and vfox use", spec)
+	}
+}
+
 // checkMissingVersionRejected proves an unpublished release, and an
 // unpublished build of the pinned one, fail loudly instead of installing
 // something else: PreInstall finds no Foojay package and names the platform

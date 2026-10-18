@@ -130,14 +130,38 @@ function distribution_version.parse_version(arg)
         end
     end
 
-    -- Convert version format for Foojay API
-    version = distribution_version.convert_version_for_api(version)
+    -- A distribution alone (tem, zulu-fx), or after an empty version (-tem,
+    -- temurin-), names no version: leave it nil for the hooks to reject.
+    if version == "" then
+        version = nil
+    end
+    if version then
+        -- Convert version format for Foojay API
+        version = distribution_version.convert_version_for_api(version)
+    end
 
     return {
         version = version,
         distribution = distribution,
         javafx_bundled = javafx_bundled,
     }
+end
+
+--- Returns the error for a user-input version that parse_version read
+--- without a version, such as tem: it names no JDK to install or use.
+--- @param arg string User-input version
+--- @param parsed table What parse_version returned for arg
+--- @return string Error message
+function distribution_version.missing_version_error(arg, parsed)
+    local short_name = parsed.distribution.short_name
+    return "No version in "
+        .. arg
+        .. "; add one, such as 21-"
+        .. short_name
+        .. (parsed.javafx_bundled and "-fx" or "")
+        .. ". Please check available versions with 'vfox search java "
+        .. short_name
+        .. "'"
 end
 
 return distribution_version

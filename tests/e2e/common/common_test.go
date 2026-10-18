@@ -209,6 +209,21 @@ func TestSpecs(t *testing.T) {
 	}
 }
 
+func TestVersionlessSpecs(t *testing.T) {
+	for _, c := range []struct {
+		dist string
+		want []string
+	}{
+		{"open", []string{"open", "-open"}},
+		{"tem", []string{"tem", "-tem"}},
+		{"librca-fx", []string{"librca-fx", "-librca-fx"}},
+	} {
+		if got := VersionlessSpecs(c.dist); !slices.Equal(got, c.want) {
+			t.Errorf("VersionlessSpecs(%s) = %q, want %q", c.dist, got, c.want)
+		}
+	}
+}
+
 func TestPaddedIdentifier(t *testing.T) {
 	for _, c := range []struct{ dist, version, installed, want string }{
 		{"open", "25.0.2", "25.0.2+10", "25.0.2.0+10-open"},

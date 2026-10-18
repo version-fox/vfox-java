@@ -120,6 +120,13 @@ local cases = {
     { "java=28-ea+19-zulu-fx\n", { "28-ea+19-zulu", "28-ea+19-zulu-fx" }, "28-ea+19-zulu-fx" },
     { "java=26-ea+13-graal\n", { "26-ea+2-graal", "26-ea+13-graal" }, "26-ea+13-graal" },
     { "java=28-ea+20\n", { "28-ea+18", "28-ea+19" }, nil },
+    -- A distribution without a version selects nothing, as vfox use rejects it
+    -- (vfox-java#98), where parse_version failed with a Lua error.
+    { "java=tem\n", { "21.0.8+9-tem", "21.0.12+8-tem" }, nil },
+    { "java=temurin-\n", { "21.0.8+9-tem" }, nil },
+    { "java=-tem\n", { "21.0.8+9-tem" }, nil },
+    { "java=zulu-fx\n", { "21.0.12+7-zulu-fx" }, nil },
+    { "java=open\n", { "25.0.2+10" }, nil },
     -- No java line at all selects nothing.
     { "maven=3.9.9\n", { "21.0.8+9-tem" }, nil },
 }

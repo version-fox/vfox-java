@@ -268,6 +268,27 @@ func activatedEnv(activation, script string) string {
 		"if ($__vfoxExport.Trim()) { Invoke-Expression -Command $__vfoxExport }\r\n" + script
 }
 
+// checkVersionlessRejected proves a distribution without a version (e.g.
+// java@tem, java@-tem, see common.VersionlessSpecs) fails both `vfox
+// install` and `vfox use` with an error asking for one. The hooks raise it
+// before any Foojay lookup, so nothing is retried.
+func checkVersionlessRejected(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, activation, distribution string) {
+	t.Helper()
+	for _, spec := range common.VersionlessSpecs(distribution) {
+		want := "No version in " + spec + ";"
+		arg := pwshQuote("java@" + spec)
+		for _, c := range []struct{ label, script string }{
+			{"vfox install java@" + spec, "vfox install " + arg},
+			{"vfox use --global java@" + spec, activated(activation, "vfox use --global "+arg)},
+		} {
+			code, out := execRun(ctx, t, ctr, c.script, box.vars...)
+			require.NotZerof(t, code, "%s must fail\n--- output ---\n%s", c.label, out)
+			require.Containsf(t, common.StripANSI(out), want, "%s must ask for a version", c.label)
+		}
+		t.Logf("PASS java@%s is rejected by vfox install and vfox use", spec)
+	}
+}
+
 // checkMissingVersionRejected proves an unpublished release, and an
 // unpublished build of the pinned one, fail loudly instead of installing
 // something else: PreInstall finds no Foojay package (zip or tar.gz) and
