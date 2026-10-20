@@ -44,7 +44,7 @@ vfox 加载 `metadata.lua`，命令需要时调用相应的钩子，并向钩子
 
 ## 命名
 
-安装后的版本名是 `<java_version>[-<简称>][-fx]`，OpenJDK 没有简称，Mandrel 和 Liberica NIK 用 Foojay 的 `distribution_version` 代替 `java_version`，`graal` 和 `graalce` 用 GraalVM 自己的版本号（[versions.md](versions.md#安装后的版本名)）。`lib/distribution_version.lua` 把一个写法解析成版本、发行版和 JavaFX 标志，两种顺序都接受（`21-tem`、`tem-21`）。`lib/installed_version.lua` 把用户输入的版本变成已安装的版本名：先看这个名字本身。只写大版本号时，取这个大版本里已安装的最新版本；其他写法则取这个版本本身，或它的最新构建。`PreUse` 到此为止。`ParseLegacyFile` 还会再退一步，取同一大版本里已安装的最新版本。
+安装后的版本名是 `<java_version>[-<简称>][-fx]`，OpenJDK 没有简称，Mandrel 和 Liberica NIK 用 Foojay 的 `distribution_version` 代替 `java_version`，`graal` 和 `graalce` 用 GraalVM 自己的版本号（[versions.md](versions.md#安装后的版本名)）。`lib/distribution_version.lua` 把一个写法解析成版本、发行版和 JavaFX 标志，两种顺序都接受（`21-tem`、`tem-21`）。`lib/installed_version.lua` 把用户输入的版本变成已安装的版本名：先看这个名字本身。只写大版本号时，取这个大版本里已安装的最新版本；其他写法则取这个版本本身，或它的最新构建。`PreUse` 到此为止。`ParseLegacyFile` 还会再退一步，取同一大版本里已安装的最新版本。这两处取一个大版本里的最新版本时，都会跳过 Oracle GraalVM 的特性版本，除非这个大版本里没有装别的版本（`bare_major_skips`，见下文）。
 
 SDKMAN 有些写法不同（`jbr`、`21.0.12.fx-zulu`、`21.0.12-fx+1.1-librca`、`28.0.0+ea.19-open`），`hooks/parse_legacy_file.lua` 里的 `plugin_spelling` 会在解析之前把它们改写成插件自己的写法。对 SDKMAN 已经不再提供的发行版，同一文件里的 `sdkman_flavours` 把 SDKMAN 写在版本号里的虚拟机或 JDK 版本换成简称（`22.3.3.r17-grl` 就是 `22.3.3-grl17`）。对 `sdkman_jdks` 里的 Mandrel 和 Liberica NIK，则是去掉 JDK 版本（`25.0.4.r25-nik` 就是 `25.0.4-nik`）。一个版本同时为两个 JDK 发布时，写了较旧 JDK（由 `older_jdk` 给出）的标识符什么都不选中（`22.1.r11-mandrel`）。SDKMAN 给版本补的零由 `installed_version.unpad` 去掉（`27.0.0+36` 就是 `27+36`）。简称与 SDKMAN 不同的地方见 [distributions.md](distributions.md#简称与-sdkman-的不同)。
 
@@ -59,7 +59,7 @@ SDKMAN 有些写法不同（`jbr`、`21.0.12.fx-zulu`、`21.0.12-fx+1.1-librca`�
 - `lib/foojay.lua` 里的 `fixes` 会在钩子拿到结果之前去掉一些包：Foojay 列在 OJDKBuild 的 Windows JDK 里的 JRE、installer bundle 包和 RHEL 6 构建，以及 Gluon GraalVM 22.x 的 JDK 11 构建，它们和 JDK 17 构建共用一个版本号。只写大版本号时，从去掉之后剩下的包里挑。
 - Foojay 里同一个名字有两条记录时，`Available` 只列一次。
 - GraalVM 社区版每月发布的特性版本（`25.1.3` 起），Foojay 按老办法列的那些标成了 LTS，以前 Oracle GraalVM 的也是这样。`lib/distribution_version.lua` 里的 `is_feature_release` 按次版本号识别它们，`Available` 去掉它们的备注。它只适用于 `graal` 和 `graalce`：Mandrel 和 Liberica NIK 在 24 及以前沿用 GraalVM 的旧版本号，次版本号并不表示特性版本（`mandrel` 的 `23.1.12` 就是 LTS），从 25 起和 JDK 的版本号一致。
-- 只有 Oracle GraalVM（`graal`）在只写大版本号时，`PreInstall` 才会跳过特性版本，所以装的是 25.0 系列。一个大版本里只有特性版本时，则保留它们。GraalVM 社区版不做这个过滤，因为特性版本就是它现在发布的全部。
+- 只有 Oracle GraalVM（`graal`）在只写大版本号时，`PreInstall` 才会跳过特性版本，所以装的是 25.0 系列。一个大版本里只有特性版本时，则保留它们。GraalVM 社区版不做这个过滤，因为特性版本就是它现在发布的全部。这条规则放在 `lib/distribution_version.lua` 的 `bare_major_skips` 里。`PreUse` 和 `ParseLegacyFile` 也用它过滤已安装的版本，这样 `vfox use` 和 `.sdkmanrc` 选中的就是 `PreInstall` 装的那个构建：这个大版本里已安装的、不是特性版本的最新版本，没有的话才取最新的特性版本。没装的版本在 `ParseLegacyFile` 里退到同一大版本的最新版本时，也适用这条规则，除非文件里写的本来就是特性版本（SDKMAN 写作 `25.4.4+1-graal`），这时仍然像以前一样取这个大版本里已安装的最新版本。
 - CPU 名字：`arm64` 改成 `aarch64`，Windows 上 `amd64` 改成 `x64`；`darwin` 改成 `macos`。在 Linux 上，由 `ldd --version` 决定是 glibc 还是 musl。
 
 ## 测试

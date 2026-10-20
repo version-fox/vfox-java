@@ -76,6 +76,8 @@ vfox uninstall java@21.0.8+9-tem
 
 If you name a build or a release, it does not cross over to another one (`21.0.12-tem` does not select `21.0.12.1+1-tem`). It does not cross to another distribution, between JavaFX and plain, or between early-access and GA either. A name that matches nothing is reported as `java@99-tem is not installed`.
 
+With Oracle GraalVM, `vfox use` of a bare major selects the build that installing it installs: `25-graal` selects the newest installed build of the 25.0 line (`25.0.5-graal`), not a monthly feature release such as `25.4.4.1.1-graal`, which it takes only where nothing else of 25 is installed. A feature release is selected by its full version. If `25-graal` itself is installed, the GA release 25 that release 0.6.1 installed, that one is selected, as for any installed name. Unreleased: release 0.6.2 selects the newest installed release of 25, which is a feature release as soon as one is installed.
+
 vfox's own match for `21` goes by the version alone, so it also takes GraalVM CE 8 to 19, Gluon GraalVM, Mandrel and Liberica NIK, whose versions are GraalVM's: `21.3.1-grl11` runs Java 11, and `vfox use java@21` selects it over `21.0.12.1+1-tem`. See [distributions.md](distributions.md#versions-numbered-after-graalvm).
 
 Pick the scope with `vfox use`'s flags: `--global`, `--project` or `--session`, the default. In a shell without vfox's hook, Windows switches to the global scope with a warning, while Linux and macOS stop with `vfox requires hook support`. `--project` writes a `.vfox.toml` that holds the installed name (`java = "17.0.10+7-tem"`). A `.sdkmanrc` is read as well, see [sdkmanrc.md](sdkmanrc.md).

@@ -95,6 +95,15 @@ JDK, so `java` can only come from what vfox installs:
    GA 25 is left out, as vfox would find `25-graal` itself installed without
    asking `PreInstall`. On Linux the install must also ask Foojay what the
    search asked, as at the end of item 4.
+
+   With those builds installed, `vfox use java@25-graal` and a `.sdkmanrc`
+   holding `java=25-graal` must select the build `vfox install` names.
+   `PreUse` and `ParseLegacyFile` took the newest installed release of 25,
+   which is a feature release as soon as one is installed
+   ([#110](https://github.com/version-fox/vfox-java/issues/110)). Each faked
+   build holds a stand-in `java` that only prints its name, as in item 6.
+   Once the 25.0 line is removed, `vfox use` and the `.sdkmanrc` must both
+   select the newest feature release.
 4. On the Temurin rows, which run on every runner, the distributions the
    suite checks by name only (`adpt` to `semcrt`, `nameOnly` in
    `tests/e2e/common`) go by their short names where Foojay has packages of

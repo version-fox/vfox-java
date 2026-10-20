@@ -17,8 +17,15 @@ PLUGIN = {}
 dofile("hooks/pre_use.lua")
 
 -- Installed versions as PreInstall names them, keyed the way vfox passes them.
-local installed = {}
-for _, version in ipairs({
+local function sdks(versions)
+    local installed = {}
+    for _, version in ipairs(versions) do
+        installed[version] = { name = "java", version = version, path = "/sdks/java-" .. version }
+    end
+    return installed
+end
+
+local installed = sdks({
     "8.0.482+8-zulu-fx",
     "21.0.8+9-tem",
     "21.0.12+8-tem",
@@ -50,9 +57,7 @@ for _, version in ipairs({
     "21.0.8+9-rdht",
     "25.0.4-semcrt",
     "25.0.2+10-sem",
-}) do
-    installed[version] = { name = "java", version = version, path = "/sdks/java-" .. version }
-end
+})
 
 local cases = {
     { "8.0.482+8-zulu-fx", "8.0.482+8-zulu-fx" },
@@ -145,6 +150,44 @@ for _, case in ipairs(cases) do
     assert(version == case[2], case[1] .. ": expected " .. tostring(case[2]) .. ", got " .. tostring(version))
 end
 
+-- Oracle GraalVM's bare major selects the newest installed build of its 25.0
+-- line, as installing it installs one, and takes a monthly feature release
+-- only where nothing else of the major is installed. It took the newest
+-- release of the major, which is a feature release as soon as one is
+-- installed (vfox-java#110).
+-- Each case is the installed versions, the input and the version selected.
+local graalvm_cases = {
+    { { "25.4.4.1.1-graal", "25.0.4.1-graal" }, "25-graal", "25.0.4.1-graal" },
+    { { "25.4.4.1.1-graal", "25.0.4.1-graal" }, "graalvm-25", "25.0.4.1-graal" },
+    {
+        { "25.3.4.1-graal", "25.0.4.1.1-graal", "25.4.4.1.1-graal", "25.0.4.1-graal", "25.0.4-graal" },
+        "25-graal",
+        "25.0.4.1.1-graal",
+    },
+    { { "25.4.4.1-graal", "25.0.2-graal" }, "25-graal", "25.0.2-graal" },
+    -- Nothing else of the major installed.
+    { { "25.4.4.1.1-graal", "25.3.4.1-graal", "25.1.3-graal" }, "25-graal", "25.4.4.1.1-graal" },
+    { { "25.3.4.1-graal" }, "25-graal", "25.3.4.1-graal" },
+    -- A feature release selects itself by its version, and not another one
+    -- when it is not installed.
+    { { "25.4.4.1.1-graal", "25.0.5-graal" }, "25.4.4.1.1-graal", "25.4.4.1.1-graal" },
+    { { "25.3.4.1-graal", "25.0.5-graal" }, "25.4.4.1.1-graal", "25.4.4.1.1-graal" },
+    -- Other majors, distributions and releases with a minor above 0 are not skipped.
+    { { "21.0.8-graal", "25.4.4.1.1-graal" }, "21-graal", "21.0.8-graal" },
+    { { "25.4.4.1.1-graal", "25.0.5-graal" }, "26-graal", "26-graal" },
+    { { "25.4.4.1.1-graalce", "25.0.2-graalce" }, "25-graalce", "25.4.4.1.1-graalce" },
+    { { "25.4.4.1.1-graalce", "25.0.5-graal" }, "25-graal", "25.0.5-graal" },
+    { { "25.4.4.1.1-graalce" }, "25-graal", "25-graal" },
+    { { "23.1.12.1-mandrel", "23.0.1.2-mandrel" }, "23-mandrel", "23.1.12.1-mandrel" },
+    { { "23.1.8-nik", "23.0.1-nik" }, "23-nik", "23.1.8-nik" },
+}
+for _, case in ipairs(graalvm_cases) do
+    local result = PLUGIN:PreUse({ version = case[2], installedSdks = sdks(case[1]) })
+    local version = result and result.version
+    local message = table.concat(case[1], ", ") .. " with " .. case[2]
+    assert(version == case[3], message .. ": expected " .. tostring(case[3]) .. ", got " .. tostring(version))
+end
+
 -- A distribution without a version names no installed version, so PreUse asks
 -- for one, as PreInstall does (vfox-java#98). Alone it failed with a Lua error;
 -- after an empty version, vfox reported -tem not installed.
@@ -154,4 +197,4 @@ for _, version in ipairs(rejected) do
     local message = "No version in " .. version .. "; add one"
     assert(not ok and tostring(err):find(message, 1, true), version .. ": unexpected " .. tostring(err))
 end
-print("PASS: " .. #cases + #rejected .. " PreUse regression cases")
+print("PASS: " .. #cases + #graalvm_cases + #rejected .. " PreUse regression cases")

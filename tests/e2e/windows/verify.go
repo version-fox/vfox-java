@@ -125,21 +125,51 @@ func verifyLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, box s
 func verifyOwnNumberLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox) {
 	t.Helper()
 	cases, installs := common.OwnNumberIdentifiers()
-	var create, remove []string
-	for _, name := range installs {
-		dir := fmt.Sprintf("(Join-Path $env:VFOX_HOME %s)", pwshQuote(`cache\java\v-`+name))
+	fakeInstalls(ctx, t, ctr, box, installs)
+	for _, c := range cases {
+		out := legacyRun(ctx, t, ctr, box, c.Identifier, printJava)
+		common.CheckSelects(t, out, c, installs)
+	}
+	removeInstalls(ctx, t, ctr, box, installs)
+}
+
+// printJava is the command that runs the stand-in java (a java.cmd) of a
+// faked install, which prints the install's name, or does nothing where no
+// install is selected.
+const printJava = "if (Get-Command java -ErrorAction SilentlyContinue) { java }"
+
+// installDir renders the directory vfox keeps the install of name in, as a
+// pwsh expression.
+func installDir(name string) string {
+	return fmt.Sprintf("(Join-Path $env:VFOX_HOME %s)", pwshQuote(`cache\java\v-`+name))
+}
+
+// fakeInstalls fakes the installs of names, each with a stand-in java (a
+// java.cmd) that only prints its name (see common.CheckSelects).
+func fakeInstalls(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, names []string) {
+	t.Helper()
+	var create []string
+	for _, name := range names {
 		create = append(create, fmt.Sprintf(
 			"$bin = Join-Path %s %s; New-Item -ItemType Directory -Force -Path $bin | Out-Null; "+
 				"Set-Content -Path (Join-Path $bin 'java.cmd') -Value %s",
-			dir, pwshQuote(`java-`+name+`\bin`), pwshQuote("@echo "+name)))
-		remove = append(remove, fmt.Sprintf("Remove-Item -LiteralPath %s -Recurse -Force", dir))
+			installDir(name), pwshQuote(`java-`+name+`\bin`), pwshQuote("@echo "+name)))
 	}
-	execOK(ctx, t, ctr, strings.Join(create, "; "), box.vars...)
-	for _, c := range cases {
-		out := legacyRun(ctx, t, ctr, box, c.Identifier, "if (Get-Command java -ErrorAction SilentlyContinue) { java }")
-		common.CheckSelects(t, out, c, installs)
+	if len(create) > 0 {
+		execOK(ctx, t, ctr, strings.Join(create, "; "), box.vars...)
 	}
-	execOK(ctx, t, ctr, strings.Join(remove, "; "), box.vars...)
+}
+
+// removeInstalls removes the installs of names that fakeInstalls made.
+func removeInstalls(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, names []string) {
+	t.Helper()
+	var remove []string
+	for _, name := range names {
+		remove = append(remove, fmt.Sprintf("Remove-Item -LiteralPath %s -Recurse -Force", installDir(name)))
+	}
+	if len(remove) > 0 {
+		execOK(ctx, t, ctr, strings.Join(remove, "; "), box.vars...)
+	}
 }
 
 // legacyJava writes java=<identifier> to a .sdkmanrc and returns what java

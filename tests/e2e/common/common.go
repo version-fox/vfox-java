@@ -86,7 +86,10 @@ var distributions = map[string]distribution{
 // must install the newest build of the 25.0 line, the line Oracle's own
 // 25/latest download follows (vfox-java#97). Since 2026-10 Foojay lists the
 // feature releases under the JDK's version, which the 25.0 line has too, so
-// that name took a feature release (vfox-java#105).
+// that name took a feature release (vfox-java#105). Of the builds installed,
+// `vfox use` and a .sdkmanrc must select the same one, the newest of the 25.0
+// line, where they took the newest release of the major, which is a feature
+// release as soon as one is installed (vfox-java#110).
 const OracleGraalVMSpec = "25-graal"
 
 // ChecksOracleGraalVM reports whether a combo also checks Oracle GraalVM's
@@ -652,8 +655,8 @@ var featureRelease = regexp.MustCompile(`^\d+\.[1-9]`)
 // BareMajorBuilds picks out of the versions `vfox search` lists, newest
 // first, the builds of a bare major spec's major and distribution
 // (25.4.4.1.1-graal ... 25.0.1-graal for 25-graal), and the one the spec must
-// install: the newest that is no feature release (25.0.4.1.1-graal). The
-// build named like the spec (25-graal, GA 25) is left out: vfox reports a
+// install and select: the newest that is no feature release (25.0.4.1.1-graal).
+// The build named like the spec (25-graal, GA 25) is left out: vfox reports a
 // spec naming an installed version as installed without calling PreInstall.
 func BareMajorBuilds(searched []string, spec string) (builds []string, want string) {
 	major, distribution, _ := strings.Cut(spec, "-")
@@ -668,6 +671,19 @@ func BareMajorBuilds(searched []string, spec string) (builds []string, want stri
 		}
 	}
 	return builds, want
+}
+
+// FeatureReleases picks the feature releases (25.4.4.1.1-graal) out of the
+// builds BareMajorBuilds returned, in their order. A bare major selects the
+// newest of them where they are all there is installed.
+func FeatureReleases(builds []string) []string {
+	var features []string
+	for _, build := range builds {
+		if featureRelease.MatchString(build) {
+			features = append(features, build)
+		}
+	}
+	return features
 }
 
 // nameOnly maps the distributions the suite checks by name only, by short

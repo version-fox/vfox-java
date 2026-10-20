@@ -120,6 +120,23 @@ function distribution_version.is_feature_release(version)
     return version:match("^%d+%.[1-9]") ~= nil
 end
 
+--- Returns what the bare major of a distribution (25-graal) skips, as a
+--- function taking a Java version, or nil where it skips nothing. Oracle
+--- GraalVM's skips the monthly feature releases (25.4.4.1.1), so it takes the
+--- newest build of the 25.0 line, which Oracle's own 25/latest download
+--- follows. GraalVM Community's skips none: its 25.0 line ended with 25.0.2,
+--- and the feature releases are what it still ships. Installing, selecting
+--- with vfox use and reading a .sdkmanrc all go by this, so that they name the
+--- same build.
+--- @param distribution table The distribution of parse_version
+--- @return (fun(version: string): boolean)|nil
+function distribution_version.bare_major_skips(distribution)
+    if distribution.name == "graalvm" then
+        return distribution_version.is_feature_release
+    end
+    return nil
+end
+
 function distribution_version.parse_version(arg)
     local version_parts = strings.split(arg, "-")
     local version

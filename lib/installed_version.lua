@@ -45,8 +45,9 @@ function installed_version.newer(a, b)
 end
 
 --- Returns the newest installed version ending in suffix whose Java version is
---- prefix followed by a rest that the pattern rest matches, or nil.
-function installed_version.newest(installed, prefix, rest, suffix)
+--- prefix followed by a rest that the pattern rest matches, or nil. A version
+--- does not count if the function skip, if given, is true for its Java version.
+function installed_version.newest(installed, prefix, rest, suffix, skip)
     local best, best_version
     for candidate in pairs(installed) do
         local java_version = candidate:sub(1, #candidate - #suffix)
@@ -54,6 +55,7 @@ function installed_version.newest(installed, prefix, rest, suffix)
             java_version .. suffix == candidate
             and java_version:sub(1, #prefix) == prefix
             and java_version:sub(#prefix + 1):find(rest)
+            and not (skip and skip(java_version))
             and (not best or installed_version.newer(java_version, best_version))
         then
             best, best_version = candidate, java_version
@@ -76,10 +78,16 @@ end
 
 --- Returns the newest installed release of a major, or nil: any release of it
 --- (21.0.12.1+1-tem for 21), the first one too (27+36-librca, 27-oracle for
---- 27), but no EA build (26-ea+13 for 26).
-function installed_version.major(installed, major, suffix)
+--- 27), but no EA build (26-ea+13 for 26). The releases for which the function
+--- skip, if given, is true come last: they are taken only where no other
+--- release of the major is installed (25.0.5-graal for 25, and 25.4.4.1.1-graal
+--- only without it).
+function installed_version.major(installed, major, suffix, skip)
     local name = major .. suffix
-    return installed_version.newest(installed, major, "^[.+][%d.+]*$", suffix) or installed[name] and name
+    local rest = "^[.+][%d.+]*$"
+    return installed_version.newest(installed, major, rest, suffix, skip)
+        or installed[name] and name
+        or skip and installed_version.newest(installed, major, rest, suffix)
 end
 
 --- Returns a Java version without the zeros SDKMAN pads releases with, which
@@ -97,16 +105,19 @@ end
 --- input may leave out the build number PreInstall found, so, like PreInstall,
 --- take the newest build of a release (21.0.8-tem selects 21.0.8+9-tem) and
 --- the newest release of a bare major (21-tem selects 21.0.12.1+1-tem), unless
---- the name itself is installed. It may also pad the release with zeros, which
---- PreInstall passes on to Foojay: 27.0.0-librca installs, and so selects, the
---- release 27 (27+36-librca), not the newest one of the major.
-function installed_version.find(installed, version, suffix)
+--- the name itself is installed. In a bare major the releases for which the
+--- function skip, if given, is true come last, as PreInstall skips them for
+--- Oracle GraalVM: 25-graal selects 25.0.5-graal, not 25.4.4.1.1-graal. The
+--- input may also pad the release with zeros, which PreInstall passes on to
+--- Foojay: 27.0.0-librca installs, and so selects, the release 27
+--- (27+36-librca), not the newest one of the major.
+function installed_version.find(installed, version, suffix, skip)
     local name = version .. suffix
     if installed[name] then
         return name
     end
     if version:match("^%d+$") then
-        return installed_version.major(installed, version, suffix)
+        return installed_version.major(installed, version, suffix, skip)
     end
     return installed_version.release(installed, installed_version.unpad(version), suffix)
 end

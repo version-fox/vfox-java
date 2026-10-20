@@ -173,6 +173,34 @@ local cases = {
     -- Until Foojay's change in October 2026, release 0.6.2 named Liberica NIK
     -- with BellSoft's build.
     { "java=23.1.8.r21-nik\n", { "23.1.8+1-nik", "23.1.12.1-nik" }, "23.1.8+1-nik" },
+    -- A bare major, or a release that is not installed, takes the newest
+    -- release of the major, and Oracle GraalVM's monthly feature releases come
+    -- after the 25.0 line there, as in vfox install java@25-graal and vfox use
+    -- java@25-graal (vfox-java#110).
+    { "java=25-graal\n", { "25.4.4.1.1-graal", "25.0.4.1-graal" }, "25.0.4.1-graal" },
+    {
+        "java=25-graal\n",
+        { "25.3.4.1-graal", "25.0.4.1.1-graal", "25.4.4.1.1-graal", "25.0.4.1-graal" },
+        "25.0.4.1.1-graal",
+    },
+    { "java=25.0.3-graal\n", { "25.4.4.1.1-graal", "25.0.4.1-graal" }, "25.0.4.1-graal" },
+    { "java=25.0.4.1-graal\n", { "25.4.4.1.1-graal", "25.0.4.1.1-graal", "25.0.5-graal" }, "25.0.5-graal" },
+    -- The first release of the major belongs to the 25.0 line as well.
+    { "java=25.0.3-graal\n", { "25.4.4.1.1-graal", "25-graal" }, "25-graal" },
+    -- Nothing else of the major installed.
+    { "java=25-graal\n", { "25.4.4.1.1-graal", "25.3.4.1-graal" }, "25.4.4.1.1-graal" },
+    { "java=25.0.3-graal\n", { "25.4.4.1.1-graal" }, "25.4.4.1.1-graal" },
+    -- A file that names a feature release (SDKMAN's identifier is 25.4.4+1-graal)
+    -- takes the newest release of the major, as it did.
+    { "java=25.4.4+1-graal\n", { "25.4.4.1.1-graal", "25.0.4.1-graal" }, "25.4.4.1.1-graal" },
+    { "java=25.5.5-graal\n", { "25.4.4.1.1-graal", "25.0.4.1-graal" }, "25.4.4.1.1-graal" },
+    { "java=25.4.4.1.1-graal\n", { "25.4.4.1.1-graal", "25.0.4.1-graal" }, "25.4.4.1.1-graal" },
+    -- Other majors and distributions: GraalVM Community's feature releases are
+    -- what it still ships, and a minor above 0 means nothing for Mandrel.
+    { "java=21-graal\n", { "21.0.8-graal", "25.4.4.1.1-graal" }, "21.0.8-graal" },
+    { "java=25-graalce\n", { "25.4.4.1.1-graalce", "25.0.2-graalce" }, "25.4.4.1.1-graalce" },
+    { "java=25.0.1-graalce\n", { "25.4.4.1.1-graalce", "25.0.2-graalce" }, "25.4.4.1.1-graalce" },
+    { "java=23-mandrel\n", { "23.1.12.1-mandrel", "23.0.1.2-mandrel" }, "23.1.12.1-mandrel" },
     -- No java line at all selects nothing.
     { "maven=3.9.9\n", { "21.0.8+9-tem" }, nil },
 }

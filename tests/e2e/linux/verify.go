@@ -120,19 +120,46 @@ func verifyLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, distr
 func verifyOwnNumberLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container) {
 	t.Helper()
 	cases, installs := common.OwnNumberIdentifiers()
-	var dirs []string
-	for _, name := range installs {
-		dir := `"${VFOX_HOME:-$HOME/.vfox}"/cache/java/` + shQuote("v-"+name)
-		bin := dir + "/" + shQuote("java-"+name) + "/bin"
-		dirs = append(dirs, dir)
+	fakeInstalls(ctx, t, ctr, installs)
+	for _, c := range cases {
+		out := legacyRun(ctx, t, ctr, c.Identifier, printJava)
+		common.CheckSelects(t, out, c, installs)
+	}
+	removeInstalls(ctx, t, ctr, installs)
+}
+
+// printJava is the command that runs the stand-in java of a faked install,
+// which prints the install's name, or does nothing where no install is
+// selected.
+const printJava = "if command -v java >/dev/null; then java; fi"
+
+// installDir renders the directory vfox keeps the install of name in, as a
+// shell word.
+func installDir(name string) string {
+	return `"${VFOX_HOME:-$HOME/.vfox}"/cache/java/` + shQuote("v-"+name)
+}
+
+// fakeInstalls fakes the installs of names, each with a stand-in java that only
+// prints its name (see common.CheckSelects).
+func fakeInstalls(ctx context.Context, t *testing.T, ctr tc.Container, names []string) {
+	t.Helper()
+	for _, name := range names {
+		bin := installDir(name) + "/" + shQuote("java-"+name) + "/bin"
 		execOK(ctx, t, ctr, fmt.Sprintf("mkdir --parents %s && printf '%%s' %s > %s/java && chmod +x %s/java",
 			bin, shQuote("#!/bin/sh\necho "+shQuote(name)+"\n"), bin, bin))
 	}
-	for _, c := range cases {
-		out := legacyRun(ctx, t, ctr, c.Identifier, "if command -v java >/dev/null; then java; fi")
-		common.CheckSelects(t, out, c, installs)
+}
+
+// removeInstalls removes the installs of names that fakeInstalls made.
+func removeInstalls(ctx context.Context, t *testing.T, ctr tc.Container, names []string) {
+	t.Helper()
+	var dirs []string
+	for _, name := range names {
+		dirs = append(dirs, installDir(name))
 	}
-	execOK(ctx, t, ctr, "rm --recursive "+strings.Join(dirs, " "))
+	if len(dirs) > 0 {
+		execOK(ctx, t, ctr, "rm --recursive "+strings.Join(dirs, " "))
+	}
 }
 
 // legacyJava writes java=<identifier> to a .sdkmanrc and returns what java
