@@ -242,6 +242,7 @@ func runOne(t *testing.T, ctx context.Context, image, platform, arch string, c c
 
 	box := setupSlotEnv(ctx, t, ctr, c.Slug())
 	setupVfox(ctx, t, ctr, box, c.Vfox)
+	checkNotes(ctx, t, ctr, box)
 	activation := fetchActivation(ctx, t, ctr, box)
 	checkVersionlessRejected(ctx, t, ctr, box, activation, c.Distribution)
 	checkMissingVersionRejected(ctx, t, ctr, box, c.Distribution, version, arch)

@@ -64,7 +64,11 @@ JDK, so `java` can only come from what vfox installs:
    (`latest`) or built from source (`main`) — and the local `java` plugin is
    registered from this checkout. On Windows, the runner builds `main` once,
    while the `latest` combinations run, and the `main` containers start from
-   the e2e image plus that `vfox.exe`.
+   the e2e image plus that `vfox.exe`. Then the notes printed by
+   `vfox info java` must link to the README, which lists the short names
+   and shows how to search a distribution. They used to give five short
+   names but not how to list their versions
+   ([vfox#390](https://github.com/version-fox/vfox/issues/390)).
 2. A distribution without a version, alone or after an empty one
    (`java@tem`, `java@-tem`), fails both `vfox install` and `vfox use` with
    an error asking for one. The hooks stopped with a Lua error on the first,
