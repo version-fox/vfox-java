@@ -138,13 +138,19 @@ The open-source edition of GraalVM, built on OpenJDK.
 
 ### Liberica Native Image Kit (`nik`)
 
-[BellSoft's](https://bell-sw.com/) distribution for building native images, based on GraalVM. Java 21 to 25, with `-fx` builds on some platforms.
+[BellSoft's](https://bell-sw.com/) distribution for building native images, based on GraalVM. Releases 21 to 25, which run Java 11, 17 and 20 to 25, with `-fx` builds on some platforms.
 
 ### Mandrel (`mandrel`)
 
-[Red Hat's](https://github.com/graalvm/mandrel) distribution for building Quarkus native executables, which concentrates on `native-image`.
+[Red Hat's](https://github.com/graalvm/mandrel) distribution for building Quarkus native executables, which concentrates on `native-image`. Releases 20.3 to 25, which run Java 11, 17 and 20 to 25.
 
-Mandrel and Liberica NIK numbered their releases after themselves up to version 24 (Mandrel `23.1.12`), and number them after the JDK from 25 on (`25.0.4.1`).
+### Behavior of Mandrel and Liberica NIK
+
+- Both carry the version of the GraalVM they are built from, and their installs are named after it: `23.1.12.1-mandrel`, `23.1.8-nik`. Up to 24 that is not the Java version. 23.1 runs Java 21, 24.0 Java 22, 24.1 Java 23 and 24.2 Java 24, and older releases run Java 11, 17 or 20. From 25 on the two agree (`25.0.4.1`).
+- A bare major is GraalVM's as well: `java@23-mandrel` installs the newest 23.x, `23.1.12.1-mandrel`, which runs Java 21, and `java@21-mandrel` installs `21.3.6-mandrel`, which runs Java 17. A longer version installs the release it names: `java@23.1.12-mandrel` is 23.1.12, not 23.1.12.1, and `java@23.1-mandrel` is the first 23.1 release, 23.1.0. A build number finds nothing (`java@23.1.8+1-nik`).
+- The releases ending in `.0.0` are listed under the bare major (`24-mandrel` is Mandrel 24.0.0) and install with a longer version, `java@24.0.0-mandrel`. Once one is installed, vfox finds `java@24-mandrel` by that name, for `vfox install` and `vfox use` alike.
+- Some releases come for several Java versions under one number, such as Mandrel 21.3.6 for Java 11 and 17. The plugin installs the build for the newest Java, which for Mandrel 23.0.1.2 and Liberica NIK 23.0.1 is Java 20, not 17. Liberica NIK built a few releases twice for the same Java (`25.0.3`), and the later build installs. The name shows neither the Java version nor BellSoft's build, so the other builds cannot be installed.
+- Unreleased: release 0.6.2 names them after Foojay's `java_version`, which held these numbers until Foojay put the Java version there in October 2026. Since then 0.6.2 fails on `java@23.1.12-mandrel` and `java@23.1.8-nik` with `No JDK found`, lists Mandrel in `vfox search` as one name per Java major (`21-mandrel`), installs Mandrel 23.1.8 for `java@21-mandrel` and Liberica NIK 24.1.2, built for Java 23, for `java@23-nik`.
 
 ### GraalVM CE 8 to 19 (`grl8`, `grl11`, `grl16`, `grl17`, `grl19`)
 
@@ -156,7 +162,7 @@ GraalVM Community Edition up to 22.3, from before it numbered its releases after
 
 ### Versions numbered after GraalVM
 
-GraalVM CE 8 to 19, and Gluon GraalVM before 23, carry GraalVM's version numbers, not Java's: `22.3.3-grl17` is GraalVM 22.3.3 and runs Java 17.0.8, and `21.3.1-grl11` runs Java 11. For a bare major vfox takes the highest installed version that starts with it, from any distribution, so with `21.3.1-grl11` and `21.0.12.1+1-tem` installed, `vfox use java@21` selects `21.3.1-grl11`. Name the distribution, as in `java@21-tem`.
+GraalVM CE 8 to 19, Gluon GraalVM before 23, and Mandrel and Liberica NIK before 25 carry GraalVM's version numbers, not Java's: `22.3.3-grl17` is GraalVM 22.3.3 and runs Java 17.0.8, `21.3.1-grl11` runs Java 11, and `23.1.12.1-mandrel` runs Java 21. For a bare major vfox takes the highest installed version that starts with it, from any distribution, so with `21.3.1-grl11` and `21.0.12.1+1-tem` installed, `vfox use java@21` selects `21.3.1-grl11`. Name the distribution, as in `java@21-tem`.
 
 ### Behavior of Oracle GraalVM and GraalVM Community
 

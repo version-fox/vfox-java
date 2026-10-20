@@ -158,3 +158,37 @@ func checkNameOnly(ctx context.Context, t *testing.T, ctr tc.Container, platform
 	}
 	t.Logf("PASS %d distributions go by name on %s: %s", len(names), platform, strings.Join(names, ", "))
 }
+
+// checkOwnNumbers proves Mandrel and Liberica NIK go by the GraalVM numbers
+// they carry (see common.OwnNumberedDistributions): `vfox search java
+// <short>` lists the release the suite names under its number, and with it
+// and the newest release of its major faked as installed, `vfox install
+// java@<long>-<release>` and `vfox install java@<major>-<short>` find those
+// installed (see common.OwnNumberSpecs and common.NewestOfMajor), so nothing
+// downloads.
+func checkOwnNumbers(ctx context.Context, t *testing.T, ctr tc.Container, platform string) {
+	t.Helper()
+	names := common.OwnNumberedDistributions(platform)
+	for _, name := range names {
+		search := "vfox search java " + name
+		out := execRetry(ctx, t, ctr, search, search)
+		searched := common.SearchedVersions(out)
+		spec, installed, bare := common.OwnNumberSpecs(name)
+		require.Containsf(t, searched, installed, "%s must list %s\n--- output ---\n%s", search, installed, out)
+		newest, ok := common.NewestOfMajor(searched, bare)
+		require.Truef(t, ok, "%s lists no release that %s names\n--- output ---\n%s", search, bare, out)
+		var dirs []string
+		for _, version := range []string{installed, newest} {
+			dir := `"${VFOX_HOME:-$HOME/.vfox}"/cache/java/` + shQuote("v-"+version)
+			dirs = append(dirs, dir)
+			execOK(ctx, t, ctr, "mkdir --parents "+dir+"/"+shQuote("java-"+version))
+		}
+		for _, c := range []struct{ spec, want string }{{spec, installed}, {bare, newest}} {
+			out = execRetry(ctx, t, ctr, "vfox install java@"+c.spec, "vfox install java@"+c.spec)
+			require.Containsf(t, common.StripANSI(out), "java@"+c.want+" is already installed",
+				"vfox install java@%s must take %s, which %s lists", c.spec, c.want, search)
+		}
+		execOK(ctx, t, ctr, "rm --recursive "+strings.Join(dirs, " "))
+		t.Logf("PASS java@%s takes %s and java@%s %s", spec, installed, bare, newest)
+	}
+}

@@ -53,7 +53,7 @@ Foojay changes, and the table with it. To get the current one, ask Foojay the wa
 A ✅ does not mean every release is there. As of the same date:
 
 - Windows on ARM64 has no Java 8 from anyone. Temurin has 21 and 23 there, Zulu 16 to 19, 21 and 25, Liberica 11 and 16 to 27, Microsoft 11, 16, 17, 21 and 25, and JetBrains Runtime 17, 21 and 25.
-- On Apple silicon Java 8 comes from Zulu, Liberica, Corretto and Kona. Temurin and Semeru have 11 and 17 to 27 there, and OpenJDK 17 to 27. Mandrel has 23 to 25, and Liberica NIK 22 to 25.
+- On Apple silicon Java 8 comes from Zulu, Liberica, Corretto and Kona. Temurin and Semeru have 11 and 17 to 27 there, and OpenJDK 17 to 27. Mandrel has releases 23.1 to 25, for Java 21 to 25, and Liberica NIK 22.2 to 25, for Java 11, 17 and 20 to 25 (see [their numbers](distributions.md#behavior-of-mandrel-and-liberica-nik)).
 - Intel Macs get new releases later or not at all. OpenJDK and Temurin stop at 26 where Linux has 27, SapMachine stops at 24, and Oracle GraalVM and GraalVM Community stop at 25.0.1. Mandrel has no Intel Mac build.
 - On Alpine, Temurin has arm64 builds from 21 only. For x64, Microsoft has 11 and 17, SapMachine 17 and 20 to 27, Kona 8 and 21, Dragonwell 11, 17, 21 and 25, and JetBrains Runtime 17. Kona has Java 8 for arm64, and JetBrains Runtime 17 for both.
 - Trava has a single build for Linux arm64, 11.0.10+6.

@@ -44,7 +44,7 @@ A few contracts that cost time to find:
 
 ## Names
 
-Installed names are `<java_version>[-<short name>][-fx]`, with no short name for OpenJDK ([versions.md](versions.md#installed-names)). `lib/distribution_version.lua` reads a spec into a version, a distribution and the JavaFX flag, in either order (`21-tem`, `tem-21`). `lib/installed_version.lua` turns a version the user typed into an installed name: the name itself first. A bare major then takes the newest installed release of it, and any other version takes the release itself or its newest build. `PreUse` stops there. `ParseLegacyFile` goes one step further and falls back to the newest installed release of the major.
+Installed names are `<java_version>[-<short name>][-fx]`, with no short name for OpenJDK and Foojay's `distribution_version` in place of `java_version` for Mandrel and Liberica NIK ([versions.md](versions.md#installed-names)). `lib/distribution_version.lua` reads a spec into a version, a distribution and the JavaFX flag, in either order (`21-tem`, `tem-21`). `lib/installed_version.lua` turns a version the user typed into an installed name: the name itself first. A bare major then takes the newest installed release of it, and any other version takes the release itself or its newest build. `PreUse` stops there. `ParseLegacyFile` goes one step further and falls back to the newest installed release of the major.
 
 SDKMAN spells some things differently (`jbr`, `21.0.12.fx-zulu`, `21.0.12-fx+1.1-librca`, `28.0.0+ea.19-open`), and `plugin_spelling` in `hooks/parse_legacy_file.lua` rewrites them into the plugin's before parsing. For the distributions SDKMAN no longer lists, `sdkman_flavours` there turns the virtual machine or JDK in SDKMAN's version into the short name (`22.3.3.r17-grl` is `22.3.3-grl17`). `installed_version.unpad` drops the zeros SDKMAN pads releases with (`27.0.0+36` is `27+36`). Where the short names differ from SDKMAN's is in [distributions.md](distributions.md#short-names-and-sdkman).
 
@@ -54,9 +54,10 @@ SDKMAN spells some things differently (`jbr`, `21.0.12.fx-zulu`, `21.0.12-fx+1.1
 - `version=21` is the GA build `21+35`. A bare major adds `latest=available` to get the newest 21.x.
 - Windows asks for `zip` and `tar.gz` in one request. JetBrains Runtime ships Windows zips for its newer builds only. `PreInstall` takes the zip when a version has both.
 - Elsewhere `other_archive_type` in `lib/foojay.lua` adds one archive type for the distributions that ship no tar.gz there for some or all releases: `tar.xz` for Red Hat, `zip` for OJDKBuild, OpenLogic and Gluon GraalVM. vfox unpacks both, and the zips carry their Unix permissions, so `bin/java` stays executable.
+- `own_numbers` in `lib/foojay.lua` holds Mandrel and Liberica NIK, which carry the GraalVM version they are built from. Foojay gives it as `distribution_version` and the Java version as `java_version`, for Mandrel the major only, so these two are asked for with `distribution_version` and an empty `version`. Foojay matches the numbers given (`23.1.12` lists 23.1.12.1 too), so a longer version keeps only its own release, and a bare major takes the newest itself, as `latest=available` picks an older one for them. The answer is sorted newest first, then by the newest Java for a release that comes for several, then by BellSoft's later build for the same Java, which only the file name carries. `distribution_version` then goes into `java_version`, so the hooks name and list them like the rest.
 - `fixes` in `lib/foojay.lua` drops packages before the hooks see them: the JREs, installer bundles and RHEL 6 builds that Foojay lists among OJDKBuild's Windows JDKs, and the JDK 11 builds of Gluon GraalVM's 22.x releases, which share their version with the JDK 17 ones. For a bare major `latest=available` answers with one package per archive type, which can be one the fix drops, so for these two the plugin then asks for that release in full.
 - `Available` lists a name once where Foojay has two records for it.
-- Foojay marks GraalVM's monthly feature releases (`25.1.3` and on) as LTS. `is_feature_release` in `lib/distribution_version.lua` recognises them, by the minor number, and `Available` drops the note. It is for `graal` and `graalce` only: Mandrel and Liberica NIK numbered their releases after themselves up to 24 (`mandrel` `23.1.12` is LTS) and follow the JDK from 25 on.
+- Foojay marks GraalVM's monthly feature releases (`25.1.3` and on) as LTS. `is_feature_release` in `lib/distribution_version.lua` recognises them, by the minor number, and `Available` drops the note. It is for `graal` and `graalce` only: Mandrel and Liberica NIK carry GraalVM's older numbers up to 24, whose minor is no feature release (`mandrel` `23.1.12` is LTS), and the JDK's from 25 on.
 - For a bare major of Oracle GraalVM (`graal`) only, `PreInstall` skips the feature releases, so the 25.0 line is installed. A major that has nothing but feature releases keeps them. GraalVM Community is not filtered, because its feature releases are what it still ships.
 - The CPU names are `arm64` to `aarch64`, and on Windows `amd64` to `x64`. `darwin` becomes `macos`. On Linux `ldd --version` decides between glibc and musl.
 
@@ -126,7 +127,7 @@ The ids are Foojay's (`oracle_open_jdk` is `open`). It prints `redhat` for Linux
 
 - Downloads are not verified, see above.
 - `vfox search` lists GA releases only. Early-access builds install by name.
-- JRE packages are not offered, and neither are the JDK 11 builds of Gluon GraalVM's 22.x releases.
+- JRE packages are not offered, and neither are the JDK 11 builds of Gluon GraalVM's 22.x releases. Of a Mandrel or Liberica NIK release only the build for its newest Java installs, so Mandrel 21.3.6 for Java 11 does not.
 - Only Linux loong64 has a source besides Foojay.
 
 ## Releasing

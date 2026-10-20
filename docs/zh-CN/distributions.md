@@ -138,13 +138,19 @@ GraalVM 的开源版本，基于 OpenJDK。
 
 ### Liberica Native Image Kit（`nik`）
 
-[BellSoft](https://bell-sw.com/) 用来构建原生镜像的发行版，基于 GraalVM。覆盖 Java 21 到 25，部分平台有带 `-fx` 的构建。
+[BellSoft](https://bell-sw.com/) 用来构建原生镜像的发行版，基于 GraalVM。版本号从 21 到 25，运行的是 Java 11、17 和 20 到 25，部分平台有带 `-fx` 的构建。
 
 ### Mandrel（`mandrel`）
 
-[Red Hat](https://github.com/graalvm/mandrel) 为构建 Quarkus 原生可执行文件提供的发行版，专注于 `native-image`。
+[Red Hat](https://github.com/graalvm/mandrel) 为构建 Quarkus 原生可执行文件提供的发行版，专注于 `native-image`。版本号从 20.3 到 25，运行的是 Java 11、17 和 20 到 25。
 
-Mandrel 和 Liberica NIK 在 24 及以前用自己的版本号体系（Mandrel 的 `23.1.12`），从 25 起沿用 JDK 的版本号（`25.0.4.1`）。
+### Mandrel 与 Liberica NIK 的行为
+
+- 两者都沿用所基于的 GraalVM 的版本号，安装后的版本名用的也是它：`23.1.12.1-mandrel`、`23.1.8-nik`。到 24 为止，这个版本号和 Java 的版本号对不上：23.1 运行的是 Java 21，24.0 是 Java 22，24.1 是 Java 23，24.2 是 Java 24，更早的版本运行 Java 11、17 或 20。从 25 起两者一致（`25.0.4.1`）。
+- 只写大版本号时，这个大版本号同样是 GraalVM 的：`java@23-mandrel` 装最新的 23.x，即 `23.1.12.1-mandrel`，运行的是 Java 21；`java@21-mandrel` 装的是 `21.3.6-mandrel`，运行的是 Java 17。写得更具体的版本只装它指定的那一个：`java@23.1.12-mandrel` 装的是 23.1.12，不是 23.1.12.1；`java@23.1-mandrel` 装的是 23.1 系列的第一个版本 23.1.0。写了构建号则什么也找不到（`java@23.1.8+1-nik`）。
+- 以 `.0.0` 结尾的版本在列表里显示为只有大版本号的名字（`24-mandrel` 是 Mandrel 24.0.0），要写全版本号才能装：`java@24.0.0-mandrel`。装上之后，vfox 会按这个名字找到 `java@24-mandrel`，`vfox install` 和 `vfox use` 都一样。
+- 有些版本号下有几个构建，分别对应不同的 Java，比如 Mandrel 21.3.6 有 Java 11 和 Java 17 两个构建，插件装 Java 最新的那个；对 Mandrel 23.0.1.2 和 Liberica NIK 23.0.1 来说，那是 Java 20，不是 17。Liberica NIK 有几个版本为同一个 Java 构建了两次（`25.0.3`），装的是后一次的构建。版本名里既看不出 Java 版本，也看不出 BellSoft 的构建号，所以其他构建装不了。
+- 未发布：0.6.2 按 Foojay 的 `java_version` 给它们命名。这个字段原先放的就是这些版本号，2026 年 10 月起 Foojay 在这里改放 Java 的版本号。从那以后，0.6.2 装 `java@23.1.12-mandrel` 和 `java@23.1.8-nik` 都报 `No JDK found`，`vfox search` 里的 Mandrel 每个 Java 大版本只列一个名字（`21-mandrel`），`java@21-mandrel` 装的是 Mandrel 23.1.8，`java@23-nik` 装的是为 Java 23 构建的 Liberica NIK 24.1.2。
 
 ### GraalVM CE 8 到 19（`grl8`、`grl11`、`grl16`、`grl17`、`grl19`）
 
@@ -156,7 +162,7 @@ Mandrel 和 Liberica NIK 在 24 及以前用自己的版本号体系（Mandrel �
 
 ### 按 GraalVM 编号的版本
 
-GraalVM CE 8 到 19，以及 23 以前的 Gluon GraalVM，版本号是 GraalVM 自己的，不是 Java 的：`22.3.3-grl17` 是 GraalVM 22.3.3，运行的是 Java 17.0.8；`21.3.1-grl11` 运行的是 Java 11。对只写大版本号的写法，vfox 只按版本号匹配，不分发行版，取以它开头的最高已安装版本，所以同时装了 `21.3.1-grl11` 和 `21.0.12.1+1-tem` 时，`vfox use java@21` 选中的是 `21.3.1-grl11`。请写上发行版，比如 `java@21-tem`。
+GraalVM CE 8 到 19、23 以前的 Gluon GraalVM，以及 25 以前的 Mandrel 和 Liberica NIK，版本号是 GraalVM 自己的，不是 Java 的：`22.3.3-grl17` 是 GraalVM 22.3.3，运行的是 Java 17.0.8；`21.3.1-grl11` 运行的是 Java 11；`23.1.12.1-mandrel` 运行的是 Java 21。对只写大版本号的写法，vfox 只按版本号匹配，不分发行版，取以它开头的最高已安装版本，所以同时装了 `21.3.1-grl11` 和 `21.0.12.1+1-tem` 时，`vfox use java@21` 选中的是 `21.3.1-grl11`。请写上发行版，比如 `java@21-tem`。
 
 ### Oracle GraalVM 与 GraalVM 社区版的行为
 

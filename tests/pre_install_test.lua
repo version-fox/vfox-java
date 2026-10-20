@@ -88,10 +88,9 @@ local foojay = {
     ["openjdk"] = { pkg("25.0.2+10"), pkg("21.0.2+13") },
     ["temurin"] = { pkg("25.0.2+10"), pkg("21.0.8+9") },
     -- Observed on 2026-10-18: Foojay marks GraalVM's feature releases LTS, as
-    -- 25.0 is, and Mandrel 23.1 LTS, as the JDK 21 it builds on is; abridged.
+    -- 25.0 is; abridged.
     ["graalvm"] = { lts(pkg("25.4.4.1")), lts(pkg("25.1.3")), lts(pkg("25.0.4.1")), lts(pkg("25")), pkg("24.0.2") },
     ["graalvm_community"] = { lts(pkg("25.4.4.1")), lts(pkg("25.0.2")) },
-    ["mandrel"] = { lts(pkg("23.1.12")) },
     -- JetBrains Runtime ships Windows zips for its newer builds only, and Foojay
     -- lists a version's zip and tar.gz in either order; abridged.
     ["windows jetbrains 21"] = { pkg("21+2121") },
@@ -186,6 +185,95 @@ for _, other in ipairs(others) do
     end
 end
 
+-- A package of Mandrel or Liberica NIK: its JDK, the GraalVM number it goes by,
+-- its file and term_of_support.
+local function own(java_version, distribution_version, filename, term_of_support, fx)
+    local jdk = file(pkg(java_version, fx), filename, distribution_version)
+    jdk.term_of_support = term_of_support
+    return jdk
+end
+
+-- Mandrel's file names carry the JDK major and Mandrel's number in four parts.
+local function mandrel(jdk, number, term_of_support)
+    local parts = number
+    while select(2, parts:gsub("%.", "")) < 3 do
+        parts = parts .. ".0"
+    end
+    return own(jdk, number, ("mandrel-java%s-linux-amd64-%s-Final.tar.gz"):format(jdk, parts), term_of_support)
+end
+
+-- BellSoft's file names carry the JDK and NIK's number with BellSoft's build,
+-- which distribution_version leaves out, with full- for the JavaFX builds.
+local function nik(jdk, number, term_of_support, fx)
+    local filename = "bellsoft-liberica-vm-" .. (fx and "full-" or "") .. "openjdk" .. jdk .. "-" .. number
+    return own(jdk, number:match("^[^+]*"), filename .. "-linux-amd64.tar.gz", term_of_support, fx)
+end
+
+-- Observed on 2026-10-20 for linux/amd64: Foojay gives the numbers Mandrel and
+-- Liberica NIK go by as distribution_version, and the JDK as java_version,
+-- Mandrel's as the major alone; abridged, in Foojay's order. The plugin asks
+-- for them by distribution_version, which lists the packages whose number
+-- starts with the numbers given, a missing one counting as 0, so 23.1.12
+-- lists 23.1.12.1 as well and 23.1.12.0 does not. A build is ignored.
+local own_numbers = {
+    mandrel = {
+        mandrel("25", "25.0.4.1", "lts"),
+        mandrel("25", "25.0.1", "lts"),
+        mandrel("24", "24.2.2", "sts"),
+        mandrel("22", "24.0.2", "sts"),
+        mandrel("22", "24", "sts"),
+        mandrel("21", "23.1.12.1", "lts"),
+        mandrel("21", "23.1.12", "lts"),
+        -- Foojay lists some files twice, as it did Oracle GraalVM 25.0.4.
+        mandrel("21", "23.1.12", "lts"),
+        mandrel("21", "23.1.8", "lts"),
+        mandrel("21", "23.1.3.1", "lts"),
+        mandrel("20", "23.0.1.2", "sts"),
+        mandrel("17", "23.0.6", "lts"),
+        mandrel("17", "23.0.1.2", "lts"),
+        mandrel("17", "21.3.6", "lts"),
+        mandrel("11", "21.3.6", "lts"),
+    },
+    liberica_native = {
+        nik("25.0.4.1+2", "25.0.4.1+1", "lts"),
+        nik("25.0.4.1+2", "25.0.4.1+1", "lts", true),
+        -- BellSoft built 25.0.3 twice for the same JDK.
+        nik("25.0.3+12", "25.0.3+1", "lts"),
+        nik("25.0.3+12", "25.0.3+2", "lts", true),
+        nik("25.0.3+12", "25.0.3+2", "lts"),
+        nik("25.0.3+12", "25.0.3+1", "lts", true),
+        nik("23.0.2+9", "24.1.2+1", "sts"),
+        nik("21.0.12.1+2", "23.1.12.1+1", "lts"),
+        nik("21.0.8+13", "23.1.8+1", "lts", true),
+        nik("21.0.8+13", "23.1.8+1", "lts"),
+        nik("20.0.2+10", "23.0.1+1", "lts"),
+        nik("17.0.10+13", "23.0.3+1", "lts"),
+        nik("17.0.10+13", "22.3.5+1", "sts"),
+        nik("17.0.8.1+1", "23.0.1+2", "lts"),
+        nik("17.0.8+7", "23.0.1+1", "lts"),
+        nik("17.0.5+8", "21.3.3.1+1", "sts"),
+        nik("11.0.22+12", "22.3.5+1", "sts"),
+        nik("11.0.17+7", "21.3.3.1+1", "sts"),
+    },
+}
+
+-- Whether Foojay lists a package of own_numbers whose number is
+-- distribution_version for the query value asked.
+local function own_number_matches(distribution_version, asked)
+    local numbers = {}
+    for number in distribution_version:gmatch("%d+") do
+        table.insert(numbers, tonumber(number))
+    end
+    local i = 0
+    for number in asked:match("^[^+]*"):gmatch("%d+") do
+        i = i + 1
+        if (numbers[i] or 0) ~= tonumber(number) then
+            return false
+        end
+    end
+    return true
+end
+
 local requests = {}
 local responses = {}
 package.preload.http = function()
@@ -218,11 +306,26 @@ package.preload.http = function()
                 if params.operating_system == "windows" or params.operating_system == "macos" then
                     key = params.operating_system .. " " .. key
                 end
-                -- Only the packages of the archive types asked for are listed.
+                local packages = foojay[key] or {}
+                if own_numbers[params.distribution] and key == params.distribution then
+                    packages = {}
+                    local asked = (params.distribution_version or ""):match("^[^ ]*")
+                    for _, package in ipairs(own_numbers[params.distribution]) do
+                        if own_number_matches(package.distribution_version, asked) then
+                            table.insert(packages, package)
+                        end
+                    end
+                end
+                -- Only the packages of the archive types asked for are listed,
+                -- each a copy, as a decoded answer is.
                 local result = {}
-                for _, package in ipairs(foojay[key] or {}) do
+                for _, package in ipairs(packages) do
                     if archive_types[package.archive_type] then
-                        table.insert(result, package)
+                        local copy = {}
+                        for field, value in pairs(package) do
+                            copy[field] = value
+                        end
+                        table.insert(result, copy)
                     end
                 end
                 body = { result = result }
@@ -342,8 +445,8 @@ assert(all["25.0.2+10-tem"] and all["21.0.8+9-tem"], "Available all: Temurin ver
 
 -- Searching drops the LTS note from GraalVM's feature releases, each
 -- superseded within a month, whether it lists one distribution or all.
--- GraalVM's other releases keep it, and so do Mandrel's, which Mandrel numbers
--- after itself.
+-- GraalVM's other releases keep it, and so do Mandrel's, though their GraalVM
+-- numbers have a non-zero minor up to 24.
 for version, note in pairs({
     ["25.4.4.1-graal"] = "",
     ["25.1.3-graal"] = "",
@@ -421,6 +524,82 @@ RUNTIME.osType = "darwin"
 check("25-opnlgc", "25.0.4+7-opnlgc", true, "zip")
 RUNTIME.osType = "linux"
 
+-- Installs version of Mandrel or Liberica NIK, which the plugin asks Foojay
+-- for by distribution_version alone, and checks the end of the file name.
+local function check_own_number(version, expected, file_end)
+    requests = {}
+    local result = PLUGIN:PreInstall({ version = version })
+    assert(result.version == expected, version .. ": expected " .. expected .. ", got " .. tostring(result.version))
+    assert(result.url:sub(-#file_end) == file_end, version .. ": expected ..." .. file_end .. ", got " .. result.url)
+    local asked = require("distribution_version").parse_version(version).version:gsub("%+", "%%2B")
+    local lookups = {}
+    for _, url in ipairs(requests) do
+        if url:sub(1, #JDKS) == JDKS then
+            table.insert(lookups, url)
+        end
+    end
+    assert(
+        #lookups == 1
+            and lookups[1]:find("?version=&", 1, true)
+            and lookups[1]:sub(-#asked - 22) == "&distribution_version=" .. asked
+            and not lookups[1]:find("latest=", 1, true),
+        version .. ": unexpected lookups " .. table.concat(lookups, " ")
+    )
+    cases = cases + 1
+end
+
+-- Mandrel and Liberica NIK install by the GraalVM numbers they go by, which
+-- Foojay gave as java_version until October 2026 and now as
+-- distribution_version (vfox-java#106). A longer version takes the release it
+-- names, though Foojay lists 23.1.12.1 for 23.1.12 as well.
+check_own_number("23.1.12-mandrel", "23.1.12-mandrel", "java21-linux-amd64-23.1.12.0-Final.tar.gz")
+check_own_number("mandrel-23.1.12", "23.1.12-mandrel", "java21-linux-amd64-23.1.12.0-Final.tar.gz")
+check_own_number("23.1.12.0-mandrel", "23.1.12-mandrel", "java21-linux-amd64-23.1.12.0-Final.tar.gz")
+check_own_number("23.1.12.1-mandrel", "23.1.12.1-mandrel", "java21-linux-amd64-23.1.12.1-Final.tar.gz")
+check_own_number("23.1.8-nik", "23.1.8-nik", "vm-openjdk21.0.8+13-23.1.8+1-linux-amd64.tar.gz")
+check_own_number("23.1.8-nik-fx", "23.1.8-nik-fx", "vm-full-openjdk21.0.8+13-23.1.8+1-linux-amd64.tar.gz")
+-- A bare major is theirs, not the JDK's, and takes the newest release, which
+-- latest=available does not find: it answered 23.1.8 for 21 and 25.0.1 for 25.
+check_own_number("23-mandrel", "23.1.12.1-mandrel", "java21-linux-amd64-23.1.12.1-Final.tar.gz")
+check_own_number("25-mandrel", "25.0.4.1-mandrel", "java25-linux-amd64-25.0.4.1-Final.tar.gz")
+check_own_number("24-mandrel", "24.2.2-mandrel", "java24-linux-amd64-24.2.2.0-Final.tar.gz")
+check_own_number("23-nik", "23.1.12.1-nik", "vm-openjdk21.0.12.1+2-23.1.12.1+1-linux-amd64.tar.gz")
+-- A release that comes for several JDKs installs the build for the newest.
+check_own_number("21-mandrel", "21.3.6-mandrel", "java17-linux-amd64-21.3.6.0-Final.tar.gz")
+check_own_number("23.0.1.2-mandrel", "23.0.1.2-mandrel", "java20-linux-amd64-23.0.1.2-Final.tar.gz")
+check_own_number("liberica_native-21", "21.3.3.1-nik", "vm-openjdk17.0.5+8-21.3.3.1+1-linux-amd64.tar.gz")
+check_own_number("22.3.5-nik", "22.3.5-nik", "vm-openjdk17.0.10+13-22.3.5+1-linux-amd64.tar.gz")
+check_own_number("23.0.1-nik", "23.0.1-nik", "vm-openjdk20.0.2+10-23.0.1+1-linux-amd64.tar.gz")
+-- Of two builds for the same JDK, BellSoft's later one installs.
+check_own_number("25.0.3-nik", "25.0.3-nik", "vm-openjdk25.0.3+12-25.0.3+2-linux-amd64.tar.gz")
+check_own_number("25.0.3-nik-fx", "25.0.3-nik-fx", "vm-full-openjdk25.0.3+12-25.0.3+2-linux-amd64.tar.gz")
+
+-- Searching lists their releases newest first by those numbers, each once with
+-- the LTS note of the build that installs. Foojay lists them by JDK, 23.0.1.2
+-- for JDK 20 before 23.0.6 for JDK 17. JavaFX builds come in between.
+for short, want in pairs({
+    mandrel = "25.0.4.1-mandrel (LTS), 25.0.1-mandrel (LTS), 24.2.2-mandrel, 24.0.2-mandrel, 24-mandrel, "
+        .. "23.1.12.1-mandrel (LTS), 23.1.12-mandrel (LTS), 23.1.8-mandrel (LTS), 23.1.3.1-mandrel (LTS), "
+        .. "23.0.6-mandrel (LTS), 23.0.1.2-mandrel, 21.3.6-mandrel (LTS)",
+    nik = "25.0.4.1-nik (LTS), 25.0.3-nik (LTS), 24.1.2-nik, 23.1.12.1-nik (LTS), 23.1.8-nik (LTS), "
+        .. "23.0.3-nik (LTS), 23.0.1-nik (LTS), 22.3.5-nik, 21.3.3.1-nik",
+}) do
+    for _, query in ipairs({ short, "all" }) do
+        local entries = {}
+        for _, item in ipairs(PLUGIN:Available({ args = { query } })) do
+            local entry = item.version .. (item.note == "" and "" or " (" .. item.note .. ")")
+            if item.version:sub(-#short - 1) == "-" .. short then
+                table.insert(entries, entry)
+            elseif item.version:sub(-#short - 4) == "-" .. short .. "-fx" then
+                assert(item.note:find("JavaFX$"), "Available " .. query .. ": " .. entry)
+            end
+        end
+        local got = table.concat(entries, ", ")
+        assert(got == want, ("Available %s lists %s, want %s"):format(query, got, want))
+    end
+end
+assert(listed("nik")["23.1.8-nik-fx"] == "LTS, JavaFX", "Available nik: 23.1.8-nik-fx")
+
 -- A distribution without a version, alone or after an empty one, asks for a
 -- version before any lookup (vfox-java#98). Alone it failed with a Lua error;
 -- the empty version reached Foojay, which listed every release, and the newest
@@ -443,6 +622,19 @@ for _, case in ipairs({
     local ok, err = pcall(PLUGIN.PreInstall, PLUGIN, { version = case[1] })
     assert(not ok and tostring(err):find(case[2], 1, true), case[1] .. ": unexpected " .. tostring(err))
     assert(#requests == 0, case[1] .. ": unexpected lookup " .. tostring(requests[1]))
+end
+
+-- A longer version of Mandrel or Liberica NIK installs only the release it
+-- names, which has no build in its name: there is a Mandrel 23.1.3.1 but no
+-- 23.1.3, and Liberica NIK 23.1.8 is named 23.1.8-nik.
+for _, version in ipairs({ "23.1.3-mandrel", "23.1.8+1-nik", "26-mandrel" }) do
+    for i = #requests, 1, -1 do
+        requests[i] = nil
+    end
+    local ok, err = pcall(PLUGIN.PreInstall, PLUGIN, { version = version })
+    local want = "No JDK found for " .. version .. " on linux/amd64"
+    assert(not ok and tostring(err):find(want, 1, true), version .. ": unexpected " .. tostring(err))
+    assert(#requests == 1, version .. ": expected one lookup, got " .. #requests)
 end
 
 print("PASS: " .. cases .. " PreInstall Foojay lookup cases")

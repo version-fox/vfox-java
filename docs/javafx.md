@@ -33,13 +33,13 @@ A build with JavaFX lists `javafx.base` and the others, one without lists none.
 
 ## Where JavaFX builds exist
 
-As of 2026-10-18 four distributions have them, and not for every platform. The table lists the LTS releases that have a JavaFX build. The releases in between have some too, with gaps.
+As of 2026-10-20 four distributions have them, and not for every platform. The table lists the LTS releases that have a JavaFX build. The releases in between have some too, with gaps. For Liberica NIK it gives the Java version, not the GraalVM version in its names (see [distributions.md](distributions.md#behavior-of-mandrel-and-liberica-nik)): its JavaFX builds for Java 21 are `23.1.x-nik-fx`.
 
 | Distribution | Linux x64 | Linux arm64 | Alpine x64 | macOS Intel | macOS Apple silicon | Windows x64 | Windows arm64 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Zulu (`zulu`) | 8, 11, 17, 21, 25 | 8, 11, 17, 21, 25 | – | 8, 11, 17, 21, 25 | 8, 11, 17, 21, 25 | 8, 11, 17, 21, 25 | – |
 | Liberica (`librca`) | 8, 11, 17, 21, 25 | 11, 17, 21, 25 | 11 | 8, 11, 17, 21, 25 | 8, 11, 17, 21, 25 | 8, 11, 17, 21, 25 | 11, 17, 21, 25 |
 | Corretto (`amzn`) | 8 | 8 | – | 8 | – | 8 | – |
-| Liberica NIK (`nik`) | 21, 25 | – | – | 25 | 25 | 21, 25 | – |
+| Liberica NIK (`nik`) | 11, 17, 21, 25 | – | – | 11, 17, 21, 25 | 11, 17, 21, 25 | 11, 17, 21, 25 | – |
 
 Nothing has JavaFX for Alpine arm64. Loongnix has JavaFX builds for LoongArch, selected the same way, see [loongnix.md](loongnix.md). To see the current picture for a platform, add `javafx_bundled=true` to a query like the ones in [foojay.md](foojay.md).

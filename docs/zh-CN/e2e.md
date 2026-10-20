@@ -34,6 +34,8 @@ Windows 容器的覆盖（`tests/e2e/windows`）无法在开发容器里运行�
 2. 只写发行版不写版本，无论单独写还是跟在空版本后面（`java@tem`、`java@-tem`），`vfox install` 和 `vfox use` 都应失败，并提示补上版本。以前，`java@tem` 会让钩子报 Lua 错误；`java@-tem` 则让 `PreInstall` 把空版本发给 Foojay，Foojay 列出所有版本，结果装上了最新的。没有任何发行版发布过的版本（`<大版本>.0.99`）应该安装失败，并且 `PreInstall` 要指出它搜索的平台（`linux/amd64`、`windows/arm64` 等），以此确认向 Foojay 查询的就是 runner 所在的平台。已固定版本里从未发布过的构建（`<版本>+99`，例如 `21.0.8+99-tem`）也一样，这证明查询保留了构建号：Foojay 会把没编码的 `+` 当成空格并丢掉构建号，于是会装上这个版本的最新构建。
 3. 在 `graalce` 这一行里，Oracle GraalVM 只写大版本号的 `25-graal` 应该装 25.0 系列的最新构建（`25.0.4.1-graal`），也就是 Oracle 官方 `25/latest` 下载跟的那个系列，而不是 Foojay 列在它前面的某个每月特性版本（比如 `25.4.4.1-graal`）。`vfox search java graal` 列出的 25 的各构建会先被模拟成已安装，这样 `vfox install` 报出的就是 `PreInstall` 选中的那个，而且不会下载任何东西。GA 版本 25 不放进去，因为那样 vfox 会发现 `25-graal` 已安装，根本不会去问 `PreInstall`。
 4. 在 `tem` 这几行里（这几行在每个 runner 上都会运行），只按名字检查的发行版（`adpt` 到 `semcrt`，即 `tests/e2e/common` 里的 `nameOnly`），只要 Foojay 在这个 runner 上有它的包，都要能用简称找到：`vfox search java <简称>` 能列出它；把它列出的最新版本模拟成已安装后，`vfox install java@<大版本>-<简称>`（`22-grl17`）要报告这个版本已经安装，所以不会下载任何东西。以前没有这些简称时，这两条命令分别报 `Unsupported distribution` 和 `Could not extract a valid distribution`。
+
+   同样在这几行里，Mandrel 和 Liberica NIK 要按它们沿用的 GraalVM 版本号来（`tests/e2e/common` 里的 `ownNumbers`；Windows arm64 上两者都没有）：`vfox search java mandrel` 要列出 `23.1.12-mandrel`（Liberica NIK 是 `23.1.8-nik`）；把它和搜索结果里最新的 23.x 模拟成已安装后，`vfox install java@mandrel-23.1.12` 和 `vfox install java@23-mandrel` 要报告这两个版本已经安装。2026 年 10 月 Foojay 把这个版本号挪到了 `distribution_version`，插件改读它之前，搜索结果每个 Java 大版本只列一个名字，找不到 `23.1.12-mandrel`，`java@23-mandrel` 装上的是为 Java 23 构建的 Mandrel 24.1.2。
 5. 固定的版本按 `PreInstall` 给它起的名字安装：请求的版本加上构建号（`21.0.8-tem` 安装为 `21.0.8+9-tem`）。`vfox search java <发行版>`（`Available` 钩子）把同一个名字列为已安装，带 JavaFX 的构建会标注 JavaFX。对 GraalVM，它还必须列出自 25.1 起每月发布的特性版本（`25.4.4.1-graalce`），这些版本都不标 LTS（Foojay 标了，因为它们基于的 JDK 是 LTS）；每个版本大约只存在一个月。在 Windows 上，列表里要包含 JetBrains Runtime 21.0.5，它在 Windows 上只有 tar.gz。
 6. 在执行任何 `vfox use` 之前，`.sdkmanrc` 要能通过 `ParseLegacyFile` 选中 JDK。测试时，`vfox list java` 里排在最前面的是另一个版本的空安装（`21.0.80+1-tem`，它的版本号以固定的版本开头；vfox 按字符串降序给已安装版本排序）。以前 `ParseLegacyFile` 会把它当成第一个以该版本开头的版本，对补零的版本（见下面第二条），则当成该大版本里最新的版本。要覆盖的写法有：
    - 不含构建号的 SDKMAN 标识符：`java=21.0.8-tem`、`java=21.0.5-jbr`（SDKMAN 对 JetBrains 的叫法）、`java=25.0.4.fx-librca`（它对 JavaFX 构建的写法）。
@@ -50,7 +52,7 @@ Windows 容器的覆盖（`tests/e2e/windows`）无法在开发容器里运行�
 | 发行版 | 版本 | 覆盖内容 | amd64 | arm64 |
 | ------------ | ------- | ---------------------------------------------------------------------------- | ----- | ----- |
 | `open` | 25.0.2 | 默认发行版，版本不带后缀 | ✓ | |
-| `tem` | 21.0.8 | 常规路径（Linux 上是 tar.gz，Windows 上是 zip）；只按名字检查的那些发行版 | ✓ | ✓ |
+| `tem` | 21.0.8 | 常规路径（Linux 上是 tar.gz，Windows 上是 zip）；第 4 条里按名字和按版本号的检查 | ✓ | ✓ |
 | `librca-fx` | 25.0.4 | 带 JavaFX 的构建（`-fx`） | ✓ | ✓ |
 | `jb` | 21.0.5 | Windows 上走 tar.gz 的路径，那里没有 zip | ✓ | ✓ |
 | `graalce` | 25.0.2 | 事先设置的 `GRAALVM_HOME` 保持原值；Oracle GraalVM 的 `25-graal` | ✓ | |
