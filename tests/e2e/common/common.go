@@ -864,6 +864,37 @@ func CheckSelects(t *testing.T, out string, c LegacyCase, installs []string) {
 	t.Logf("PASS .sdkmanrc java=%s selects %s", c.Identifier, c.Selects)
 }
 
+// JdkLookups picks, out of the log of the Linux suite's stand-in for
+// api.foojay.io (tests/e2e/linux/front), the lookups of packages, path and
+// query, in the order they were asked.
+func JdkLookups(log string) []string {
+	var lookups []string
+	for _, line := range strings.Split(log, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "/disco/v3.0/packages/jdks?") {
+			lookups = append(lookups, line)
+		}
+	}
+	return lookups
+}
+
+// AsksAsSearch reports an error unless every lookup of an install is the
+// last one of the search before it. Foojay's answers are cached per
+// question, so after a release another question could take a build the
+// search does not list yet (vfox-java#113).
+func AsksAsSearch(searched, installed []string) error {
+	if len(searched) == 0 || len(installed) == 0 {
+		return fmt.Errorf("the search asked Foojay %q and the install %q", searched, installed)
+	}
+	want := searched[len(searched)-1]
+	for _, lookup := range installed {
+		if lookup != want {
+			return fmt.Errorf("the install asked Foojay %s, the search %s", lookup, want)
+		}
+	}
+	return nil
+}
+
 // ContainerName returns a unique container name per run: the combo slug stays
 // greppable in `docker ps`, the random suffix avoids clashes with leftovers
 // from killed runs.

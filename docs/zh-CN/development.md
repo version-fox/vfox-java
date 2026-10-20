@@ -51,12 +51,12 @@ SDKMAN 有些写法不同（`jbr`、`21.0.12.fx-zulu`、`21.0.12-fx+1.1-librca`�
 ## Foojay
 
 - 查询里的 `+` 必须做百分号编码。Foojay 会把没编码的 `+` 当成空格并丢掉构建号，`21.0.5+63130` 就会匹配 21.0.5 的所有构建。
-- `version=21` 只是 GA 构建 `21+35`。只写大版本号时会加上 `latest=available`，才能拿到最新的 21.x。
+- `version=21` 只是 GA 构建 `21+35`，所以只写大版本号时和 `vfox search` 发同一个请求，查出全部的包，再由 `lib/foojay.lua` 留下这个大版本的包，顺序沿用 Foojay 的从新到旧。不用 `latest=available` 挑最新的 21.x，因为 Foojay 的结果按请求分别缓存，新版本发布后的半小时里，那个请求的结果里可能有搜索还没列出的构建（见 [foojay.md](foojay.md#插件发出的请求)）。
 - Windows 在同一次请求里同时要 `zip` 和 `tar.gz`。JetBrains Runtime 只为较新的构建提供 Windows 的 zip。同一版本两种都有时，`PreInstall` 取 zip。
 - 在其他系统上，有几个发行版的部分或全部版本没有 tar.gz，`lib/foojay.lua` 里的 `other_archive_type` 会为它们多要一种格式：Red Hat 要 `tar.xz`，OJDKBuild、OpenLogic 和 Gluon GraalVM 要 `zip`。这两种 vfox 都能解压，这些 zip 包也带着 Unix 权限，所以 `bin/java` 仍然可以执行。
-- `lib/foojay.lua` 里的 `own_numbers` 列的是 Mandrel 和 Liberica NIK，它们沿用所基于的 GraalVM 的版本号。Foojay 把这个版本号放在 `distribution_version` 里，把 Java 的版本号放在 `java_version` 里（Mandrel 的 `java_version` 只有大版本号），所以查这两个发行版时用 `distribution_version`，`version` 留空。Foojay 按给出的几段数字匹配（查 `23.1.12` 也会返回 23.1.12.1），所以写得更具体的版本，插件只保留与它完全相同的那个；只写大版本号时由插件自己挑最新的，因为 `latest=available` 对它们会挑出旧版本。结果按版本从新到旧排；同一版本有几个 Java 版本的构建时，Java 最新的在前；为同一个 Java 构建了两次时，BellSoft 后一次的构建在前，两次构建只能从文件名区分。之后 `distribution_version` 写进 `java_version`，钩子就能像对其他发行版一样给它们命名、列出它们。
-- Oracle GraalVM 和 GraalVM 社区版按 GraalVM 自己的版本号命名和查找。从 2026 年 10 月起，Foojay 把它放在 `distribution_version` 里，`java_version` 则是 JDK 的版本号。`lib/foojay.lua` 里的 `graalvm_packages` 和 `vfox search` 发同一个请求，查出全部的包，这样安装时看到的构建和搜索列出的一致（见 [foojay.md](foojay.md#某个发行版的所有版本)）。它把每个包改用 GraalVM 的版本号命名（`graalvm_version`：取 `java_version` 和 `distribution_version` 中较新的那个，因为 GraalVM 社区版的特性版本还有一份按老办法列的记录），按从新到旧排序；只写大版本号时留下这个大版本的全部包，更具体的版本则只留下它指的那一个，补的零不算。给 `vfox search` 用时，同一个下载只留一条，用两个名字中较新的那个（`25.4.4.1.1`，不是 `25.4.4.1`）。查这两个发行版时不加 `latest=available`，因为它会漏掉版本：2026-10-20 在 Windows 上查 25，结果里有 GraalVM `25.0.4.1`，却没有 `25.0.4.1.1`，两者的 Java 版本都是 25.0.4.1。EA 构建仍按 `version` 查。
-- `lib/foojay.lua` 里的 `fixes` 会在钩子拿到结果之前去掉一些包：Foojay 列在 OJDKBuild 的 Windows JDK 里的 JRE、installer bundle 包和 RHEL 6 构建，以及 Gluon GraalVM 22.x 的 JDK 11 构建，它们和 JDK 17 构建共用一个版本号。只写大版本号时，`latest=available` 每种格式只返回一个包，这个包可能正好是要去掉的，所以对这两个发行版，插件会再按那个版本完整地查一次。
+- `lib/foojay.lua` 里的 `own_numbers` 列的是 Mandrel 和 Liberica NIK，它们沿用所基于的 GraalVM 的版本号。Foojay 把这个版本号放在 `distribution_version` 里，把 Java 的版本号放在 `java_version` 里（Mandrel 的 `java_version` 只有大版本号），所以查这两个发行版时和搜索一样查出全部的包，再按 `distribution_version` 挑：写得更具体的版本，只保留与它完全相同的那个；只写大版本号时挑这个大版本里最新的，因为 `latest=available` 对它们会挑出旧版本。结果按版本从新到旧排；同一版本有几个 Java 版本的构建时，Java 最新的在前；为同一个 Java 构建了两次时，BellSoft 后一次的构建在前，两次构建只能从文件名区分。之后 `distribution_version` 写进 `java_version`，钩子就能像对其他发行版一样给它们命名、列出它们。
+- Oracle GraalVM 和 GraalVM 社区版按 GraalVM 自己的版本号命名和查找。从 2026 年 10 月起，Foojay 把它放在 `distribution_version` 里，`java_version` 则是 JDK 的版本号。`lib/foojay.lua` 里的 `graalvm_packages` 和 `vfox search` 发同一个请求，查出全部的包，这样安装时看到的构建和搜索列出的一致（见 [foojay.md](foojay.md#插件发出的请求)）。它把每个包改用 GraalVM 的版本号命名（`graalvm_version`：取 `java_version` 和 `distribution_version` 中较新的那个，因为 GraalVM 社区版的特性版本还有一份按老办法列的记录），按从新到旧排序；只写大版本号时留下这个大版本的全部包，更具体的版本则只留下它指的那一个，补的零不算。给 `vfox search` 用时，同一个下载只留一条，用两个名字中较新的那个（`25.4.4.1.1`，不是 `25.4.4.1`）。`latest=available` 在这里也会漏掉版本：2026-10-20 在 Windows 上查 25，结果里有 GraalVM `25.0.4.1`，却没有 `25.0.4.1.1`，两者的 Java 版本都是 25.0.4.1。EA 构建仍按 `version` 查。
+- `lib/foojay.lua` 里的 `fixes` 会在钩子拿到结果之前去掉一些包：Foojay 列在 OJDKBuild 的 Windows JDK 里的 JRE、installer bundle 包和 RHEL 6 构建，以及 Gluon GraalVM 22.x 的 JDK 11 构建，它们和 JDK 17 构建共用一个版本号。只写大版本号时，从去掉之后剩下的包里挑。
 - Foojay 里同一个名字有两条记录时，`Available` 只列一次。
 - GraalVM 社区版每月发布的特性版本（`25.1.3` 起），Foojay 按老办法列的那些标成了 LTS，以前 Oracle GraalVM 的也是这样。`lib/distribution_version.lua` 里的 `is_feature_release` 按次版本号识别它们，`Available` 去掉它们的备注。它只适用于 `graal` 和 `graalce`：Mandrel 和 Liberica NIK 在 24 及以前沿用 GraalVM 的旧版本号，次版本号并不表示特性版本（`mandrel` 的 `23.1.12` 就是 LTS），从 25 起和 JDK 的版本号一致。
 - 只有 Oracle GraalVM（`graal`）在只写大版本号时，`PreInstall` 才会跳过特性版本，所以装的是 25.0 系列。一个大版本里只有特性版本时，则保留它们。GraalVM 社区版不做这个过滤，因为特性版本就是它现在发布的全部。
@@ -74,7 +74,7 @@ go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/loongnix_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
 ```
 
-请在仓库根目录运行。五个文件都会加载 `tests/support.lua`，它模拟 `vfox.strings`；`tests/pre_install_test.lua` 和 `tests/loongnix_test.lua` 还自己模拟了 `http` 和 `json`。`tests/pre_install_test.lua` 把 Foojay 的返回结果放在文件开头的一张表里，键是 `<发行版> [<版本>] [<latest>]`，Windows 和 macOS 的前面再分别加 `windows` 和 `macos`。新增用例需要的返回结果就加在那里，并注明观察到的日期。Lint、许可证头和容器测试见 [e2e.md](e2e.md#本地检查)。
+请在仓库根目录运行。五个文件都会加载 `tests/support.lua`，它模拟 `vfox.strings`；`tests/pre_install_test.lua` 和 `tests/loongnix_test.lua` 还自己模拟了 `http` 和 `json`。`tests/pre_install_test.lua` 把 Foojay 的返回结果放在文件开头的一张表里，键是 `<发行版> [<版本>]`，Windows 和 macOS 的前面再分别加 `windows` 和 `macos`。新增用例需要的返回结果就加在那里，并注明观察到的日期。Lint、许可证头和容器测试见 [e2e.md](e2e.md#本地检查)。
 
 想对着真实的 Foojay 调用单个钩子，可以用 vfox 1.0.13 及以后版本的 `vfox plugin run`。它不会注册插件，`--os` 和 `--arch` 可以模拟其他平台：
 

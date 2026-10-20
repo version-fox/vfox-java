@@ -114,38 +114,30 @@ local function zips(list)
 end
 
 -- Foojay answers observed on 2026-10-17 for linux/amd64 tar.gz packages, keyed
--- by "<distribution>[ <version>][ <latest>]", and for windows/amd64 zip and
--- tar.gz packages, keyed by "windows <distribution>[ <version>][ <latest>]"
--- (darwin/amd64: "macos ...").
+-- by "<distribution>[ <version>]", and for windows/amd64 zip and tar.gz
+-- packages, keyed by "windows <distribution>[ <version>]" (darwin/amd64:
+-- "macos ...").
 local foojay = {
-    ["temurin 21"] = { pkg("21+35") },
-    ["temurin 21 available"] = { pkg("21.0.12.1+1") },
     ["temurin 21.0.8"] = { pkg("21.0.8+9") },
-    -- latest=available looks at the major alone.
-    ["temurin 21.0.8 available"] = { pkg("21.0.12.1+1") },
     -- Oracle GraalVM's early-access builds are asked for by version.
     ["graalvm 26-ea+13"] = { graal("26-ea+13", "26", "sts", "graalvm-jdk-26.0.0-ea.13_linux-x64_bin.tar.gz") },
-    ["zulu 21"] = { pkg("21+35"), pkg("21+35", true) },
-    ["zulu 21 available"] = { pkg("21.0.12.1+1"), pkg("21.0.12.1+1", true) },
-    ["openjdk 21"] = { pkg("21+35") },
-    ["openjdk 21 available"] = { pkg("21.0.2+13") },
     ["openjdk 25.0.2"] = { pkg("25.0.2+10") },
     ["openjdk 28-ea"] = { pkg("28-ea+19"), pkg("28-ea+18"), pkg("28-ea+15") },
     ["openjdk 28-ea+15"] = { pkg("28-ea+15") },
     -- JetBrains Runtime has nine 21.0.5 builds; abridged.
     ["jetbrains 21.0.5"] = { pkg("21.0.5+79248"), pkg("21.0.5+76240"), pkg("21.0.5+63130"), pkg("21.0.5+6318") },
     ["jetbrains 21.0.5+63130"] = { pkg("21.0.5+63130") },
-    -- Searching asks for no version; abridged.
+    -- Searching asks for no version, and so does a bare major, which takes the
+    -- newest release of the major; abridged, newest first as Foojay lists them.
     ["openjdk"] = { pkg("25.0.2+10"), pkg("21.0.2+13") },
-    ["temurin"] = { pkg("25.0.2+10"), pkg("21.0.8+9") },
+    ["temurin"] = { pkg("25.0.2+10"), pkg("21.0.12.1+1"), pkg("21.0.8+9"), pkg("21+35") },
+    ["zulu"] = { pkg("25.0.2+10"), pkg("21.0.12.1+1"), pkg("21.0.12.1+1", true), pkg("21+35"), pkg("21+35", true) },
     -- Installing Oracle GraalVM or GraalVM Community asks for every package,
     -- as searching does.
     ["graalvm"] = graalvm_linux,
     ["graalvm_community"] = graalvm_community_linux,
     -- JetBrains Runtime ships Windows zips for its newer builds only, and Foojay
     -- lists a version's zip and tar.gz in either order; abridged.
-    ["windows jetbrains 21"] = { pkg("21+2121") },
-    ["windows jetbrains 21 available"] = { pkg("21.0.11+1163116"), pkg("21.0.11+1163116", false, "zip") },
     ["windows jetbrains 21.0.5"] = { pkg("21.0.5+79248"), pkg("21.0.5+76240") },
     -- Windows lists the same GraalVM packages as zips.
     ["windows graalvm"] = zips(graalvm_linux),
@@ -160,25 +152,15 @@ local foojay = {
     -- Observed on 2026-10-20. Outside Windows, Red Hat ships tar.xz only,
     -- OJDKBuild's Linux builds and OpenLogic's macOS ones are zips, and so are
     -- Gluon GraalVM's releases before 22.1 (macos in front for macOS).
-    ["redhat 21 available"] = { pkg("21.0.8+9", false, "tar.xz") },
-    ["ojdk_build 11 available"] = { pkg("11.0.15", false, "zip") },
-    ["macos openlogic 25 available"] = { pkg("25.0.4+7", false, "zip") },
-    -- latest=available answers with one package of the newest release per
-    -- archive type, here the JDK 11 build of Gluon's 22.1.0.1, which the JDK
-    -- 17 one supersedes, as its JRE does OJDKBuild's 17.0.3 JDK.
-    ["gluon_graalvm 22 available"] = {
-        file(pkg("22.1.0.1"), "graalvm-svm-java11-linux-gluon-22.1.0.1-Final.tar.gz", "11"),
-        file(pkg("22.0.0.3", false, "zip"), "graalvm-svm-java11-linux-gluon-22.0.0.3-Final.zip", "11"),
-    },
+    ["redhat"] = { pkg("21.0.8+9", false, "tar.xz") },
+    ["ojdk_build"] = { pkg("11.0.15", false, "zip") },
+    ["macos openlogic"] = { pkg("25.0.4+7", false, "zip") },
+    -- Gluon's 22.1.0.1 comes for JDK 11 first and JDK 17, which supersedes
+    -- it, as OJDKBuild's 17.0.3 JRE comes before its JDK.
     ["gluon_graalvm 22.1.0.1"] = {
         file(pkg("22.1.0.1"), "graalvm-svm-java11-linux-gluon-22.1.0.1-Final.tar.gz", "11"),
         file(pkg("22.1.0.1"), "graalvm-svm-java17-linux-gluon-22.1.0.1-Final.tar.gz", "17"),
     },
-    ["gluon_graalvm 21 available"] = {
-        file(pkg("21.2", false, "zip"), "graalvm-svm-linux-gluon-21.2.0-dev.zip", "21.2"),
-        file(pkg("21.1", false, "zip"), "graalvm-svm-linux-gluon-21.1.0-dev.zip", "21.1"),
-    },
-    ["gluon_graalvm 21.2"] = { file(pkg("21.2", false, "zip"), "graalvm-svm-linux-gluon-21.2.0-dev.zip", "21.2") },
     ["gluon_graalvm"] = {
         file(pkg("23+25"), "graalvm-java23-linux-amd64-gluon-23+25.1-dev.tar.gz", "23"),
         file(pkg("22.1.0.1"), "graalvm-svm-java11-linux-gluon-22.1.0.1-Final.tar.gz", "11"),
@@ -187,18 +169,19 @@ local foojay = {
     },
     -- Among OJDKBuild's Windows JDKs Foojay lists JREs, installer bundles, which
     -- have the JDK one directory down, and RHEL 6 builds for Linux.
-    ["windows ojdk_build 17 available"] = {
-        file(pkg("17.0.3", false, "zip"), "java-17-openjdk-17.0.3.0.6-1.jre.win.x86_64.zip"),
-    },
-    ["windows ojdk_build 17.0.3"] = {
-        file(pkg("17.0.3", false, "zip"), "java-17-openjdk-17.0.3.0.6-1.jre.win.x86_64.zip"),
-        file(pkg("17.0.3", false, "zip"), "java-17-openjdk-17.0.3.0.6-1.win.x86_64.zip"),
-    },
     ["windows ojdk_build 11.0.14"] = {
         file(pkg("11.0.14", false, "zip"), "java-11-openjdk-11.0.14.9-2.windows.ojdkbuild.x86_64.installer_bundle.zip"),
         file(pkg("11.0.14", false, "zip"), "java-11-openjdk-11.0.14.9-2.windows.ojdkbuild.x86_64.zip"),
     },
     ["windows ojdk_build 8.0.161"] = {
+        file(pkg("8.0.161+14", false, "zip"), "java-1.8.0-openjdk-1.8.0.161-3.b14.el6_9.x86_64.zip"),
+        file(pkg("8.0.161+14", false, "zip"), "java-1.8.0-openjdk-1.8.0.161-1.b14.ojdkbuild.windows.x86_64.zip"),
+    },
+    ["windows ojdk_build"] = {
+        file(pkg("17.0.3", false, "zip"), "java-17-openjdk-17.0.3.0.6-1.jre.win.x86_64.zip"),
+        file(pkg("17.0.3", false, "zip"), "java-17-openjdk-17.0.3.0.6-1.win.x86_64.zip"),
+        file(pkg("11.0.14", false, "zip"), "java-11-openjdk-11.0.14.9-2.windows.ojdkbuild.x86_64.installer_bundle.zip"),
+        file(pkg("11.0.14", false, "zip"), "java-11-openjdk-11.0.14.9-2.windows.ojdkbuild.x86_64.zip"),
         file(pkg("8.0.161+14", false, "zip"), "java-1.8.0-openjdk-1.8.0.161-3.b14.el6_9.x86_64.zip"),
         file(pkg("8.0.161+14", false, "zip"), "java-1.8.0-openjdk-1.8.0.161-1.b14.ojdkbuild.windows.x86_64.zip"),
     },
@@ -224,11 +207,7 @@ local others = {
     { "semcrt", "semeru_certified", "25.0.4" },
 }
 for _, other in ipairs(others) do
-    -- OJDKBuild and Gluon GraalVM ask for the newest release itself as well.
-    for _, key in ipairs({ other[3]:match("^%d+") .. " available", other[3] }) do
-        key = other[2] .. " " .. key
-        foojay[key] = foojay[key] or { pkg(other[3], false, other[4]) }
-    end
+    foojay[other[2]] = foojay[other[2]] or { pkg(other[3], false, other[4]) }
 end
 
 -- A package of Mandrel or Liberica NIK: its JDK, the GraalVM number it goes by,
@@ -258,9 +237,7 @@ end
 -- Observed on 2026-10-20 for linux/amd64: Foojay gives the numbers Mandrel and
 -- Liberica NIK go by as distribution_version, and the JDK as java_version,
 -- Mandrel's as the major alone; abridged, in Foojay's order. The plugin asks
--- for them by distribution_version, which lists the packages whose number
--- starts with the numbers given, a missing one counting as 0, so 23.1.12
--- lists 23.1.12.1 as well and 23.1.12.0 does not. A build is ignored.
+-- for every package, as searching does, and picks them by that number.
 local own_numbers = {
     mandrel = {
         mandrel("25", "25.0.4.1", "lts"),
@@ -303,21 +280,8 @@ local own_numbers = {
     },
 }
 
--- Whether Foojay lists a package of own_numbers whose number is
--- distribution_version for the query value asked.
-local function own_number_matches(distribution_version, asked)
-    local numbers = {}
-    for number in distribution_version:gmatch("%d+") do
-        table.insert(numbers, tonumber(number))
-    end
-    local i = 0
-    for number in asked:match("^[^+]*"):gmatch("%d+") do
-        i = i + 1
-        if (numbers[i] or 0) ~= tonumber(number) then
-            return false
-        end
-    end
-    return true
+for distribution, packages in pairs(own_numbers) do
+    foojay[distribution] = packages
 end
 
 local requests = {}
@@ -346,22 +310,10 @@ package.preload.http = function()
                 if version ~= "" then
                     key = key .. " " .. version
                 end
-                if params.latest then
-                    key = key .. " " .. params.latest
-                end
                 if params.operating_system == "windows" or params.operating_system == "macos" then
                     key = params.operating_system .. " " .. key
                 end
                 local packages = foojay[key] or {}
-                if own_numbers[params.distribution] and key == params.distribution then
-                    packages = {}
-                    local asked = (params.distribution_version or ""):match("^[^ ]*")
-                    for _, package in ipairs(own_numbers[params.distribution]) do
-                        if own_number_matches(package.distribution_version, asked) then
-                            table.insert(packages, package)
-                        end
-                    end
-                end
                 -- Only the packages of the archive types asked for are listed,
                 -- each a copy, as a decoded answer is.
                 local result = {}
@@ -397,39 +349,29 @@ PLUGIN = {}
 dofile("hooks/available.lua")
 dofile("hooks/pre_install.lua")
 
-local cases = 0
-local function check(version, expected, latest, archive_type)
+-- What searching asks Foojay for the distribution of version.
+local function searched(version)
     requests = {}
-    local result = PLUGIN:PreInstall({ version = version })
-    assert(result.version == expected, version .. ": expected " .. expected .. ", got " .. tostring(result.version))
-    if archive_type then
-        assert(
-            result.url:sub(-#archive_type - 1) == "." .. archive_type,
-            version .. ": expected the " .. archive_type .. " package, got " .. result.url
-        )
-    end
-    local lookups = 0
-    for _, url in ipairs(requests) do
-        if url:sub(1, #JDKS) == JDKS then
-            lookups = lookups + 1
-            assert((url:find("&latest=available", 1, true) ~= nil) == latest, version .. ": unexpected lookup " .. url)
-            -- Only Mandrel and Liberica NIK ask by distribution_version.
-            assert(not url:find("distribution_version=", 1, true), version .. ": unexpected lookup " .. url)
-        end
-    end
-    assert(lookups > 0, version .. ": no Foojay lookup")
-    cases = cases + 1
-    return lookups
+    PLUGIN:Available({ args = { require("distribution_version").parse_version(version).distribution.short_name } })
+    return requests[1]
 end
 
--- Installs version as OJDKBuild's and Gluon GraalVM's bare majors do: the
--- latest=available lookup names the newest release, and a second one asks
--- for that release in full, from which the package of the named file comes.
-local function check_release_lookup(version, expected, release, filename)
+local cases = 0
+-- Installs version, from a file ending in file_end where given, in one lookup.
+-- A bare major asks what searching asks, as Foojay's answers are cached per
+-- question and two of them can disagree for a while; any other version asks
+-- for itself.
+local function check(version, expected, bare, file_end)
+    local search = searched(version)
     requests = {}
     local result = PLUGIN:PreInstall({ version = version })
     assert(result.version == expected, version .. ": expected " .. expected .. ", got " .. tostring(result.version))
-    assert(result.url:sub(-#filename) == filename, version .. ": expected " .. filename .. ", got " .. result.url)
+    if file_end then
+        assert(
+            result.url:sub(-#file_end) == file_end,
+            version .. ": expected ..." .. file_end .. ", got " .. result.url
+        )
+    end
     local lookups = {}
     for _, url in ipairs(requests) do
         if url:sub(1, #JDKS) == JDKS then
@@ -437,11 +379,11 @@ local function check_release_lookup(version, expected, release, filename)
         end
     end
     assert(
-        #lookups == 2
-            and lookups[1]:find("&latest=available", 1, true)
-            and lookups[2]:find("?version=" .. release:gsub("%+", "%%2B") .. "&", 1, true)
-            and not lookups[2]:find("latest=", 1, true),
-        version .. ": unexpected lookups " .. table.concat(lookups, " ")
+        #lookups == 1
+            and (lookups[1] == search) == bare
+            and not lookups[1]:find("latest=", 1, true)
+            and not lookups[1]:find("distribution_version=", 1, true),
+        version .. ": asked " .. table.concat(lookups, " ") .. ", searching asks " .. search
     )
     cases = cases + 1
 end
@@ -450,10 +392,7 @@ end
 -- The plugin asks Foojay the question searching asks, as Foojay's answers are
 -- cached per question and two of them can disagree for a while.
 local function check_graalvm(version, expected, filename)
-    local short = require("distribution_version").parse_version(version).distribution.short_name
-    requests = {}
-    PLUGIN:Available({ args = { short } })
-    local searched = requests[1]
+    local search = searched(version)
     requests = {}
     local result = PLUGIN:PreInstall({ version = version })
     assert(result.version == expected, version .. ": expected " .. expected .. ", got " .. tostring(result.version))
@@ -468,8 +407,8 @@ local function check_graalvm(version, expected, filename)
         end
     end
     assert(
-        #lookups == 1 and lookups[1] == searched,
-        version .. ": asked " .. table.concat(lookups, " ") .. ", searching asks " .. searched
+        #lookups == 1 and lookups[1] == search,
+        version .. ": asked " .. table.concat(lookups, " ") .. ", searching asks " .. search
     )
     cases = cases + 1
 end
@@ -575,8 +514,8 @@ end
 -- version's zip where there is one, and searching lists the releases that ship
 -- only as tar.gz too, newest first and each once.
 RUNTIME.osType = "windows"
-assert(check("21-jb", "21.0.11+1163116-jb", true, "zip") == 1, "21-jb: expected one lookup")
-assert(check("21.0.5-jb", "21.0.5+79248-jb", false, "tar.gz") == 1, "21.0.5-jb: expected one lookup")
+check("21-jb", "21.0.11+1163116-jb", true, ".zip")
+check("21.0.5-jb", "21.0.5+79248-jb", false, ".tar.gz")
 check_graalvm("25-graal", "25.0.4.1.1-graal", "graalvm-jdk-25.0.4.1.1_windows-x64_bin.zip")
 check_graalvm("25-graalce", "25.4.4.1.1-graalce", "gds/graalvm-community-jdk-25i4-25.0.4.1.1_windows-x64_bin.zip")
 -- Searching GraalVM lists each release once, under GraalVM's own version and
@@ -609,11 +548,11 @@ assert(
     table.concat(jb, " ") == "21.0.11+1163116-jb 21.0.8+895146-jb 21.0.5+79248-jb",
     "Available jb on Windows: unexpected " .. table.concat(jb, " ")
 )
--- OJDKBuild's bare major installs the JDK, not the JRE that latest=available
--- answers with, and no release installs an installer bundle or a Linux build.
-check_release_lookup("17-ojdkbld", "17.0.3-ojdkbld", "17.0.3", "/java-17-openjdk-17.0.3.0.6-1.win.x86_64.zip")
-check("11.0.14-ojdkbld", "11.0.14-ojdkbld", false, "windows.ojdkbuild.x86_64.zip")
-check("8.0.161-ojdkbld", "8.0.161+14-ojdkbld", false, "b14.ojdkbuild.windows.x86_64.zip")
+-- OJDKBuild's bare major installs the JDK, not the JRE Foojay lists first, and
+-- no release installs an installer bundle or a Linux build.
+check("17-ojdkbld", "17.0.3-ojdkbld", true, "/java-17-openjdk-17.0.3.0.6-1.win.x86_64.zip")
+check("11.0.14-ojdkbld", "11.0.14-ojdkbld", false, ".windows.ojdkbuild.x86_64.zip")
+check("8.0.161-ojdkbld", "8.0.161+14-ojdkbld", false, ".b14.ojdkbuild.windows.x86_64.zip")
 RUNTIME.osType = "linux"
 
 -- The distributions in others install by their short and long names, each from
@@ -621,13 +560,8 @@ RUNTIME.osType = "linux"
 for _, other in ipairs(others) do
     local short, long, release, archive_type = other[1], other[2], other[3], other[4]
     local major = release:match("^%d+")
-    if long == "ojdk_build" or long == "gluon_graalvm" then
-        check_release_lookup(major .. "-" .. short, release .. "-" .. short, release, "." .. (archive_type or "tar.gz"))
-        check_release_lookup(long .. "-" .. major, release .. "-" .. short, release, "." .. (archive_type or "tar.gz"))
-    else
-        check(major .. "-" .. short, release .. "-" .. short, true, archive_type)
-        check(long .. "-" .. major, release .. "-" .. short, true, archive_type)
-    end
+    check(major .. "-" .. short, release .. "-" .. short, true, "." .. (archive_type or "tar.gz"))
+    check(long .. "-" .. major, release .. "-" .. short, true, "." .. (archive_type or "tar.gz"))
 end
 -- Only these distributions ask for another archive type besides tar.gz.
 requests = {}
@@ -638,8 +572,8 @@ PLUGIN:PreInstall({ version = "21-tem" })
 assert(requests[1]:find("&archive_type=tar.gz&operating_system=", 1, true), "21-tem: " .. requests[1])
 -- Gluon GraalVM's 22.x releases install their JDK 17 build, which they share a
 -- version with the JDK 11 one, listed once by searching.
-check_release_lookup("22-gln", "22.1.0.1-gln", "22.1.0.1", "/graalvm-svm-java17-linux-gluon-22.1.0.1-Final.tar.gz")
-check_release_lookup("21-gln", "21.2-gln", "21.2", "/graalvm-svm-linux-gluon-21.2.0-dev.zip")
+check("22-gln", "22.1.0.1-gln", true, "/graalvm-svm-java17-linux-gluon-22.1.0.1-Final.tar.gz")
+check("21-gln", "21.2-gln", true, "/graalvm-svm-linux-gluon-21.2.0-dev.zip")
 requests = {}
 local gluon = PLUGIN:PreInstall({ version = "22.1.0.1-gln" })
 assert(gluon.url:find("/graalvm-svm-java17-", 1, true) and #requests == 2, "22.1.0.1-gln: " .. gluon.url)
@@ -653,17 +587,17 @@ assert(
 )
 -- OpenLogic installs from a zip on macOS, where it ships no tar.gz.
 RUNTIME.osType = "darwin"
-check("25-opnlgc", "25.0.4+7-opnlgc", true, "zip")
+check("25-opnlgc", "25.0.4+7-opnlgc", true, ".zip")
 RUNTIME.osType = "linux"
 
 -- Installs version of Mandrel or Liberica NIK, which the plugin asks Foojay
--- for by distribution_version alone, and checks the end of the file name.
+-- for as searching does, and checks the end of the file name.
 local function check_own_number(version, expected, file_end)
+    local search = searched(version)
     requests = {}
     local result = PLUGIN:PreInstall({ version = version })
     assert(result.version == expected, version .. ": expected " .. expected .. ", got " .. tostring(result.version))
     assert(result.url:sub(-#file_end) == file_end, version .. ": expected ..." .. file_end .. ", got " .. result.url)
-    local asked = require("distribution_version").parse_version(version).version:gsub("%+", "%%2B")
     local lookups = {}
     for _, url in ipairs(requests) do
         if url:sub(1, #JDKS) == JDKS then
@@ -671,11 +605,8 @@ local function check_own_number(version, expected, file_end)
         end
     end
     assert(
-        #lookups == 1
-            and lookups[1]:find("?version=&", 1, true)
-            and lookups[1]:sub(-#asked - 22) == "&distribution_version=" .. asked
-            and not lookups[1]:find("latest=", 1, true),
-        version .. ": unexpected lookups " .. table.concat(lookups, " ")
+        #lookups == 1 and lookups[1] == search,
+        version .. ": asked " .. table.concat(lookups, " ") .. ", searching asks " .. search
     )
     cases = cases + 1
 end
@@ -683,7 +614,7 @@ end
 -- Mandrel and Liberica NIK install by the GraalVM numbers they go by, which
 -- Foojay gave as java_version until October 2026 and now as
 -- distribution_version (vfox-java#106). A longer version takes the release it
--- names, though Foojay lists 23.1.12.1 for 23.1.12 as well.
+-- names, not 23.1.12.1 for 23.1.12.
 check_own_number("23.1.12-mandrel", "23.1.12-mandrel", "java21-linux-amd64-23.1.12.0-Final.tar.gz")
 check_own_number("mandrel-23.1.12", "23.1.12-mandrel", "java21-linux-amd64-23.1.12.0-Final.tar.gz")
 check_own_number("23.1.12.0-mandrel", "23.1.12-mandrel", "java21-linux-amd64-23.1.12.0-Final.tar.gz")

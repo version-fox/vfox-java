@@ -737,3 +737,49 @@ func TestPrintedNames(t *testing.T) {
 		})
 	}
 }
+
+func TestJdkLookups(t *testing.T) {
+	// The front's log after its readiness check, `vfox search java mandrel`
+	// and `vfox install java@23-mandrel` before vfox-java#113, which fetched
+	// the package's record as well.
+	log := `/disco/v3.0/distributions
+/disco/v3.0/packages/jdks?version=&distribution=mandrel&architecture=amd64&archive_type=tar.gz&operating_system=linux&lib_c_type=glibc&directly_downloadable=true
+/disco/v3.0/packages/jdks?version=&distribution=mandrel&architecture=amd64&archive_type=tar.gz&operating_system=linux&lib_c_type=glibc&directly_downloadable=true&distribution_version=23
+/disco/v3.0/ids/4d2b4ad0dbd6fea8ba1a5c4f1ea1e5bd
+`
+	want := []string{
+		"/disco/v3.0/packages/jdks?version=&distribution=mandrel&architecture=amd64&archive_type=tar.gz&operating_system=linux&lib_c_type=glibc&directly_downloadable=true",
+		"/disco/v3.0/packages/jdks?version=&distribution=mandrel&architecture=amd64&archive_type=tar.gz&operating_system=linux&lib_c_type=glibc&directly_downloadable=true&distribution_version=23",
+	}
+	if got := JdkLookups(log); !slices.Equal(got, want) {
+		t.Errorf("JdkLookups = %q, want %q", got, want)
+	}
+	if got := JdkLookups(""); len(got) != 0 {
+		t.Errorf("JdkLookups of an empty log = %q", got)
+	}
+}
+
+func TestAsksAsSearch(t *testing.T) {
+	search := "/disco/v3.0/packages/jdks?version=&distribution=temurin&architecture=amd64&archive_type=tar.gz&operating_system=linux&lib_c_type=glibc&directly_downloadable=true"
+	latest := "/disco/v3.0/packages/jdks?version=21&distribution=temurin&architecture=amd64&archive_type=tar.gz&operating_system=linux&lib_c_type=glibc&directly_downloadable=true&latest=available"
+	for _, c := range []struct {
+		searched, installed []string
+		ok                  bool
+	}{
+		{[]string{search}, []string{search}, true},
+		// A retried search or install asks again.
+		{[]string{search, search}, []string{search, search}, true},
+		// Before vfox-java#113 a bare major asked with latest=available.
+		{[]string{search}, []string{latest}, false},
+		{[]string{search}, []string{search, latest}, false},
+		{[]string{latest, search}, []string{latest}, false},
+		// Nothing to compare: vfox answered the search from its cache, or
+		// the install did not get to PreInstall.
+		{nil, []string{search}, false},
+		{[]string{search}, nil, false},
+	} {
+		if err := AsksAsSearch(c.searched, c.installed); (err == nil) != c.ok {
+			t.Errorf("AsksAsSearch(%q, %q) = %v, want ok %v", c.searched, c.installed, err, c.ok)
+		}
+	}
+}

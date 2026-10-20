@@ -24,16 +24,16 @@ https://api.foojay.io/disco/v3.0/packages/jdks
 | Parameter | Value |
 | --- | --- |
 | `distribution` | the long name, see [distributions.md](distributions.md) |
-| `version` | empty for `vfox search`, else the version part of what you typed. A `+` is percent-encoded, because Foojay reads a bare one as a space and drops the build. `28.ea.19` becomes `28-ea+19`. Always empty for Mandrel and Liberica NIK, and for the GA releases of Oracle GraalVM and GraalVM Community |
-| `distribution_version` | for Mandrel and Liberica NIK only, the version part of what you typed, see [below](#mandrel-and-liberica-nik) |
+| `version` | empty for `vfox search` and for a bare major such as `21`, else the version part of what you typed. A `+` is percent-encoded, because Foojay reads a bare one as a space and drops the build. `28.ea.19` becomes `28-ea+19`. Always empty for Mandrel and Liberica NIK, and for the GA releases of Oracle GraalVM and GraalVM Community |
 | `architecture` | `aarch64` for arm64, `x64` on Windows x64, `amd64` for x64 elsewhere, and the name vfox reports for other CPUs |
 | `operating_system` | `linux`, `macos` or `windows` |
 | `archive_type` | `tar.gz`, and `zip` plus `tar.gz` on Windows. Elsewhere `tar.xz` comes in for Red Hat, and `zip` for OJDKBuild, OpenLogic and Gluon GraalVM |
 | `lib_c_type` | `glibc` or `musl` on Linux, empty elsewhere |
 | `directly_downloadable` | always `true` |
-| `latest` | `available`, added only when the version is a bare major such as `21`, and never for Mandrel, Liberica NIK, Oracle GraalVM and GraalVM Community |
 
-Without `latest=available`, `version=21` matches the 21 GA build only (`21+35`). With it Foojay picks the newest 21.x, which is what `java@21-tem` installs. Longer versions match as they are.
+For a bare major such as `21` the answer lists every release, and the plugin takes the newest 21.x itself, which is what `java@21-tem` installs: `version=21` would match the 21 GA build only (`21+35`). Longer versions match as they are. Unreleased: release 0.6.2 asks for `version=21&latest=available` instead, with which Foojay picks the newest 21.x.
+
+A bare major asks what searching asks so that installing sees the builds `vfox search` lists. Foojay's answers are cached per question, and two questions can get answers of different ages: half an hour after Oracle GraalVM 25.0.5 reached Foojay on 2026-10-20, GitHub's runners got it from a lookup with `distribution_version=25` but not from a search, and `vfox install java@25-graal` took a build that `vfox search java graal` did not list ([#113](https://github.com/version-fox/vfox-java/issues/113)).
 
 The answer is a list of packages. The plugin names a release after `java_version` (Mandrel and Liberica NIK after `distribution_version`, Oracle GraalVM and GraalVM Community after GraalVM's own version), adds `-fx` where `javafx_bundled` is true, marks it LTS where `term_of_support` is `lts`, and prefers a `zip` over a `tar.gz` of the same version on Windows. It leaves out the JREs, installer bundles and RHEL 6 builds that Foojay lists among OJDKBuild's Windows JDKs, and the JDK 11 builds of Gluon GraalVM's 22.x releases, see [distributions.md](distributions.md). For the install it then fetches the package's `links.pkg_info_uri` and downloads its `direct_download_uri`, which is a vendor's own server (GitHub Releases for Temurin). That record also holds a `checksum`. The plugin does not pass it on, so vfox prints `WARNING: Checksum is not provided, skip verify...` and does not verify the download.
 
@@ -53,7 +53,7 @@ curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=mandrel&dis
 21	23.1.12	mandrel-java21-linux-amd64-23.1.12.0-Final.tar.gz
 ```
 
-So the plugin asks for them with `distribution_version` and an empty `version`. Foojay matches the numbers given, which is why `23.1.12` also lists 23.1.12.1, and the plugin keeps only the release named. For a bare major it picks the newest release in the answer itself, as `latest=available` does not: for `distribution_version=23` it answered with 23.1.8 and two builds of 23.0.1.2, although 23.1.12.1 was out. Where a release comes for several Java versions the plugin takes the build for the newest, and of two Liberica NIK builds for the same Java the later one, which only the file name tells apart (`...-25.0.3+2-linux-amd64.tar.gz`). Searching sorts them by `distribution_version`, newest first.
+So the plugin asks for every package of these two, as `vfox search` does, and picks the release by `distribution_version` itself: the one named, or for a bare major the newest of the major. Foojay's own matching does neither: `distribution_version=23.1.12` lists 23.1.12.1 as well, as above, and with `distribution_version=23`, `latest=available` answered with 23.1.8 and two builds of 23.0.1.2, although 23.1.12.1 was out. Where a release comes for several Java versions the plugin takes the build for the newest, and of two Liberica NIK builds for the same Java the later one, which only the file name tells apart (`...-25.0.3+2-linux-amd64.tar.gz`). Searching sorts them by `distribution_version`, newest first.
 
 ## Which distributions have a build for my platform
 
@@ -139,8 +139,6 @@ curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=graalvm&ver
 ```
 
 `version` cannot tell those apart, and `distribution_version` matches whole leading components (`25.0.4.1` also lists `25.0.4.1.1`). So the plugin asks for every package, as `vfox search` does, picks the release itself, and names it after GraalVM's version: the newer of a package's `java_version` and `distribution_version`, as GraalVM Community's feature releases are also listed the old way round, with GraalVM's version as `java_version`. `vfox search` lists them newest first by that version, and a file that Foojay lists under two versions once.
-
-Installing asks what searching asks so that the two see the same builds. Foojay's answers are cached per question, and two questions can get answers of different ages: half an hour after GraalVM 25.0.5 reached Foojay on 2026-10-20, GitHub's runners got it from a lookup with `distribution_version=25` but not from a search.
 
 ## Releases and support terms
 
