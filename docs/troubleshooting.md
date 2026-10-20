@@ -66,7 +66,8 @@ While `proxy.enable` is `false`, the usual `HTTP_PROXY`, `HTTPS_PROXY` and `NO_P
 - **The installed name has a build number you did not type.** `java@21.0.8-tem` installs `21.0.8+9-tem`. The build is part of the name, see [versions.md](versions.md#installed-names).
 - **`vfox install java@21-tem` and `vfox install java tem` do different things.** The second one is two SDKs, `java` and `tem`.
 - **A `GRAALVM_HOME` you set is left alone.** The plugin sets `JAVA_HOME` and `PATH` only.
-- **`vfox use java@21` selects `21.3.1-grl11`, which runs Java 11.** GraalVM CE 8 to 19 and Gluon GraalVM before 23 carry GraalVM's version numbers, and vfox matches a bare major against those, see [distributions.md](distributions.md#versions-numbered-after-graalvm). Write `java@21-tem`.
+- **`vfox use java@21` selects `21.3.1-grl11`, which runs Java 11.** GraalVM CE 8 to 19, Gluon GraalVM before 23, and Mandrel and Liberica NIK before 25 carry GraalVM's version numbers, and vfox matches a bare major against those, see [distributions.md](distributions.md#versions-numbered-after-graalvm). Write `java@21-tem`.
+- **`java@21-mandrel` installs a Mandrel that runs Java 17.** Mandrel's and Liberica NIK's majors are GraalVM's: `21.3.6-mandrel` is the newest Mandrel 21.x. Their releases for Java 21 are 23.1.x, so write `java@23-mandrel`, see [distributions.md](distributions.md#behavior-of-mandrel-and-liberica-nik).
 
 ## Where the JDK is
 

@@ -37,7 +37,7 @@ end
 
 --- Whether Java version a is newer than b: the release decides, then the
 --- build (21.0.12.1+1 > 21.0.8+9 > 21.0.8+7 > 21+35).
-local function newer(a, b)
+function installed_version.newer(a, b)
     local a_release, a_build = a:match("^([^+]*)(.*)$")
     local b_release, b_build = b:match("^([^+]*)(.*)$")
     local order = compare(a_release, b_release)
@@ -54,7 +54,7 @@ function installed_version.newest(installed, prefix, rest, suffix)
             java_version .. suffix == candidate
             and java_version:sub(1, #prefix) == prefix
             and java_version:sub(#prefix + 1):find(rest)
-            and (not best or newer(java_version, best_version))
+            and (not best or installed_version.newer(java_version, best_version))
         then
             best, best_version = candidate, java_version
         end

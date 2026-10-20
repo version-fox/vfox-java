@@ -379,3 +379,39 @@ func checkNameOnly(ctx context.Context, t *testing.T, ctr tc.Container, box slot
 	}
 	t.Logf("PASS %d distributions go by name on %s: %s", len(names), platform, strings.Join(names, ", "))
 }
+
+// checkOwnNumbers proves Mandrel and Liberica NIK go by the GraalVM numbers
+// they carry (see common.OwnNumberedDistributions): `vfox search java
+// <short>` lists the release the suite names under its number, and with it
+// and the newest release of its major faked as installed, `vfox install
+// java@<long>-<release>` and `vfox install java@<major>-<short>` find those
+// installed (see common.OwnNumberSpecs and common.NewestOfMajor), so nothing
+// downloads.
+func checkOwnNumbers(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, platform string) {
+	t.Helper()
+	names := common.OwnNumberedDistributions(platform)
+	for _, name := range names {
+		search := "vfox search java " + name
+		out := execRetry(ctx, t, ctr, search, search, box.vars...)
+		searched := common.SearchedVersions(out)
+		spec, installed, bare := common.OwnNumberSpecs(name)
+		require.Containsf(t, searched, installed, "%s must list %s\n--- output ---\n%s", search, installed, out)
+		newest, ok := common.NewestOfMajor(searched, bare)
+		require.Truef(t, ok, "%s lists no release that %s names\n--- output ---\n%s", search, bare, out)
+		var create, remove []string
+		for _, version := range []string{installed, newest} {
+			dir := fmt.Sprintf("(Join-Path $env:VFOX_HOME %s)", pwshQuote(`cache\java\v-`+version))
+			create = append(create, fmt.Sprintf("New-Item -ItemType Directory -Force -Path (Join-Path %s %s) | Out-Null",
+				dir, pwshQuote("java-"+version)))
+			remove = append(remove, fmt.Sprintf("Remove-Item -LiteralPath %s -Recurse -Force", dir))
+		}
+		execOK(ctx, t, ctr, strings.Join(create, "; "), box.vars...)
+		for _, c := range []struct{ spec, want string }{{spec, installed}, {bare, newest}} {
+			out = execRetry(ctx, t, ctr, "vfox install java@"+c.spec, "vfox install "+pwshQuote("java@"+c.spec), box.vars...)
+			require.Containsf(t, common.StripANSI(out), "java@"+c.want+" is already installed",
+				"vfox install java@%s must take %s, which %s lists", c.spec, c.want, search)
+		}
+		execOK(ctx, t, ctr, strings.Join(remove, "; "), box.vars...)
+		t.Logf("PASS java@%s takes %s and java@%s %s", spec, installed, bare, newest)
+	}
+}

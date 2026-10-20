@@ -252,6 +252,9 @@ func runOne(t *testing.T, ctx context.Context, image, platform, arch string, c c
 	if common.ChecksNameOnly(c.Distribution) {
 		checkNameOnly(ctx, t, ctr, box, platform)
 	}
+	if common.ChecksOwnNumbers(c.Distribution) {
+		checkOwnNumbers(ctx, t, ctr, box, platform)
+	}
 
 	installed := installJava(ctx, t, ctr, box, common.Spec(c.Distribution, version))
 	verifySearch(ctx, t, ctr, box, c.Distribution, installed)

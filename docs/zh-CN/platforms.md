@@ -53,7 +53,7 @@ Foojay 的数据会变，这张表也会过时。想看当前的情况，按 [fo
 标了 ✅ 也不代表所有版本都有。以下同样截至 2026-10-18：
 
 - Windows ARM64 上，没有任何发行版提供 Java 8。Temurin 有 21 和 23，Zulu 有 16 到 19、21 和 25，Liberica 有 11 和 16 到 27，Microsoft 有 11、16、17、21 和 25，JetBrains Runtime 有 17、21 和 25。
-- Apple Silicon 上，Java 8 来自 Zulu、Liberica、Corretto 和 Kona。Temurin 和 Semeru 在那里有 11 和 17 到 27，OpenJDK 有 17 到 27。Mandrel 有 23 到 25，Liberica NIK 有 22 到 25。
+- Apple Silicon 上，Java 8 来自 Zulu、Liberica、Corretto 和 Kona。Temurin 和 Semeru 在那里有 11 和 17 到 27，OpenJDK 有 17 到 27。Mandrel 有 23.1 到 25 的版本，运行 Java 21 到 25；Liberica NIK 有 22.2 到 25 的版本，运行 Java 11、17 和 20 到 25（见[它们的版本号](distributions.md#mandrel-与-liberica-nik-的行为)）。
 - Intel Mac 上的新版本来得更晚，有的干脆没有。OpenJDK 和 Temurin 停在 26，而 Linux 上已有 27；SapMachine 停在 24；Oracle GraalVM 和 GraalVM 社区版停在 25.0.1。Mandrel 没有 Intel Mac 的构建。
 - 在 Alpine 上，Temurin 的 arm64 构建只有 21 及以后。x64 方面，Microsoft 只有 11 和 17，SapMachine 有 17 和 20 到 27，Kona 有 8 和 21，Dragonwell 有 11、17、21 和 25，JetBrains Runtime 只有 17。arm64 方面，Kona 有 Java 8，JetBrains Runtime 有 17（x64 也有）。
 - Trava 在 Linux arm64 上只有一个构建，11.0.10+6。

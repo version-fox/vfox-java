@@ -24,19 +24,36 @@ https://api.foojay.io/disco/v3.0/packages/jdks
 | 参数 | 取值 |
 | --- | --- |
 | `distribution` | 发行版的长名，见 [distributions.md](distributions.md) |
-| `version` | `vfox search` 时为空，否则是你输入内容里的版本部分。`+` 会做百分号编码，因为 Foojay 会把没编码的 `+` 当成空格，进而丢掉构建号。`28.ea.19` 会变成 `28-ea+19` |
+| `version` | `vfox search` 时为空，否则是你输入内容里的版本部分。`+` 会做百分号编码，因为 Foojay 会把没编码的 `+` 当成空格，进而丢掉构建号。`28.ea.19` 会变成 `28-ea+19`。查 Mandrel 和 Liberica NIK 时始终为空 |
+| `distribution_version` | 只用于 Mandrel 和 Liberica NIK，是你输入内容里的版本部分，见[下文](#mandrel-与-liberica-nik) |
 | `architecture` | arm64 用 `aarch64`，Windows x64 用 `x64`，其他系统的 x64 用 `amd64`，其他 CPU 用 vfox 报告的名字 |
 | `operating_system` | `linux`、`macos` 或 `windows` |
 | `archive_type` | `tar.gz`；Windows 上是 `zip` 加 `tar.gz`。其他系统上，Red Hat 还要 `tar.xz`，OJDKBuild、OpenLogic 和 Gluon GraalVM 还要 `zip` |
 | `lib_c_type` | Linux 上是 `glibc` 或 `musl`，其他系统为空 |
 | `directly_downloadable` | 始终是 `true` |
-| `latest` | `available`，仅当版本只有大版本号（如 `21`）时才加 |
+| `latest` | `available`，仅当版本只有大版本号（如 `21`）时才加；查 Mandrel 和 Liberica NIK 时一律不加 |
 
 不加 `latest=available` 时，`version=21` 只匹配 21 的 GA 构建（`21+35`）；加上之后，Foojay 会挑出最新的 21.x，`java@21-tem` 装的就是它。更具体的版本则按原样匹配。
 
-返回的是一个包列表。插件用 `java_version` 给版本命名；`javafx_bundled` 为真时加上 `-fx`；`term_of_support` 是 `lts` 时标注 LTS；在 Windows 上，同一版本既有 `zip` 又有 `tar.gz` 时优先用 `zip`。Foojay 混在 OJDKBuild 的 Windows JDK 里的 JRE、installer bundle 包和 RHEL 6 构建，以及 Gluon GraalVM 22.x 的 JDK 11 构建，插件都会略过，见 [distributions.md](distributions.md)。安装时，插件再取这个包的 `links.pkg_info_uri`，并从其中的 `direct_download_uri` 下载，那是厂商自己的服务器（Temurin 是 GitHub Releases）。这条记录里还有 `checksum`，但插件没有把它交给 vfox，所以 vfox 会打印 `WARNING: Checksum is not provided, skip verify...`，下载内容不做校验。
+返回的是一个包列表。插件用 `java_version` 给版本命名（Mandrel 和 Liberica NIK 用 `distribution_version`）；`javafx_bundled` 为真时加上 `-fx`；`term_of_support` 是 `lts` 时标注 LTS；在 Windows 上，同一版本既有 `zip` 又有 `tar.gz` 时优先用 `zip`。Foojay 混在 OJDKBuild 的 Windows JDK 里的 JRE、installer bundle 包和 RHEL 6 构建，以及 Gluon GraalVM 22.x 的 JDK 11 构建，插件都会略过，见 [distributions.md](distributions.md)。安装时，插件再取这个包的 `links.pkg_info_uri`，并从其中的 `direct_download_uri` 下载，那是厂商自己的服务器（Temurin 是 GitHub Releases）。这条记录里还有 `checksum`，但插件没有把它交给 vfox，所以 vfox 会打印 `WARNING: Checksum is not provided, skip verify...`，下载内容不做校验。
 
 `vfox search` 与原始列表有几处不同：Foojay 里同一个名字有两条记录时，它只列一次；不给 GraalVM 的特性版本加 LTS 备注（见 [distributions.md](distributions.md#oracle-graalvm-与-graalvm-社区版的行为)）；只列 GA 版本。
+
+### Mandrel 与 Liberica NIK
+
+截至 2026-10-20，这两个发行版沿用的 GraalVM 版本号，Foojay 放在 `distribution_version` 里，Java 的版本号放在 `java_version` 里，其中 Mandrel 的 `java_version` 只有大版本号：
+
+```bash
+curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=mandrel&distribution_version=23.1.12&architecture=amd64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
+  | jq -r '.result[] | [.java_version, .distribution_version, .filename] | @tsv'
+```
+
+```
+21	23.1.12.1	mandrel-java21-linux-amd64-23.1.12.1-Final.tar.gz
+21	23.1.12	mandrel-java21-linux-amd64-23.1.12.0-Final.tar.gz
+```
+
+所以插件查这两个发行版时用 `distribution_version`，`version` 留空。Foojay 按给出的几段数字匹配，所以查 `23.1.12` 也会返回 23.1.12.1，插件只保留指定的那个版本。只写大版本号时，插件自己从结果里挑最新的版本，因为 `latest=available` 挑不对：查 `distribution_version=23` 时，它返回的是 23.1.8 和 23.0.1.2 的两个构建，而 23.1.12.1 已经发布。同一个版本有几个 Java 版本的构建时，插件取 Java 最新的那个；Liberica NIK 为同一个 Java 构建了两次时，取后一次的，两次构建只能从文件名里区分（`...-25.0.3+2-linux-amd64.tar.gz`）。搜索时按 `distribution_version` 从新到旧排列。
 
 ## 我的平台上有哪些发行版
 
@@ -105,7 +122,7 @@ curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=temurin&ver
 {"java_version":"21.0.8+9","distribution_version":"21.0.8","term_of_support":"lts","javafx_bundled":false,"archive_type":"tar.gz","filename":"OpenJDK21U-jdk_x64_linux_hotspot_21.0.8_9.tar.gz"}
 ```
 
-`java_version` 是 Java 的版本号，插件用的就是它。`distribution_version` 是厂商自己的版本号（Java `27+35` 对应 Zulu 的 `27.28.101`）。
+`java_version` 是 Java 的版本号，插件用的就是它。`distribution_version` 是厂商自己的版本号（Java `27+35` 对应 Zulu 的 `27.28.101`），插件只对 Mandrel 和 Liberica NIK 用它，见[上文](#mandrel-与-liberica-nik)。
 
 ## 版本与支持期限
 

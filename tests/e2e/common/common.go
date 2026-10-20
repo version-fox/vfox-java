@@ -684,6 +684,72 @@ func NewestBareMajor(searched []string, short string) (spec, newest string, ok b
 	return spec, newest, found && major != "" && spec != newest
 }
 
+// ownNumbered describes a distribution that goes by the numbers of the
+// GraalVM it is built from (Mandrel 23.1.12 runs on JDK 21): its long name, a
+// release it has under such a number for every platform in platforms, and
+// those runner platforms (2026-10-20).
+type ownNumbered struct {
+	longName, release string
+	platforms         []string
+}
+
+// ownNumbers maps Mandrel and Liberica NIK, by short name, to what the suite
+// checks of them. Foojay gives their numbers as distribution_version and the
+// JDK as java_version, after which the plugin named them, so `vfox install
+// java@23.1.12-mandrel` found no package, `vfox search java mandrel` listed
+// one name per JDK major, and `java@23-mandrel` installed Mandrel 24.1.2,
+// built for JDK 23 (vfox-java#106).
+var ownNumbers = map[string]ownNumbered{
+	"mandrel": {longName: "mandrel", release: "23.1.12", platforms: []string{"linux/amd64", "linux/arm64", "windows/amd64"}},
+	"nik":     {longName: "liberica_native", release: "23.1.8", platforms: []string{"linux/amd64", "linux/arm64", "windows/amd64"}},
+}
+
+// OwnNumberedDistributions returns, sorted, the distributions in ownNumbers
+// that Foojay has packages of for platform ("linux/amd64", "windows/arm64").
+func OwnNumberedDistributions(platform string) []string {
+	var names []string
+	for name, d := range ownNumbers {
+		if slices.Contains(d.platforms, platform) {
+			names = append(names, name)
+		}
+	}
+	slices.Sort(names)
+	return names
+}
+
+// OwnNumberSpecs renders, for a distribution in ownNumbers, its release in
+// asdf's order ("mandrel-23.1.12"), which vfox does not find installed under
+// that spelling and so passes to PreInstall, the installed name it must
+// resolve to ("23.1.12-mandrel"), and the bare major of that release
+// ("23-mandrel").
+func OwnNumberSpecs(short string) (spec, installed, bare string) {
+	d := ownNumbers[short]
+	return d.longName + "-" + d.release, d.release + "-" + short, Major(d.release) + "-" + short
+}
+
+// NewestOfMajor picks out of the versions `vfox search` lists, newest first,
+// the one a bare major spec ("23-mandrel") must install: the first release of
+// that major and distribution without JavaFX ("23.1.12.1-mandrel"). The
+// release named like the spec (Mandrel 23.0.0.0, "23-mandrel") does not
+// count, as vfox would find it installed without asking PreInstall.
+func NewestOfMajor(searched []string, bare string) (newest string, ok bool) {
+	major, short, _ := strings.Cut(bare, "-")
+	for _, version := range searched {
+		core, found := strings.CutSuffix(version, "-"+short)
+		if found && strings.HasPrefix(core, major+".") {
+			return version, true
+		}
+	}
+	return "", false
+}
+
+// ChecksOwnNumbers reports whether a combo also checks the distributions in
+// OwnNumberedDistributions, which downloads nothing. Temurin's combos do: they
+// run on every runner.
+func ChecksOwnNumbers(distribution string) bool {
+	return Base(distribution) == "tem"
+}
+
 // ContainerName returns a unique container name per run: the combo slug stays
 // greppable in `docker ps`, the random suffix avoids clashes with leftovers
 // from killed runs.

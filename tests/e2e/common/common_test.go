@@ -489,6 +489,59 @@ func TestNameOnlyDistributions(t *testing.T) {
 	}
 }
 
+func TestOwnNumbers(t *testing.T) {
+	for platform, want := range map[string][]string{
+		"linux/amd64":   {"mandrel", "nik"},
+		"linux/arm64":   {"mandrel", "nik"},
+		"windows/amd64": {"mandrel", "nik"},
+		"windows/arm64": nil,
+	} {
+		if got := OwnNumberedDistributions(platform); !slices.Equal(got, want) {
+			t.Errorf("OwnNumberedDistributions(%s) = %q, want %q", platform, got, want)
+		}
+	}
+	for short, want := range map[string][3]string{
+		"mandrel": {"mandrel-23.1.12", "23.1.12-mandrel", "23-mandrel"},
+		"nik":     {"liberica_native-23.1.8", "23.1.8-nik", "23-nik"},
+	} {
+		if spec, installed, bare := OwnNumberSpecs(short); [3]string{spec, installed, bare} != want {
+			t.Errorf("OwnNumberSpecs(%s) = %q, %q, %q; want %q", short, spec, installed, bare, want)
+		}
+	}
+	// Temurin's combos run on every runner, arm64 included.
+	for _, arch := range []string{"amd64", "arm64"} {
+		if !slices.ContainsFunc(DefaultDistributions(arch), ChecksOwnNumbers) {
+			t.Errorf("no %s default combo checks Mandrel and Liberica NIK", arch)
+		}
+	}
+	if ChecksOwnNumbers("graalce") {
+		t.Error("only the Temurin combos check Mandrel and Liberica NIK")
+	}
+}
+
+func TestNewestOfMajor(t *testing.T) {
+	// Abridged `vfox search` output, observed on 2026-10-20.
+	mandrel := []string{"25.0.4.1-mandrel", "24.2.2-mandrel", "23.1.12.1-mandrel", "23.1.12-mandrel", "23-mandrel"}
+	nik := []string{"25.0.4.1-nik-fx", "25.0.4.1-nik", "23.1.12.1-nik-fx", "23.1.12.1-nik", "23.1.8-nik"}
+	for _, c := range []struct {
+		searched     []string
+		bare, newest string
+		ok           bool
+	}{
+		{mandrel, "23-mandrel", "23.1.12.1-mandrel", true},
+		{mandrel, "24-mandrel", "24.2.2-mandrel", true},
+		{nik, "23-nik", "23.1.12.1-nik", true},
+		// Before vfox-java#106 the search listed one name per JDK major.
+		{[]string{"25-mandrel", "24-mandrel", "23-mandrel"}, "23-mandrel", "", false},
+		{mandrel, "21-mandrel", "", false},
+		{nik, "23-mandrel", "", false},
+	} {
+		if newest, ok := NewestOfMajor(c.searched, c.bare); newest != c.newest || ok != c.ok {
+			t.Errorf("NewestOfMajor(%q, %s) = %q, %v; want %q, %v", c.searched, c.bare, newest, ok, c.newest, c.ok)
+		}
+	}
+}
+
 func TestNewestBareMajor(t *testing.T) {
 	for _, c := range []struct {
 		searched           []string

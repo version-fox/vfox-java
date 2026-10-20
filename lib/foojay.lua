@@ -15,6 +15,8 @@
 local http = require("http")
 local json = require("json")
 
+local installed_version = require("installed_version")
+
 local foojay = {}
 
 local URL =
@@ -71,6 +73,38 @@ local fixes = {
         return result
     end,
 }
+
+-- Mandrel and Liberica NIK go by the numbers of the GraalVM they are built
+-- from: Mandrel 23.1.12.1 runs on JDK 21, and only from 25 on do the numbers
+-- follow the JDK's (25.0.4.1). Foojay gives them as distribution_version, and
+-- the JDK as java_version, Mandrel's as the major alone (21), so the plugin
+-- looks up and names their releases by distribution_version.
+local own_numbers = {
+    mandrel = true,
+    liberica_native = true,
+}
+
+--- Returns BellSoft's build number of a Liberica NIK release, which only the
+--- file name carries (...-openjdk25.0.3+12-25.0.3+2-linux-amd64.tar.gz), or 0.
+local function bellsoft_build(package)
+    local build = (package.filename or ""):match("%-[%d.]+%+(%d+)%-")
+    return tonumber(build) or 0
+end
+
+--- Whether package a goes before b among the releases of own_numbers: the
+--- newer release first, then the build for the newer JDK, as some releases
+--- come for several (Mandrel 21.3.6 for JDK 11 and 17), then BellSoft's later
+--- build for the same JDK (25.0.3+2 before 25.0.3+1).
+local function newest_first(a, b)
+    for _, field in ipairs({ "distribution_version", "java_version" }) do
+        if installed_version.newer(a[field], b[field]) then
+            return true
+        elseif installed_version.newer(b[field], a[field]) then
+            return false
+        end
+    end
+    return bellsoft_build(a) > bellsoft_build(b)
+end
 
 --- Detects the libc type on Linux systems (glibc or musl)
 --- @return string "glibc" or "musl"
@@ -145,6 +179,31 @@ foojay.fetchtJdkList = function(distribution, version)
 
         local respBody = json.decode(resp.body)
         return respBody.result
+    end
+
+    if own_numbers[distribution] then
+        -- Foojay matches distribution_version by the numbers given, so 23.1.12
+        -- lists 23.1.12.1 as well, and its latest=available takes an older
+        -- release (23.1.8 for 23.1). A bare major takes the newest release
+        -- itself, and a longer version the release it names, whose zeros
+        -- Foojay leaves out (23.1.12.0 is 23.1.12).
+        local bare = version == "" or version:match("^%d+$")
+        local release = installed_version.unpad(version)
+        local result = {}
+        local query = version ~= "" and "&distribution_version=" .. encode(version) or ""
+        for _, package in ipairs(request("", query) or {}) do
+            if
+                package.distribution_version
+                and (bare or installed_version.unpad(package.distribution_version) == release)
+            then
+                table.insert(result, package)
+            end
+        end
+        table.sort(result, newest_first)
+        for _, package in ipairs(result) do
+            package.java_version = package.distribution_version
+        end
+        return result
     end
 
     local result = request(version, latest)

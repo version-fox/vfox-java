@@ -33,13 +33,13 @@ java --list-modules | grep javafx
 
 ## 哪些平台有 JavaFX 构建
 
-截至 2026-10-18，提供 JavaFX 构建的发行版有四个，而且并非每个平台都有。下表列出有 JavaFX 构建的 LTS 版本，中间的非 LTS 版本也有一些，但有缺口。
+截至 2026-10-20，提供 JavaFX 构建的发行版有四个，而且并非每个平台都有。下表列出有 JavaFX 构建的 LTS 版本，中间的非 LTS 版本也有一些，但有缺口。Liberica NIK 一行写的是 Java 版本，不是它名字里的 GraalVM 版本号（见 [distributions.md](distributions.md#mandrel-与-liberica-nik-的行为)）：它为 Java 21 提供的 JavaFX 构建是 `23.1.x-nik-fx`。
 
 | 发行版 | Linux x64 | Linux arm64 | Alpine x64 | macOS Intel | macOS Apple Silicon | Windows x64 | Windows arm64 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Zulu（`zulu`） | 8、11、17、21、25 | 8、11、17、21、25 | – | 8、11、17、21、25 | 8、11、17、21、25 | 8、11、17、21、25 | – |
 | Liberica（`librca`） | 8、11、17、21、25 | 11、17、21、25 | 11 | 8、11、17、21、25 | 8、11、17、21、25 | 8、11、17、21、25 | 11、17、21、25 |
 | Corretto（`amzn`） | 8 | 8 | – | 8 | – | 8 | – |
-| Liberica NIK（`nik`） | 21、25 | – | – | 25 | 25 | 21、25 | – |
+| Liberica NIK（`nik`） | 11、17、21、25 | – | – | 11、17、21、25 | 11、17、21、25 | 11、17、21、25 | – |
 
 Alpine arm64 上没有任何发行版提供 JavaFX。Loongnix 为龙架构提供带 JavaFX 的构建，选择方式相同，见 [loongnix.md](loongnix.md)。想看某个平台当前的情况，在 [foojay.md](foojay.md) 的查询里加上 `javafx_bundled=true` 即可。

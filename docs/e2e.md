@@ -98,6 +98,17 @@ JDK, so `java` can only come from what vfox installs:
    already installed, so nothing downloads. Before they had short names, the
    two failed with `Unsupported distribution` and `Could not extract a valid
    distribution`.
+
+   On the same rows Mandrel and Liberica NIK go by the GraalVM version they
+   carry (`ownNumbers` in `tests/e2e/common`; Windows arm64 has neither):
+   `vfox search java mandrel` lists `23.1.12-mandrel` (`23.1.8-nik` for
+   Liberica NIK), and with it and the newest 23.x the search lists faked as
+   installed, `vfox install java@mandrel-23.1.12` and
+   `vfox install java@23-mandrel` report those two as already installed.
+   Before the plugin read `distribution_version`, where Foojay moved that
+   version in October 2026, the search listed one name per Java major,
+   `23.1.12-mandrel` was not found, and `java@23-mandrel` installed Mandrel
+   24.1.2, built for Java 23.
 5. The pinned release installs under the name `PreInstall` gives it: the
    requested version plus the build number (`21.0.8-tem` installs as
    `21.0.8+9-tem`). `vfox search java <distribution>` (the `Available` hook)
@@ -157,7 +168,7 @@ The default matrix runs every distribution against both vfox channels
 | Distribution | Release | Covers                                                                                   | amd64 | arm64 |
 | ------------ | ------- | ---------------------------------------------------------------------------------------- | ----- | ----- |
 | `open`       | 25.0.2  | the default distribution, versions without a suffix                                      | ✓     |       |
-| `tem`        | 21.0.8  | the common path (tar.gz on Linux, zip on Windows); the distributions checked by name     | ✓     | ✓     |
+| `tem`        | 21.0.8  | the common path (tar.gz on Linux, zip on Windows); the name and number checks of item 4  | ✓     | ✓     |
 | `librca-fx`  | 25.0.4  | JavaFX bundled builds (`-fx`)                                                            | ✓     | ✓     |
 | `jb`         | 21.0.5  | the tar.gz path on Windows, which has no zip for it                                      | ✓     | ✓     |
 | `graalce`    | 25.0.2  | a `GRAALVM_HOME` set beforehand keeps its value; Oracle GraalVM's `25-graal`             | ✓     |       |
