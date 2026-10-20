@@ -121,3 +121,30 @@ func checkGraalVMBareMajor(ctx context.Context, t *testing.T, ctr tc.Container) 
 	execOK(ctx, t, ctr, "rm --recursive "+strings.Join(dirs, " "))
 	t.Logf("PASS java@%s takes %s out of %s", spec, want, strings.Join(builds, ", "))
 }
+
+// checkNameOnly proves the distributions checked by name only go by their
+// short names (see common.NameOnlyDistributions): `vfox search java
+// <short>` lists each, and with the newest version it lists faked as
+// installed, `vfox install java@<major>-<short>` finds that one installed,
+// so nothing downloads (see common.NewestBareMajor).
+func checkNameOnly(ctx context.Context, t *testing.T, ctr tc.Container, platform string) {
+	t.Helper()
+	names := common.NameOnlyDistributions(platform)
+	var dirs []string
+	for _, name := range names {
+		search := "vfox search java " + name
+		out := execRetry(ctx, t, ctr, search, search)
+		spec, newest, ok := common.NewestBareMajor(common.SearchedVersions(out), name)
+		require.Truef(t, ok, "%s lists no newest version that a bare major names\n--- output ---\n%s", search, out)
+		dir := `"${VFOX_HOME:-$HOME/.vfox}"/cache/java/` + shQuote("v-"+newest)
+		dirs = append(dirs, dir)
+		execOK(ctx, t, ctr, "mkdir --parents "+dir+"/"+shQuote("java-"+newest))
+		out = execRetry(ctx, t, ctr, "vfox install java@"+spec, "vfox install java@"+spec)
+		require.Containsf(t, common.StripANSI(out), "java@"+newest+" is already installed",
+			"vfox install java@%s must take %s, the newest version %s lists", spec, newest, search)
+	}
+	if len(dirs) > 0 {
+		execOK(ctx, t, ctr, "rm --recursive "+strings.Join(dirs, " "))
+	}
+	t.Logf("PASS %d distributions go by name on %s: %s", len(names), platform, strings.Join(names, ", "))
+}

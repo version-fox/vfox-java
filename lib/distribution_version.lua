@@ -35,6 +35,25 @@ local short_name = {
     ["trava"] = "trava",
     ["zulu"] = "zulu",
     ["jb"] = "jetbrains",
+    -- SDKMAN no longer offers these. It wrote the VM or the JDK into the
+    -- version (11.0.10.j9-adpt, 22.3.3.r17-grl), which here is part of the
+    -- name, one per Foojay distribution.
+    ["adpt"] = "aoj",
+    ["adptj9"] = "aoj_openj9",
+    ["gln"] = "gluon_graalvm",
+    ["grl8"] = "graalvm_ce8",
+    ["grl11"] = "graalvm_ce11",
+    ["grl16"] = "graalvm_ce16",
+    ["grl17"] = "graalvm_ce17",
+    ["grl19"] = "graalvm_ce19",
+    -- SDKMAN has no identifier for these. Short vendor names stay whole, as its
+    -- zulu and kona do, and longer ones are cut down, mostly by dropping vowels,
+    -- as its librca and sapmchn are; semcrt is its sem with certified.
+    ["eliya"] = "eliya",
+    ["ojdkbld"] = "ojdk_build",
+    ["opnlgc"] = "openlogic",
+    ["rdht"] = "redhat",
+    ["semcrt"] = "semeru_certified",
 }
 
 local long_name = {}

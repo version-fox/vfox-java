@@ -20,7 +20,7 @@ Foojay 在这个平台上没有对应的包：版本、发行版、带不带 Jav
 
 ### `Could not extract a valid distribution: 21-foo`
 
-`-` 前后两部分都不是发行版名。名字都是小写，取自 [distributions.md](distributions.md) 里的表。`java@21-openlogic` 也会报这个错，因为插件没有提供 Foojay 里的所有发行版。
+`-` 前后两部分都不是发行版名。名字都是小写，取自 [distributions.md](distributions.md) 里的表。未发布：0.6.2 之后新增的 13 个发行版，在 0.6.2 上都会报这个错，比如 `java@21-opnlgc` 和 `java@21-openlogic`。
 
 ### `Unsupported distribution: foo`
 
@@ -32,7 +32,7 @@ Foojay 在这个平台上没有对应的包：版本、发行版、带不带 Jav
 
 ### `source file not found`
 
-下载时服务器返回 404。厂商会下线旧的构建，而 Foojay 仍保留它们的记录。最常见的是 EA 构建（见 [versions.md](versions.md#早期访问ea构建)）。换一个较新的构建。
+下载时服务器返回 404。厂商会下线旧的构建，而 Foojay 仍保留它们的记录。最常见的是 EA 构建（见 [versions.md](versions.md#早期访问ea构建)）。换一个较新的构建。Red Hat 除了 Linux x64 以外的构建都会报这个错，见 [distributions.md](distributions.md#red-hat-build-of-openjdkrdht)。
 
 ### `java@21-tem is not installed`
 
@@ -66,6 +66,7 @@ vfox config proxy.url http://127.0.0.1:7890
 - **安装后的版本名里多了一个你没写的构建号。** `java@21.0.8-tem` 装出来是 `21.0.8+9-tem`。构建号是版本名的一部分，见 [versions.md](versions.md#安装后的版本名)。
 - **`vfox install java@21-tem` 和 `vfox install java tem` 做的是不同的事。** 后者是两个 SDK，`java` 和 `tem`。
 - **你设置的 `GRAALVM_HOME` 不会被改动。** 插件只设置 `JAVA_HOME` 和 `PATH`。
+- **`vfox use java@21` 选中了 `21.3.1-grl11`，而它运行的是 Java 11。** GraalVM CE 8 到 19 和 23 以前的 Gluon GraalVM 用的是 GraalVM 的版本号，对只写大版本号的写法，vfox 只按版本号匹配，不分发行版，见 [distributions.md](distributions.md#按-graalvm-编号的版本)。请写成 `java@21-tem`。
 
 ## JDK 在哪里
 

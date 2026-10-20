@@ -41,6 +41,15 @@ for _, version in ipairs({
     "21.0.2+13",
     "28-ea+18",
     "28-ea+19",
+    -- Some of the distributions added after release 0.6.2, two numbered after
+    -- GraalVM, with names that start like others.
+    "11.0.11-adpt",
+    "11.0.10-adptj9",
+    "22.3.3-grl17",
+    "22.3.1-grl11",
+    "21.0.8+9-rdht",
+    "25.0.4-semcrt",
+    "25.0.2+10-sem",
 }) do
     installed[version] = { name = "java", version = version, path = "/sdks/java-" .. version }
 end
@@ -113,6 +122,20 @@ local cases = {
     { "21.0.8.0+7-tem", "21.0.8.0+7-tem" },
     { "27.0.0+35-librca", "27.0.0+35-librca" },
     { "26.0.0-graal", "26.0.0-graal" },
+    -- The distributions added after release 0.6.2 go by their short and long
+    -- names too, and never cross to the one whose name starts the same.
+    { "11-adpt", "11.0.11-adpt" },
+    { "11-adptj9", "11.0.10-adptj9" },
+    { "aoj_openj9-11.0.10", "11.0.10-adptj9" },
+    { "11.0.10-adpt", "11.0.10-adpt" },
+    { "22-grl17", "22.3.3-grl17" },
+    { "graalvm_ce17-22.3.3", "22.3.3-grl17" },
+    { "22.3-grl11", "22.3-grl11" },
+    { "21.0.8-rdht", "21.0.8+9-rdht" },
+    { "redhat-21", "21.0.8+9-rdht" },
+    { "25-semcrt", "25.0.4-semcrt" },
+    { "25-sem", "25.0.2+10-sem" },
+    { "semeru_certified-25.0.4", "25.0.4-semcrt" },
 }
 for _, case in ipairs(cases) do
     local result = PLUGIN:PreUse({ version = case[1], installedSdks = installed })

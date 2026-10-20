@@ -460,3 +460,55 @@ func TestBareMajorBuilds(t *testing.T) {
 		t.Error("only the GraalVM Community combos check Oracle GraalVM's bare major")
 	}
 }
+
+func TestNameOnlyDistributions(t *testing.T) {
+	for platform, want := range map[string][]string{
+		"linux/amd64":   {"adpt", "adptj9", "eliya", "gln", "grl11", "grl16", "grl17", "grl19", "grl8", "ojdkbld", "opnlgc", "rdht", "semcrt"},
+		"linux/arm64":   {"adpt", "adptj9", "eliya", "grl11", "grl16", "grl17", "grl19", "rdht", "semcrt"},
+		"windows/amd64": {"adpt", "adptj9", "gln", "grl11", "grl16", "grl17", "grl19", "grl8", "ojdkbld", "opnlgc", "rdht"},
+		"windows/arm64": nil,
+	} {
+		if got := NameOnlyDistributions(platform); !slices.Equal(got, want) {
+			t.Errorf("NameOnlyDistributions(%s) = %q, want %q", platform, got, want)
+		}
+	}
+	// The suite installs these, so it knows their names already.
+	for name := range nameOnly {
+		if _, ok := distributions[name]; ok {
+			t.Errorf("%s is checked by name only, but the suite installs it", name)
+		}
+	}
+	// Temurin's combos run on every runner, arm64 included.
+	for _, arch := range []string{"amd64", "arm64"} {
+		if !slices.ContainsFunc(DefaultDistributions(arch), ChecksNameOnly) {
+			t.Errorf("no %s default combo checks the distributions by name", arch)
+		}
+	}
+	if ChecksNameOnly("librca-fx") {
+		t.Error("only the Temurin combos check the distributions by name")
+	}
+}
+
+func TestNewestBareMajor(t *testing.T) {
+	for _, c := range []struct {
+		searched           []string
+		short, spec, found string
+		ok                 bool
+	}{
+		// Abridged `vfox search` output, observed on 2026-10-20.
+		{[]string{"22.3.3-grl17", "22.3.2-grl17"}, "grl17", "22-grl17", "22.3.3-grl17", true},
+		{[]string{"25.0.4+7-opnlgc", "25.0.3+9-opnlgc"}, "opnlgc", "25-opnlgc", "25.0.4+7-opnlgc", true},
+		{[]string{"23+25-gln", "22.1.0.1-gln"}, "gln", "23-gln", "23+25-gln", true},
+		{[]string{"8.0.345+1-rdht"}, "rdht", "8-rdht", "8.0.345+1-rdht", true},
+		// vfox would find 16-adpt itself installed, without asking PreInstall.
+		{[]string{"16-adpt", "15.0.2-adpt"}, "adpt", "16-adpt", "16-adpt", false},
+		{[]string{"16.0.1-adptj9"}, "adpt", "", "16.0.1-adptj9", false},
+		{nil, "eliya", "", "", false},
+	} {
+		spec, found, ok := NewestBareMajor(c.searched, c.short)
+		if ok != c.ok || ok && (spec != c.spec || found != c.found) {
+			t.Errorf("NewestBareMajor(%q, %s) = %q, %q, %v; want %q, %q, %v",
+				c.searched, c.short, spec, found, ok, c.spec, c.found, c.ok)
+		}
+	}
+}

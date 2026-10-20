@@ -73,6 +73,8 @@ vfox uninstall java@21.0.8+9-tem
 
 写明了构建或版本时，不会跳到别的构建或版本（`21.0.12-tem` 不会选中 `21.0.12.1+1-tem`）。也不会跨发行版，不会在带 JavaFX 和不带 JavaFX 的构建之间串用，不会在 EA 和 GA 之间串用。什么都匹配不上时，报 `java@99-tem is not installed`。
 
+vfox 自己匹配 `21` 时只看版本号，所以 GraalVM CE 8 到 19 和 Gluon GraalVM 也会被它选中，它们的版本号是 GraalVM 的：`21.3.1-grl11` 运行的是 Java 11，`vfox use java@21` 却会选中它，而不是 `21.0.12.1+1-tem`。见 [distributions.md](distributions.md#按-graalvm-编号的版本)。
+
 作用域用 `vfox use` 的参数选择：`--global`、`--project` 或 `--session`，默认是会话作用域。如果 Shell 没有挂载 vfox，Windows 会警告并切到全局作用域，Linux 和 macOS 则报 `vfox requires hook support` 后退出。`--project` 会写出 `.vfox.toml`，里面记录的是安装后的版本名（`java = "17.0.10+7-tem"`）。`.sdkmanrc` 也会被读取，见 [sdkmanrc.md](sdkmanrc.md)。
 
 ## 早期访问（EA）构建
@@ -91,7 +93,7 @@ vfox install java@28.ea.15-open    # 28-ea+15
 ```bash
 vfox search java            # 默认的 OpenJDK
 vfox search java tem        # 指定一个发行版，简称或长名都行
-vfox search java all        # 所有发行版，在 Linux x64 上约 2300 行
+vfox search java all        # 所有发行版，在 Linux x64 上约 2500 行
 ```
 
 每一行都是可以接在 `java@` 后面的名字，新的在前，带 LTS、JavaFX（见 [javafx.md](javafx.md)）备注，已安装的会有标记：

@@ -20,7 +20,7 @@ The spec holds a distribution and no version. `java@-tem`, `java@temurin-` and `
 
 ### `Could not extract a valid distribution: 21-foo`
 
-Neither part of the spec is the name of a distribution. Names are lower case and come from the table in [distributions.md](distributions.md). `java@21-openlogic` ends here too, because the plugin does not offer every distribution Foojay has.
+Neither part of the spec is the name of a distribution. Names are lower case and come from the table in [distributions.md](distributions.md). Unreleased: release 0.6.2 ends here for the 13 distributions added after it, such as `java@21-opnlgc` and `java@21-openlogic`.
 
 ### `Unsupported distribution: foo`
 
@@ -32,7 +32,7 @@ The request to Foojay failed. After `status_code =>` comes the HTTP status, othe
 
 ### `source file not found`
 
-The download answered 404. Vendors take old builds down while Foojay keeps their records. Early-access builds are the common case (see [versions.md](versions.md#early-access-builds)). Pick a newer build.
+The download answered 404. Vendors take old builds down while Foojay keeps their records. Early-access builds are the common case (see [versions.md](versions.md#early-access-builds)). Pick a newer build. Red Hat's builds for anything but Linux x64 all end here, see [distributions.md](distributions.md#red-hat-build-of-openjdk-rdht).
 
 ### `java@21-tem is not installed`
 
@@ -66,6 +66,7 @@ While `proxy.enable` is `false`, the usual `HTTP_PROXY`, `HTTPS_PROXY` and `NO_P
 - **The installed name has a build number you did not type.** `java@21.0.8-tem` installs `21.0.8+9-tem`. The build is part of the name, see [versions.md](versions.md#installed-names).
 - **`vfox install java@21-tem` and `vfox install java tem` do different things.** The second one is two SDKs, `java` and `tem`.
 - **A `GRAALVM_HOME` you set is left alone.** The plugin sets `JAVA_HOME` and `PATH` only.
+- **`vfox use java@21` selects `21.3.1-grl11`, which runs Java 11.** GraalVM CE 8 to 19 and Gluon GraalVM before 23 carry GraalVM's version numbers, and vfox matches a bare major against those, see [distributions.md](distributions.md#versions-numbered-after-graalvm). Write `java@21-tem`.
 
 ## Where the JDK is
 
