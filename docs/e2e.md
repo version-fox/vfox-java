@@ -152,6 +152,15 @@ JDK, so `java` can only come from what vfox installs:
    weeks, so that install is faked: its `bin` holds a stand-in `java` that
    only prints the name. On Windows the file is written with CRLF line
    endings.
+
+   On the Temurin rows, a `.sdkmanrc` holding one of SDKMAN's identifiers of
+   Mandrel and Liberica NIK with the JDK after `.r` must then select the
+   release it names: `java=25.0.4.r25-nik` selects `25.0.4-nik`, not
+   `25.0.4.1-nik`, which `ParseLegacyFile` took while it read `25.0.4.r25` as
+   the release. `java=22.1.r11-mandrel` must select nothing, as the plugin
+   installs only the JDK 17 build of Mandrel 22.1 (`OwnNumberIdentifiers` in
+   `tests/e2e/common`). The releases they name and a newer one of each major
+   are faked the same way.
 7. After `vfox use --global`, the JDK on `PATH` reports the requested
    `java.version`, the runner's `os.arch` (`amd64` / `aarch64`, which also
    catches an x64 JDK emulated on Windows ARM64) and the distribution's
@@ -176,13 +185,13 @@ JDK, so `java` can only come from what vfox installs:
 The default matrix runs every distribution against both vfox channels
 (`latest`, `main`):
 
-| Distribution | Release | Covers                                                                                   | amd64 | arm64 |
-| ------------ | ------- | ---------------------------------------------------------------------------------------- | ----- | ----- |
-| `open`       | 25.0.2  | the default distribution, versions without a suffix                                      | ✓     |       |
-| `tem`        | 21.0.8  | the common path (tar.gz on Linux, zip on Windows); the name and number checks of item 4  | ✓     | ✓     |
-| `librca-fx`  | 25.0.4  | JavaFX bundled builds (`-fx`)                                                            | ✓     | ✓     |
-| `jb`         | 21.0.5  | the tar.gz path on Windows, which has no zip for it                                      | ✓     | ✓     |
-| `graalce`    | 25.0.2  | a `GRAALVM_HOME` set beforehand keeps its value; Oracle GraalVM's `25-graal`             | ✓     |       |
+| Distribution | Release | Covers                                                                                         | amd64 | arm64 |
+| ------------ | ------- | ---------------------------------------------------------------------------------------------- | ----- | ----- |
+| `open`       | 25.0.2  | the default distribution, versions without a suffix                                            | ✓     |       |
+| `tem`        | 21.0.8  | the common path (tar.gz on Linux, zip on Windows); the name and number checks of items 4 and 6 | ✓     | ✓     |
+| `librca-fx`  | 25.0.4  | JavaFX bundled builds (`-fx`)                                                                  | ✓     | ✓     |
+| `jb`         | 21.0.5  | the tar.gz path on Windows, which has no zip for it                                            | ✓     | ✓     |
+| `graalce`    | 25.0.2  | a `GRAALVM_HOME` set beforehand keeps its value; Oracle GraalVM's `25-graal`                   | ✓     |       |
 
 Every pinned release is published through Foojay for each platform its row
 runs on. OpenJDK and GraalVM Community ship no `windows-aarch64` build, so

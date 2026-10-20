@@ -44,6 +44,8 @@ Windows 容器的覆盖（`tests/e2e/windows`）无法在开发容器里运行�
    - EA 构建的标识符。固定大版本的 EA 构建，如果按 `sdk list java` 里 OpenJDK 的写法来写（`28.0.0.0+ea.20-open`），必须选中那个 EA 构建：`java=21.0.0.0+ea.1-tem` 要选中 `21-ea+1-tem`，不能选中 GA 版本。`ParseLegacyFile` 只认 SDKMAN 较旧的 `21.ea.1-tem` 写法时，选中的正是 GA 版本。安装后的版本名本身（`java=21-ea+1-tem`）也要能选中：`ParseLegacyFile` 以前解析不了它，什么也没选中，而 `vfox use` 是能选中的。
 
    jdk.java.net 会在几周内撤掉每个 EA 构建，所以这个安装是模拟出来的：它的 `bin` 里放着一个只打印名字的替身 `java`。在 Windows 上，文件用 CRLF 换行写入。
+
+   接着，在 `tem` 这几行里，`.sdkmanrc` 里写的是 SDKMAN 给 Mandrel 和 Liberica NIK 的、`.r` 后面带 JDK 版本的标识符时，要选中标识符指明的版本：`java=25.0.4.r25-nik` 选中 `25.0.4-nik`，而不是 `25.0.4.1-nik`。`ParseLegacyFile` 以前把 `25.0.4.r25` 当成版本号，选中的正是后者。`java=22.1.r11-mandrel` 则什么都不能选中，因为插件只装 Mandrel 22.1 的 JDK 17 构建（`tests/e2e/common` 里的 `OwnNumberIdentifiers`）。标识符指明的版本，以及同一大版本里更新的一个版本，也是这样模拟安装的。
 7. `vfox use --global` 之后，`PATH` 上的 JDK 要报告请求的 `java.version`、runner 的 `os.arch`（`amd64` / `aarch64`，这也能抓出在 Windows ARM64 上模拟运行的 x64 JDK）和这个发行版的 `java.vendor`。`JAVA_HOME` 指向同一个 JDK，`javac` 能编译一个程序，`java` 能运行它，模块列表恰好在 `-fx` 构建里含有 JavaFX，`vfox current java` 报告已安装的版本。事先设置的 `GRAALVM_HOME` 保持原值，因为用户会把它指向自己的 GraalVM；对 GraalVM，插件以前会把它替换成正在使用的 JDK。
 8. `PreUse` 把用户输入的各种写法映射到已安装的版本，不需要再次下载：只写大版本号（`java@21`，交给 vfox 核心做模糊匹配）、安装时用的写法（`java@21.0.8-tem`，`PreUse` 会在已安装的版本里找到它的构建号），以及 asdf 风格的 `<长名>-<版本>[-fx]`（`java@temurin-21.0.8+9` 改写成 `21.0.8+9-tem`；`java@openjdk-25.0.2+10` 改写成 `25.0.2+10`）。SDKMAN 那样补零的版本也一样（`java@21.0.8.0-tem`、`java@21.0.8.0+9-tem`），`vfox install` 必须先发现它们已经安装：`PreInstall` 把零原样交给了 Foojay，Foojay 会去掉它，而 `PreUse` 以前去找以补零版本开头的已安装版本，报告说没有安装。
 
@@ -52,7 +54,7 @@ Windows 容器的覆盖（`tests/e2e/windows`）无法在开发容器里运行�
 | 发行版 | 版本 | 覆盖内容 | amd64 | arm64 |
 | ------------ | ------- | ---------------------------------------------------------------------------- | ----- | ----- |
 | `open` | 25.0.2 | 默认发行版，版本不带后缀 | ✓ | |
-| `tem` | 21.0.8 | 常规路径（Linux 上是 tar.gz，Windows 上是 zip）；第 4 条里按名字和按版本号的检查 | ✓ | ✓ |
+| `tem` | 21.0.8 | 常规路径（Linux 上是 tar.gz，Windows 上是 zip）；第 4、6 条里按名字和按版本号的检查 | ✓ | ✓ |
 | `librca-fx` | 25.0.4 | 带 JavaFX 的构建（`-fx`） | ✓ | ✓ |
 | `jb` | 21.0.5 | Windows 上走 tar.gz 的路径，那里没有 zip | ✓ | ✓ |
 | `graalce` | 25.0.2 | 事先设置的 `GRAALVM_HOME` 保持原值；Oracle GraalVM 的 `25-graal` | ✓ | |

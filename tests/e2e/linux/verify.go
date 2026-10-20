@@ -110,17 +110,49 @@ func verifyLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, distr
 	execOK(ctx, t, ctr, "rm --recursive "+eaDir)
 }
 
+// verifyOwnNumberLegacyFile proves a .sdkmanrc holding SDKMAN's identifiers
+// of Mandrel and Liberica NIK that carry the JDK after .r (e.g.
+// java=25.0.4.r25-nik) selects the release they name, not a newer one of its
+// major, and nothing for the JDK 11 build of Mandrel 22.1, which the plugin
+// does not install (see common.OwnNumberIdentifiers). The installs are faked,
+// each with a stand-in java that only prints its name. It runs before any
+// `vfox use`, so java can only come from the legacy file.
+func verifyOwnNumberLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container) {
+	t.Helper()
+	cases, installs := common.OwnNumberIdentifiers()
+	var dirs []string
+	for _, name := range installs {
+		dir := `"${VFOX_HOME:-$HOME/.vfox}"/cache/java/` + shQuote("v-"+name)
+		bin := dir + "/" + shQuote("java-"+name) + "/bin"
+		dirs = append(dirs, dir)
+		execOK(ctx, t, ctr, fmt.Sprintf("mkdir --parents %s && printf '%%s' %s > %s/java && chmod +x %s/java",
+			bin, shQuote("#!/bin/sh\necho "+shQuote(name)+"\n"), bin, bin))
+	}
+	for _, c := range cases {
+		out := legacyRun(ctx, t, ctr, c.Identifier, "if command -v java >/dev/null; then java; fi")
+		common.CheckSelects(t, out, c, installs)
+	}
+	execOK(ctx, t, ctr, "rm --recursive "+strings.Join(dirs, " "))
+}
+
 // legacyJava writes java=<identifier> to a .sdkmanrc and returns what java
+// prints next to it.
+func legacyJava(ctx context.Context, t *testing.T, ctr tc.Container, identifier string) string {
+	t.Helper()
+	return legacyRun(ctx, t, ctr, identifier, showSettings)
+}
+
+// legacyRun writes java=<identifier> to a .sdkmanrc and returns what command
 // prints next to it. The probe activates inside its own exec, a fresh shell
 // session, so no `vfox env` state cached by an earlier call can answer for
 // the file.
-func legacyJava(ctx context.Context, t *testing.T, ctr tc.Container, identifier string) string {
+func legacyRun(ctx context.Context, t *testing.T, ctr tc.Container, identifier, command string) string {
 	t.Helper()
 	const dir = "/tmp/e2e-legacy-sdkmanrc"
 	execOK(ctx, t, ctr, fmt.Sprintf("mkdir --parents %s && printf 'java=%%s\\n' %s > %s/.sdkmanrc",
 		dir, shQuote(identifier), dir))
 	return execRetry(ctx, t, ctr, ".sdkmanrc java="+identifier, fmt.Sprintf(
-		`cd %s && eval "$(vfox activate bash)" && eval "$(vfox env -s bash)" && %s`, dir, showSettings))
+		`cd %s && eval "$(vfox activate bash)" && eval "$(vfox env -s bash)" && %s`, dir, command))
 }
 
 // verifyToolchain runs java and javac through the activate hook and checks

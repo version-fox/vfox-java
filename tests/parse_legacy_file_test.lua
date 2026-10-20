@@ -148,6 +148,31 @@ local cases = {
     { "java=21.0.8-rdht\n", { "21.0.8+9-rdht" }, "21.0.8+9-rdht" },
     { "java=25.0.4-semcrt\n", { "25.0.4-semcrt", "25.0.2+10-sem" }, "25.0.4-semcrt" },
     { "java=25.0.2-sem\n", { "25.0.4-semcrt", "25.0.2+10-sem" }, "25.0.2+10-sem" },
+    -- SDKMAN writes the JDK into some versions of Mandrel and Liberica NIK as
+    -- well, which their installed names leave out (vfox-java#109).
+    -- ParseLegacyFile took 25.0.4.r25 for a release, found none and fell back
+    -- to the newest one of the major. A release from 21.3 to 23.0.1.2 comes
+    -- for two JDKs, of which the plugin installs the newer one's build, so the
+    -- older JDK selects nothing, as Gluon's JDK 11 does.
+    { "java=25.0.4.r25-nik\n", { "25.0.4-nik", "25.0.4.1-nik" }, "25.0.4-nik" },
+    { "java=25.0.2.r25-mandrel\n", { "25.0.2-mandrel", "25.0.4.1-mandrel" }, "25.0.2-mandrel" },
+    { "java=22.1.r17-mandrel\n", { "22.1-mandrel", "22.2-mandrel" }, "22.1-mandrel" },
+    { "java=22.1.r11-mandrel\n", { "22.1-mandrel", "22.2-mandrel" }, nil },
+    { "java=21.2.r11-nik\n", { "21.2-nik" }, "21.2-nik" },
+    { "java=21.3.r11-nik\n", { "21.3-nik" }, nil },
+    { "java=22.3.5.r11-nik\n", { "22.3.5-nik" }, nil },
+    { "java=22.3.5.r17-nik\n", { "22.3.5-nik" }, "22.3.5-nik" },
+    { "java=23.r17-nik\n", { "23-nik" }, nil },
+    { "java=23.r20-nik\n", { "23-nik", "23.1.12.1-nik" }, "23-nik" },
+    { "java=23.0.1.2.r17-mandrel\n", { "23.0.1.2-mandrel" }, nil },
+    { "java=23.0.1.2.r20-mandrel\n", { "23.0.1.2-mandrel", "23.0.6-mandrel" }, "23.0.1.2-mandrel" },
+    { "java=23.0.2.r17-nik\n", { "23.0.2-nik" }, "23.0.2-nik" },
+    -- SDKMAN's 25.r25-mandrel (Mandrel 25.0.1.0) names a bare major, which
+    -- selects the newest release of it, as java@25-mandrel does.
+    { "java=25.r25-mandrel\n", { "25.0.1-mandrel", "25.0.4.1-mandrel" }, "25.0.4.1-mandrel" },
+    -- Until Foojay's change in October 2026, release 0.6.2 named Liberica NIK
+    -- with BellSoft's build.
+    { "java=23.1.8.r21-nik\n", { "23.1.8+1-nik", "23.1.12.1-nik" }, "23.1.8+1-nik" },
     -- No java line at all selects nothing.
     { "maven=3.9.9\n", { "21.0.8+9-tem" }, nil },
 }
