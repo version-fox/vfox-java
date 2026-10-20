@@ -2,8 +2,6 @@
 
 [中文](zh-CN/mirror.md) | [English](mirror.md)
 
-Unreleased: release 0.6.2 has no mirror setting.
-
 Foojay links the JDKs of most distributions to GitHub Releases, so `vfox install java@21-tem` downloads from `github.com`. If github.com is slow or unreachable where you are, set `VFOX_JAVA_GITHUB_MIRROR` and the plugin sends these downloads through a GitHub mirror.
 
 The value is a URL prefix. The plugin puts it in front of the GitHub URL, and adds a `/` if the value does not end in one. For Temurin 21.0.8 on Linux x64:

@@ -8,7 +8,7 @@
 No JDK found for 21-bsg on darwin/arm64. Please check available versions with 'vfox search java'
 ```
 
-下表列出各发行版有哪些平台的包，数据取自 2026-10-18 的 Foojay，从 AdoptOpenJDK 起的各行是 2026-10-20 补上的。✅ 表示 Foojay 在这个平台上至少列有一个插件能安装的包，❌ 表示一个也没有。未发布：0.6.2 只有到 Trava 为止的那些行。
+下表列出各发行版有哪些平台的包，数据取自 2026-10-18 的 Foojay，从 AdoptOpenJDK 起的各行是 2026-10-20 补上的。✅ 表示 Foojay 在这个平台上至少列有一个插件能安装的包，❌ 表示一个也没有。
 
 | 发行版 | Linux x64 | Linux arm64 | Alpine x64 | Alpine arm64 | macOS Intel | macOS Apple Silicon | Windows x64 | Windows arm64 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |

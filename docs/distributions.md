@@ -4,8 +4,6 @@
 
 The plugin gets the releases and download links of these 31 distributions from [Foojay](foojay.md), all that Foojay listed on 2026-10-20. The short name or the long name goes wherever a distribution does: `21-tem`, `21-temurin`, `temurin-21`, `vfox search java tem`.
 
-Unreleased: release 0.6.2 lacks `adpt`, `adptj9`, `eliya`, `gln`, `grl8`, `grl11`, `grl16`, `grl17`, `grl19`, `ojdkbld`, `opnlgc`, `rdht` and `semcrt`. For those its `vfox install` stops with `Could not extract a valid distribution` and `vfox search` with `Unsupported distribution`.
-
 | Short name | Long name | Distribution | Maintained by |
 | --- | --- | --- | --- |
 | `adpt` | `aoj` | AdoptOpenJDK with HotSpot | AdoptOpenJDK |
@@ -150,7 +148,6 @@ The open-source edition of GraalVM, built on OpenJDK.
 - A bare major is GraalVM's as well: `java@23-mandrel` installs the newest 23.x, `23.1.12.1-mandrel`, which runs Java 21, and `java@21-mandrel` installs `21.3.6-mandrel`, which runs Java 17. A longer version installs the release it names: `java@23.1.12-mandrel` is 23.1.12, not 23.1.12.1, and `java@23.1-mandrel` is the first 23.1 release, 23.1.0. A build number finds nothing (`java@23.1.8+1-nik`).
 - The releases ending in `.0.0` are listed under the bare major (`24-mandrel` is Mandrel 24.0.0) and install with a longer version, `java@24.0.0-mandrel`. Once one is installed, vfox finds `java@24-mandrel` by that name, for `vfox install` and `vfox use` alike.
 - Some releases come for several Java versions under one number, such as Mandrel 21.3.6 for Java 11 and 17. The plugin installs the build for the newest Java, which for Mandrel 23.0.1.2 and Liberica NIK 23.0.1 is Java 20, not 17. Liberica NIK built a few releases twice for the same Java (`25.0.3`), and the later build installs. The name shows neither the Java version nor BellSoft's build, so the other builds cannot be installed.
-- Unreleased: release 0.6.2 names them after Foojay's `java_version`, which held these numbers until Foojay put the Java version there in October 2026. Since then 0.6.2 fails on `java@23.1.12-mandrel` and `java@23.1.8-nik` with `No JDK found`, lists Mandrel in `vfox search` as one name per Java major (`21-mandrel`), installs Mandrel 23.1.8 for `java@21-mandrel` and Liberica NIK 24.1.2, built for Java 23, for `java@23-nik`.
 
 ### GraalVM CE 8 to 19 (`grl8`, `grl11`, `grl16`, `grl17`, `grl19`)
 
@@ -169,8 +166,7 @@ GraalVM CE 8 to 19, Gluon GraalVM before 23, and Mandrel and Liberica NIK before
 - Since 25.1 (June 2026) GraalVM puts out a feature release every month next to its 25.0 line: `25.1.3`, `25.2.4`, `25.3.4.1`, `25.4.4.1.1`. Each is replaced within about a month. Foojay marks Oracle GraalVM's STS, but GraalVM Community's LTS where it lists them the old way round (see below), as the JDK they build on is LTS. `vfox search` leaves the LTS note off them all.
 - Releases are named after GraalVM's own version, which Foojay gives as `distribution_version`. Foojay's `java_version` is the JDK's version, which a feature release shares with the 25.0 line: `25.4.4.1.1-graal`, `25.3.4.1-graal`, `25.0.4.1.1-graal` and `25.0.4.1-graal` all have the `java_version` 25.0.4.1.
 - Foojay lists GraalVM Community's feature releases under GraalVM's version too, as it did before October 2026, with downloads from GitHub. So `java@25.4.4.1-graalce`, the name release 0.6.2 gives the 25.4.4.1.1 build, still installs it from GitHub, while `java@25.4.4.1.1-graalce` gets the same file from Oracle's GraalVM Download Service.
-- Unreleased: release 0.6.2 names releases after `java_version`, so `java@25.0.4.1-graal` installs the feature release 25.4.4.1.1, `java@25-graal` installs a feature release whenever one is out on the JDK of the newest 25.0 build, and `vfox search java graal` lists no feature release.
-- `java@25-graal` installs the newest build of the 25.0 line (`25.0.5-graal` on 2026-10-20), the line Oracle's own `25/latest` download follows. A feature release needs its full version: `java@25.4.4.1.1-graal`. `vfox use java@25-graal` and `java=25-graal` in a `.sdkmanrc` select the newest installed build of that line too, and a feature release only where nothing else of 25 is installed. Unreleased: release 0.6.2 selects the newest installed release of 25, which is a feature release as soon as one is installed.
+- `java@25-graal` installs the newest build of the 25.0 line (`25.0.5-graal` on 2026-10-20), the line Oracle's own `25/latest` download follows. A feature release needs its full version: `java@25.4.4.1.1-graal`. `vfox use java@25-graal` and `java=25-graal` in a `.sdkmanrc` select the newest installed build of that line too, and a feature release only where nothing else of 25 is installed.
 - GraalVM Community's 25.0 line ended with `25.0.2`, and the feature releases are all it still ships. `java@25-graalce` installs the newest of them, `25.4.4.1.1-graalce` on 2026-10-20.
 - The plugin sets `JAVA_HOME` and `PATH`, and no `GRAALVM_HOME`. A `GRAALVM_HOME` that points at a GraalVM of your own stays as it is, and the native-image build plugins fall back to `JAVA_HOME` when it is unset.
 - There is no Windows ARM64 and no Alpine build, and Intel Macs get nothing after 25.0.1. See [platforms.md](platforms.md#graalvm).

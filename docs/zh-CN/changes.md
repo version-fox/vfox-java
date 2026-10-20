@@ -2,9 +2,9 @@
 
 [中文](changes.md) | [English](../changes.md)
 
-按发布版本列出用户能感受到的变化。GitHub 的 Release 页面列出了对应的 PR。写这篇文档时最新的发布版是 0.6.2，`main` 比它多出“未发布”下面的所有内容。想现在就用上这些变化，见 [install-from-source.md](install-from-source.md)。
+按发布版本列出用户能感受到的变化。GitHub 的 Release 页面列出了对应的 PR。
 
-## 未发布
+## 0.6.3（2026-10-20）
 
 - 新增 13 个发行版，Foojay 列出的发行版从此全都有了：AdoptOpenJDK（`adpt`、`adptj9`）、Eliya（`eliya`）、OJDKBuild（`ojdkbld`）、OpenLogic（`opnlgc`）、Red Hat（`rdht`）、Semeru 认证版（`semcrt`）、Gluon GraalVM（`gln`），以及基于 JDK 8 到 19 的 GraalVM CE（`grl8`、`grl11`、`grl16`、`grl17`、`grl19`）。Red Hat 从 tar.xz 包安装；Linux 上的 OJDKBuild、macOS 上的 OpenLogic 和 22.1 以前的 Gluon GraalVM 从 zip 包安装。`.sdkmanrc` 里写 SDKMAN 以前给它们的标识符也认，例如 `11.0.10.j9-adpt`、`22.3.3.r17-grl`。见 [distributions.md](distributions.md)。
 - Mandrel 和 Liberica NIK 重新按它们沿用的 GraalVM 版本号安装：`java@23.1.12-mandrel` 和 `java@23.1.8-nik` 能装了，`vfox search java mandrel` 列出全部版本，`java@23-mandrel` 装最新的 23.x，即运行 Java 21 的 `23.1.12.1-mandrel`。2026 年 10 月，Foojay 把这个版本号从 `java_version` 挪到了 `distribution_version`，此后 0.6.2 装这样的版本都报 `No JDK found`，每个 Java 大版本只列一个 Mandrel，`java@21-mandrel` 装的是 Mandrel 23.1.8。这段时间里它装上的版本按 Java 版本号命名（`21-mandrel`、`21.0.12.1+2-nik`），vfox 仍会按这些名字找到它们；想要这个写法现在所指的版本，先把旧的卸载。见 [distributions.md](distributions.md#mandrel-与-liberica-nik-的行为)（[#106](https://github.com/version-fox/vfox-java/issues/106)）。

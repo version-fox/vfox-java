@@ -32,8 +32,6 @@ java -version
 
 `vfox search java tem` 会列出 Temurin 的各个版本，在交互式终端里还可以直接选一个并安装。
 
-只存在于 `main`、还没进入最新发布版的行为，在下面各页里标有“未发布”。完整列表见 [docs/zh-CN/changes.md](docs/zh-CN/changes.md)，想直接用上 `main`，见 [docs/zh-CN/install-from-source.md](docs/zh-CN/install-from-source.md)。
-
 ## 版本与命名
 
 版本写成 `<版本>-<发行版>`，例如 `21.0.8-tem`，后面加 `-fx` 表示带 JavaFX。不写发行版时得到的是 jdk.java.net 上的 OpenJDK，它的 17 只到 17.0.2，21 只到 21.0.2。详见 [docs/zh-CN/versions.md](docs/zh-CN/versions.md)。
@@ -70,8 +68,6 @@ java -version
 | `grl8`、`grl11`、`grl16`、`grl17`、`grl19` | 基于 JDK 8 到 19 的 GraalVM CE |
 | `lnxabi1`、`lnxabi2` | Loongnix，仅限 Linux loong64 |
 
-未发布：0.6.2 只有到 `trava` 为止的那些行，以及 Loongnix 那一行。
-
 简称沿用 SDKMAN 的标识符，有几处不同：JetBrains Runtime 在 SDKMAN 里叫 `jbr`；AdoptOpenJDK 和 GraalVM CE 的虚拟机或 JDK 版本，SDKMAN 当时写在版本号里（`11.0.10.j9-adpt`、`22.3.3.r17-grl`），插件则给每种各起一个简称（`adptj9`、`grl17`）。Eliya、OJDKBuild、OpenLogic、Red Hat 和 Semeru 认证版在 SDKMAN 里没有标识符，简称是插件自己起的。全部差别以及每个发行版是什么，见 [docs/zh-CN/distributions.md](docs/zh-CN/distributions.md)；最后一行见 [docs/zh-CN/loongnix.md](docs/zh-CN/loongnix.md)。
 
 ## 平台
@@ -89,8 +85,6 @@ vfox 通过这个插件读取 SDKMAN 的 `.sdkmanrc` 里的 `java=` 一行，并
 ## GitHub 镜像
 
 大多数发行版从 GitHub 下载。如果你那里下载很慢，执行 `export VFOX_JAVA_GITHUB_MIRROR=https://gh-proxy.org/`，这些下载就会经过镜像。详见 [docs/zh-CN/mirror.md](docs/zh-CN/mirror.md)。
-
-未发布：0.6.2 没有镜像设置。
 
 ## 查询 Foojay
 

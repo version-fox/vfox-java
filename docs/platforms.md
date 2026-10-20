@@ -8,7 +8,7 @@ The plugin asks Foojay for packages of the platform it runs on: the operating sy
 No JDK found for 21-bsg on darwin/arm64. Please check available versions with 'vfox search java'
 ```
 
-The table shows which platforms each distribution has packages for. It was taken from Foojay on 2026-10-18, and the rows from AdoptOpenJDK on were added on 2026-10-20. ✅ means Foojay lists at least one package the plugin can install there, ❌ means none. Unreleased: release 0.6.2 has the rows up to Trava only.
+The table shows which platforms each distribution has packages for. It was taken from Foojay on 2026-10-18, and the rows from AdoptOpenJDK on were added on 2026-10-20. ✅ means Foojay lists at least one package the plugin can install there, ❌ means none.
 
 | Distribution | Linux x64 | Linux arm64 | Alpine x64 | Alpine arm64 | macOS Intel | macOS Apple silicon | Windows x64 | Windows arm64 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |

@@ -32,8 +32,6 @@ java -version
 
 `vfox search java tem` lists the Temurin releases, and in an interactive terminal it lets you pick one and installs it.
 
-Behavior that only exists on `main` and not in the latest release is marked "Unreleased" in the pages below. [docs/changes.md](docs/changes.md) lists it, and [docs/install-from-source.md](docs/install-from-source.md) gets you `main`.
-
 ## Versions and names
 
 A version is `<version>-<distribution>`, such as `21.0.8-tem`, with `-fx` after it for JavaFX. Without a distribution you get OpenJDK from jdk.java.net, which has nothing newer than 17.0.2 for 17 and 21.0.2 for 21. See [docs/versions.md](docs/versions.md) for details.
@@ -70,8 +68,6 @@ A version is `<version>-<distribution>`, such as `21.0.8-tem`, with `-fx` after 
 | `grl8`, `grl11`, `grl16`, `grl17`, `grl19` | GraalVM CE for JDK 8 to 19 |
 | `lnxabi1`, `lnxabi2` | Loongnix, Linux loong64 only |
 
-Unreleased: release 0.6.2 has the rows up to `trava`, and the Loongnix one.
-
 The short names follow SDKMAN's identifiers, with a few differences: SDKMAN calls JetBrains Runtime `jbr`, and it wrote the virtual machine or JDK of AdoptOpenJDK and GraalVM CE into the version (`11.0.10.j9-adpt`, `22.3.3.r17-grl`), where the plugin has a name for each (`adptj9`, `grl17`). Eliya, OJDKBuild, OpenLogic, Red Hat and Semeru certified have no SDKMAN identifier, so their short names are the plugin's own. See [docs/distributions.md](docs/distributions.md) for all the differences and for what each distribution is, and [docs/loongnix.md](docs/loongnix.md) for the last row.
 
 ## Platforms
@@ -89,8 +85,6 @@ vfox reads the `java=` line of SDKMAN's `.sdkmanrc` through this plugin and sele
 ## GitHub mirror
 
 Most distributions download from GitHub. If that is slow where you are, `export VFOX_JAVA_GITHUB_MIRROR=https://gh-proxy.org/` sends these downloads through a mirror. See [docs/mirror.md](docs/mirror.md) for details.
-
-Unreleased: release 0.6.2 has no mirror setting.
 
 ## Querying Foojay
 
