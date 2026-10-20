@@ -32,6 +32,8 @@ Windows 容器的覆盖（`tests/e2e/windows`）无法在开发容器里运行�
 
 1. 从指定的渠道安装 vfox，要么是最新发布版（`latest`），要么从源码构建（`main`），然后从当前检出的代码注册本地的 `java` 插件。在 Windows 上，runner 会在 `latest` 组合运行期间把 `main` 构建一次，`main` 的容器由 e2e 镜像加上这个 `vfox.exe` 启动。接着，`vfox info java` 打印的 Notes 要链接到 README，README 里列了各个简称，也写了怎样搜索某个发行版。以前的 Notes 只给了五个简称，没说怎样列出它们的版本（[vfox#390](https://github.com/version-fox/vfox/issues/390)）。
 2. 只写发行版不写版本，无论单独写还是跟在空版本后面（`java@tem`、`java@-tem`），`vfox install` 和 `vfox use` 都应失败，并提示补上版本。以前，`java@tem` 会让钩子报 Lua 错误；`java@-tem` 则让 `PreInstall` 把空版本发给 Foojay，Foojay 列出所有版本，结果装上了最新的。没有任何发行版发布过的版本（`<大版本>.0.99`）应该安装失败，并且 `PreInstall` 要指出它搜索的平台（`linux/amd64`、`windows/arm64` 等），以此确认向 Foojay 查询的就是 runner 所在的平台。已固定版本里从未发布过的构建（`<版本>+99`，例如 `21.0.8+99-tem`）也一样，这证明查询保留了构建号：Foojay 会把没编码的 `+` 当成空格并丢掉构建号，于是会装上这个版本的最新构建。
+
+   在 `tem` 这几行里，经过一个不存在的镜像安装也必须失败。设成 `VFOX_JAVA_GITHUB_MIRROR=https://invalid.example.invalid` 后，镜像会加在 Temurin 的 GitHub 地址前面，所以 `vfox install` 在下载时失败，错误信息里必须出现 vfox 请求的那个地址：镜像、一个斜杠，再加 GitHub 地址。以前插件不读这个变量，会从 github.com 下载 JDK，安装成功。这一步不下载任何东西，也不运行能正常工作的镜像。
 3. 在 `graalce` 这一行里，Oracle GraalVM 只写大版本号的 `25-graal` 应该装 25.0 系列的最新构建（2026-10-20 是 `25.0.5-graal`），也就是 Oracle 官方 `25/latest` 下载跟的那个系列，而不是列在它前面的某个每月特性版本（比如 `25.4.4.1.1-graal`）。`vfox search java graal` 必须按 GraalVM 自己的版本号列出这些特性版本，25 的其他版本备注要一致，同第 5 条。从 2026 年 10 月起，Foojay 给特性版本标的是 JDK 的版本号，和 25.0 系列共用。插件以前按这个版本号命名，结果搜索里一个特性版本都没有，`25.0.4.1-graal` 也没有 LTS 备注，装上的却是 25.4.4.1.1。搜索列出的 25 的各构建会先被模拟成已安装，这样 `vfox install` 报出的就是 `PreInstall` 选中的那个，而且不会下载任何东西。GA 版本 25 不放进去，因为那样 vfox 会发现 `25-graal` 已安装，根本不会去问 `PreInstall`。在 Linux 上，安装向 Foojay 发的请求还必须和搜索的相同，同第 4 条末尾。
 
    装着这些构建时，`vfox use java@25-graal` 和写着 `java=25-graal` 的 `.sdkmanrc` 必须选中 `vfox install` 报出的那个构建。`PreUse` 和 `ParseLegacyFile` 以前选的是 25 里已安装的最新版本，所以一旦装了特性版本，选中的就是它（[#110](https://github.com/version-fox/vfox-java/issues/110)）。模拟出的每个构建里都放着一个只打印名字的替身 `java`，同第 6 条。把 25.0 系列的构建删掉之后，`vfox use` 和 `.sdkmanrc` 都必须选中最新的特性版本。
@@ -58,7 +60,7 @@ Windows 容器的覆盖（`tests/e2e/windows`）无法在开发容器里运行�
 | 发行版 | 版本 | 覆盖内容 | amd64 | arm64 |
 | ------------ | ------- | ---------------------------------------------------------------------------- | ----- | ----- |
 | `open` | 25.0.2 | 默认发行版，版本不带后缀 | ✓ | |
-| `tem` | 21.0.8 | 常规路径（Linux 上是 tar.gz，Windows 上是 zip）；第 4、6 条里按名字和按版本号的检查 | ✓ | ✓ |
+| `tem` | 21.0.8 | 常规路径（Linux 上是 tar.gz，Windows 上是 zip）；第 2、4、6 条里的镜像检查、按名字和按版本号的检查 | ✓ | ✓ |
 | `librca-fx` | 25.0.4 | 带 JavaFX 的构建（`-fx`） | ✓ | ✓ |
 | `jb` | 21.0.5 | Windows 上走 tar.gz 的路径，那里没有 zip | ✓ | ✓ |
 | `graalce` | 25.0.2 | 事先设置的 `GRAALVM_HOME` 保持原值；Oracle GraalVM 的 `25-graal` | ✓ | |
@@ -195,6 +197,7 @@ go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_install_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_use_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/parse_legacy_file_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/loongnix_test.lua
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/github_mirror_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
 ```
 

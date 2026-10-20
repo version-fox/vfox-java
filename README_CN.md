@@ -86,6 +86,12 @@ Zulu、Liberica、Liberica NIK 和 Corretto（只有 Java 8）提供内置 JavaF
 
 vfox 通过这个插件读取 SDKMAN 的 `.sdkmanrc` 里的 `java=` 一行，并选中已经安装的 JDK。详见 [docs/zh-CN/sdkmanrc.md](docs/zh-CN/sdkmanrc.md)。
 
+## GitHub 镜像
+
+大多数发行版从 GitHub 下载。如果你那里下载很慢，执行 `export VFOX_JAVA_GITHUB_MIRROR=https://gh-proxy.org/`，这些下载就会经过镜像。详见 [docs/zh-CN/mirror.md](docs/zh-CN/mirror.md)。
+
+未发布：0.6.2 没有镜像设置。
+
 ## 查询 Foojay
 
 想知道你的平台上有哪些 JDK，可以自己去问 Foojay。[docs/zh-CN/foojay.md](docs/zh-CN/foojay.md) 里有 Swagger UI 和查询命令。

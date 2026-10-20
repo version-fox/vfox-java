@@ -40,6 +40,7 @@ jobs:
           go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_use_test.lua
           go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/parse_legacy_file_test.lua
           go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/loongnix_test.lua
+          go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/github_mirror_test.lua
       - name: Test macOS Java home normalization
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
   macos-layout:

@@ -246,6 +246,9 @@ func runOne(t *testing.T, ctx context.Context, image, platform, arch string, c c
 	activation := fetchActivation(ctx, t, ctr, box)
 	checkVersionlessRejected(ctx, t, ctr, box, activation, c.Distribution)
 	checkMissingVersionRejected(ctx, t, ctr, box, c.Distribution, version, arch)
+	if common.ChecksGitHubMirror(c.Distribution) {
+		checkGitHubMirror(ctx, t, ctr, box, common.Spec(c.Distribution, version))
+	}
 	if common.ChecksOracleGraalVM(c.Distribution) {
 		checkGraalVMBareMajor(ctx, t, ctr, box, activation)
 	}

@@ -105,6 +105,30 @@ func ChecksOracleGraalVM(distribution string) bool {
 // OpenJDK only (https://github.com/version-fox/vfox/issues/390).
 const ReadmeURL = "https://github.com/version-fox/vfox-java/blob/main/README.md"
 
+// GitHubMirrorEnv is the variable that puts a mirror in front of the
+// downloads from GitHub, where Foojay links the JDKs of most distributions:
+// Temurin, Liberica, GraalVM Community and others.
+const GitHubMirrorEnv = "VFOX_JAVA_GITHUB_MIRROR"
+
+// BogusMirror is a mirror that does not exist: the name cannot resolve, so a
+// download through it fails, and vfox's error names the URL it asked for.
+const BogusMirror = "https://invalid.example.invalid"
+
+// AskedBogusMirror reports whether `vfox install` output shows a download
+// from GitHub going through BogusMirror: the error names the URL vfox asked
+// for, which is the mirror, a slash and the GitHub URL. Before the plugin
+// read GitHubMirrorEnv, it downloaded from github.com and installed.
+func AskedBogusMirror(output string) bool {
+	return strings.Contains(StripANSI(output), BogusMirror+"/https://github.com/")
+}
+
+// ChecksGitHubMirror reports whether a combo also checks the mirror of the
+// downloads from GitHub, which downloads nothing. Temurin's combos do: Foojay
+// links its JDKs to GitHub on every platform, and they run on every runner.
+func ChecksGitHubMirror(distribution string) bool {
+	return Base(distribution) == "tem"
+}
+
 // PassThroughEnvs are host env knobs recorded in each target container's
 // environment, so `docker inspect` shows what a combo ran with. Forwarded
 // only when set, so unset stays default.

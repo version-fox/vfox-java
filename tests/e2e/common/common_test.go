@@ -788,3 +788,46 @@ func TestAsksAsSearch(t *testing.T) {
 		}
 	}
 }
+
+func TestAskedBogusMirror(t *testing.T) {
+	// The error vfox 1.0.13 prints when the mirror's name does not resolve, and
+	// when a fake-IP DNS answers it and the connection then ends.
+	url := BogusMirror + "/https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.8%2B9/OpenJDK21U-jdk_x64_linux_hotspot_21.0.8_9.tar.gz"
+	for _, c := range []struct {
+		name, output string
+		ok           bool
+	}{
+		{"name not resolved", "Preinstalling java@21.0.8+9-tem...\nfailed to download java@21.0.8+9-tem file, err:Get \"" + url + "\": dial tcp: lookup invalid.example.invalid: no such host\nfailed to install java\n", true},
+		{"connection ended", "Preinstalling java@21.0.8+9-tem...\nfailed to download java@21.0.8+9-tem file, err:Get \"" + url + "\": EOF\n", true},
+		{"colours", "\x1b[91mfailed\x1b[0m to download file, err:Get \"" + url + "\": EOF", true},
+		// The plugin ignored the variable: the download went to GitHub.
+		{"github.com asked", "failed to download java@21.0.8+9-tem file, err:Get \"https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.8%2B9/OpenJDK21U-jdk_x64_linux_hotspot_21.0.8_9.tar.gz\": EOF", false},
+		// The mirror was asked, but not for the GitHub URL behind it.
+		{"mirror alone", "failed to download file, err:Get \"" + BogusMirror + "/\": EOF", false},
+		{"mirror in place of github.com", "err:Get \"" + BogusMirror + "/adoptium/temurin21-binaries/releases/download/jdk-21.0.8%2B9/file.tar.gz\": EOF", false},
+		// A failure before the download is retried by the check.
+		{"foojay unreachable", "Failed to fetch jdk info from foojay: Get \"https://api.foojay.io/disco/v3.0/packages/jdks\": EOF", false},
+		{"empty", "", false},
+	} {
+		if got := AskedBogusMirror(c.output); got != c.ok {
+			t.Errorf("AskedBogusMirror(%s) = %v, want %v", c.name, got, c.ok)
+		}
+	}
+}
+
+func TestChecksGitHubMirror(t *testing.T) {
+	// Temurin's combos run on every runner, arm64 included.
+	for _, arch := range []string{"amd64", "arm64"} {
+		if !slices.ContainsFunc(DefaultDistributions(arch), ChecksGitHubMirror) {
+			t.Errorf("no %s default combo checks the mirror of the downloads from GitHub", arch)
+		}
+	}
+	for distribution, want := range map[string]bool{"tem": true, "librca-fx": false, "jb": false, "open": false, "graalce": false} {
+		if got := ChecksGitHubMirror(distribution); got != want {
+			t.Errorf("ChecksGitHubMirror(%s) = %v, want %v", distribution, got, want)
+		}
+	}
+	if !strings.HasPrefix(BogusMirror, "https://") || !strings.HasSuffix(BogusMirror, ".invalid") {
+		t.Errorf("BogusMirror = %q, want an https URL on the .invalid TLD, which never resolves", BogusMirror)
+	}
+}
