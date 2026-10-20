@@ -341,3 +341,31 @@ func checkGraalVMBareMajor(ctx context.Context, t *testing.T, ctr tc.Container, 
 	execOK(ctx, t, ctr, strings.Join(remove, "; "), box.vars...)
 	t.Logf("PASS java@%s takes %s out of %s", spec, want, strings.Join(builds, ", "))
 }
+
+// checkNameOnly proves the distributions checked by name only go by their
+// short names (see common.NameOnlyDistributions): `vfox search java
+// <short>` lists each, and with the newest version it lists faked as
+// installed, `vfox install java@<major>-<short>` finds that one installed,
+// so nothing downloads (see common.NewestBareMajor).
+func checkNameOnly(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, platform string) {
+	t.Helper()
+	names := common.NameOnlyDistributions(platform)
+	var remove []string
+	for _, name := range names {
+		search := "vfox search java " + name
+		out := execRetry(ctx, t, ctr, search, search, box.vars...)
+		spec, newest, ok := common.NewestBareMajor(common.SearchedVersions(out), name)
+		require.Truef(t, ok, "%s lists no newest version that a bare major names\n--- output ---\n%s", search, out)
+		dir := fmt.Sprintf("(Join-Path $env:VFOX_HOME %s)", pwshQuote(`cache\java\v-`+newest))
+		remove = append(remove, fmt.Sprintf("Remove-Item -LiteralPath %s -Recurse -Force", dir))
+		execOK(ctx, t, ctr, fmt.Sprintf("New-Item -ItemType Directory -Force -Path (Join-Path %s %s) | Out-Null",
+			dir, pwshQuote("java-"+newest)), box.vars...)
+		out = execRetry(ctx, t, ctr, "vfox install java@"+spec, "vfox install "+pwshQuote("java@"+spec), box.vars...)
+		require.Containsf(t, common.StripANSI(out), "java@"+newest+" is already installed",
+			"vfox install java@%s must take %s, the newest version %s lists", spec, newest, search)
+	}
+	if len(remove) > 0 {
+		execOK(ctx, t, ctr, strings.Join(remove, "; "), box.vars...)
+	}
+	t.Logf("PASS %d distributions go by name on %s: %s", len(names), platform, strings.Join(names, ", "))
+}

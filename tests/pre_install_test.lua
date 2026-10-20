@@ -32,9 +32,21 @@ local function lts(jdk)
     return jdk
 end
 
+-- A package whose download is named after its file, for distributions that
+-- list several packages of one version: Gluon GraalVM's builds for JDK 11 and
+-- JDK 17, whose JDK Foojay gives as distribution_version, and OJDKBuild's JRE
+-- next to its JDK.
+local function file(jdk, filename, distribution_version)
+    jdk.filename = filename
+    jdk.distribution_version = distribution_version
+    jdk.links.pkg_info_uri = IDS .. filename
+    return jdk
+end
+
 -- Foojay answers observed on 2026-10-17 for linux/amd64 tar.gz packages, keyed
 -- by "<distribution>[ <version>][ <latest>]", and for windows/amd64 zip and
--- tar.gz packages, keyed by "windows <distribution>[ <version>][ <latest>]".
+-- tar.gz packages, keyed by "windows <distribution>[ <version>][ <latest>]"
+-- (darwin/amd64: "macos ...").
 local foojay = {
     ["temurin 21"] = { pkg("21+35") },
     ["temurin 21 available"] = { pkg("21.0.12.1+1") },
@@ -100,7 +112,79 @@ local foojay = {
         pkg("21.0.8+895146"),
         pkg("21.0.5+79248"),
     },
+    -- Observed on 2026-10-20. Outside Windows, Red Hat ships tar.xz only,
+    -- OJDKBuild's Linux builds and OpenLogic's macOS ones are zips, and so are
+    -- Gluon GraalVM's releases before 22.1 (macos in front for macOS).
+    ["redhat 21 available"] = { pkg("21.0.8+9", false, "tar.xz") },
+    ["ojdk_build 11 available"] = { pkg("11.0.15", false, "zip") },
+    ["macos openlogic 25 available"] = { pkg("25.0.4+7", false, "zip") },
+    -- latest=available answers with one package of the newest release per
+    -- archive type, here the JDK 11 build of Gluon's 22.1.0.1, which the JDK
+    -- 17 one supersedes, as its JRE does OJDKBuild's 17.0.3 JDK.
+    ["gluon_graalvm 22 available"] = {
+        file(pkg("22.1.0.1"), "graalvm-svm-java11-linux-gluon-22.1.0.1-Final.tar.gz", "11"),
+        file(pkg("22.0.0.3", false, "zip"), "graalvm-svm-java11-linux-gluon-22.0.0.3-Final.zip", "11"),
+    },
+    ["gluon_graalvm 22.1.0.1"] = {
+        file(pkg("22.1.0.1"), "graalvm-svm-java11-linux-gluon-22.1.0.1-Final.tar.gz", "11"),
+        file(pkg("22.1.0.1"), "graalvm-svm-java17-linux-gluon-22.1.0.1-Final.tar.gz", "17"),
+    },
+    ["gluon_graalvm 21 available"] = {
+        file(pkg("21.2", false, "zip"), "graalvm-svm-linux-gluon-21.2.0-dev.zip", "21.2"),
+        file(pkg("21.1", false, "zip"), "graalvm-svm-linux-gluon-21.1.0-dev.zip", "21.1"),
+    },
+    ["gluon_graalvm 21.2"] = { file(pkg("21.2", false, "zip"), "graalvm-svm-linux-gluon-21.2.0-dev.zip", "21.2") },
+    ["gluon_graalvm"] = {
+        file(pkg("23+25"), "graalvm-java23-linux-amd64-gluon-23+25.1-dev.tar.gz", "23"),
+        file(pkg("22.1.0.1"), "graalvm-svm-java11-linux-gluon-22.1.0.1-Final.tar.gz", "11"),
+        file(pkg("22.1.0.1"), "graalvm-svm-java17-linux-gluon-22.1.0.1-Final.tar.gz", "17"),
+        file(pkg("21.2", false, "zip"), "graalvm-svm-linux-gluon-21.2.0-dev.zip", "21.2"),
+    },
+    -- Among OJDKBuild's Windows JDKs Foojay lists JREs, installer bundles, which
+    -- have the JDK one directory down, and RHEL 6 builds for Linux.
+    ["windows ojdk_build 17 available"] = {
+        file(pkg("17.0.3", false, "zip"), "java-17-openjdk-17.0.3.0.6-1.jre.win.x86_64.zip"),
+    },
+    ["windows ojdk_build 17.0.3"] = {
+        file(pkg("17.0.3", false, "zip"), "java-17-openjdk-17.0.3.0.6-1.jre.win.x86_64.zip"),
+        file(pkg("17.0.3", false, "zip"), "java-17-openjdk-17.0.3.0.6-1.win.x86_64.zip"),
+    },
+    ["windows ojdk_build 11.0.14"] = {
+        file(pkg("11.0.14", false, "zip"), "java-11-openjdk-11.0.14.9-2.windows.ojdkbuild.x86_64.installer_bundle.zip"),
+        file(pkg("11.0.14", false, "zip"), "java-11-openjdk-11.0.14.9-2.windows.ojdkbuild.x86_64.zip"),
+    },
+    ["windows ojdk_build 8.0.161"] = {
+        file(pkg("8.0.161+14", false, "zip"), "java-1.8.0-openjdk-1.8.0.161-3.b14.el6_9.x86_64.zip"),
+        file(pkg("8.0.161+14", false, "zip"), "java-1.8.0-openjdk-1.8.0.161-1.b14.ojdkbuild.windows.x86_64.zip"),
+    },
 }
+
+-- The 13 distributions added after release 0.6.2, with their Foojay name and the
+-- newest release of a major each lists on Linux x64 (2026-10-20). Their
+-- versions follow Foojay's java_version, GraalVM's own numbers for GraalVM CE
+-- and Gluon GraalVM.
+local others = {
+    { "adpt", "aoj", "16.0.1" },
+    { "adptj9", "aoj_openj9", "16.0.1" },
+    { "eliya", "eliya", "25.0.3" },
+    { "gln", "gluon_graalvm", "23+25" },
+    { "grl8", "graalvm_ce8", "21.3.1" },
+    { "grl11", "graalvm_ce11", "22.3.3" },
+    { "grl16", "graalvm_ce16", "21.2" },
+    { "grl17", "graalvm_ce17", "22.3.3" },
+    { "grl19", "graalvm_ce19", "22.3.1" },
+    { "ojdkbld", "ojdk_build", "11.0.15", "zip" },
+    { "opnlgc", "openlogic", "25.0.4+7" },
+    { "rdht", "redhat", "21.0.8+9", "tar.xz" },
+    { "semcrt", "semeru_certified", "25.0.4" },
+}
+for _, other in ipairs(others) do
+    -- OJDKBuild and Gluon GraalVM ask for the newest release itself as well.
+    for _, key in ipairs({ other[3]:match("^%d+") .. " available", other[3] }) do
+        key = other[2] .. " " .. key
+        foojay[key] = foojay[key] or { pkg(other[3], false, other[4]) }
+    end
+end
 
 local requests = {}
 local responses = {}
@@ -131,8 +215,8 @@ package.preload.http = function()
                 if params.latest then
                     key = key .. " " .. params.latest
                 end
-                if params.operating_system == "windows" then
-                    key = "windows " .. key
+                if params.operating_system == "windows" or params.operating_system == "macos" then
+                    key = params.operating_system .. " " .. key
                 end
                 -- Only the packages of the archive types asked for are listed.
                 local result = {}
@@ -185,6 +269,30 @@ local function check(version, expected, latest, archive_type)
     assert(lookups > 0, version .. ": no Foojay lookup")
     cases = cases + 1
     return lookups
+end
+
+-- Installs version as OJDKBuild's and Gluon GraalVM's bare majors do: the
+-- latest=available lookup names the newest release, and a second one asks
+-- for that release in full, from which the package of the named file comes.
+local function check_release_lookup(version, expected, release, filename)
+    requests = {}
+    local result = PLUGIN:PreInstall({ version = version })
+    assert(result.version == expected, version .. ": expected " .. expected .. ", got " .. tostring(result.version))
+    assert(result.url:sub(-#filename) == filename, version .. ": expected " .. filename .. ", got " .. result.url)
+    local lookups = {}
+    for _, url in ipairs(requests) do
+        if url:sub(1, #JDKS) == JDKS then
+            table.insert(lookups, url)
+        end
+    end
+    assert(
+        #lookups == 2
+            and lookups[1]:find("&latest=available", 1, true)
+            and lookups[2]:find("?version=" .. release:gsub("%+", "%%2B") .. "&", 1, true)
+            and not lookups[2]:find("latest=", 1, true),
+        version .. ": unexpected lookups " .. table.concat(lookups, " ")
+    )
+    cases = cases + 1
 end
 
 -- A bare major installs its newest release, not the GA build.
@@ -266,6 +374,51 @@ assert(
     table.concat(jb, " ") == "21.0.11+1163116-jb 21.0.8+895146-jb 21.0.5+79248-jb",
     "Available jb on Windows: unexpected " .. table.concat(jb, " ")
 )
+-- OJDKBuild's bare major installs the JDK, not the JRE that latest=available
+-- answers with, and no release installs an installer bundle or a Linux build.
+check_release_lookup("17-ojdkbld", "17.0.3-ojdkbld", "17.0.3", "/java-17-openjdk-17.0.3.0.6-1.win.x86_64.zip")
+check("11.0.14-ojdkbld", "11.0.14-ojdkbld", false, "windows.ojdkbuild.x86_64.zip")
+check("8.0.161-ojdkbld", "8.0.161+14-ojdkbld", false, "b14.ojdkbuild.windows.x86_64.zip")
+RUNTIME.osType = "linux"
+
+-- The distributions in others install by their short and long names, each from
+-- its own Foojay distribution.
+for _, other in ipairs(others) do
+    local short, long, release, archive_type = other[1], other[2], other[3], other[4]
+    local major = release:match("^%d+")
+    if long == "ojdk_build" or long == "gluon_graalvm" then
+        check_release_lookup(major .. "-" .. short, release .. "-" .. short, release, "." .. (archive_type or "tar.gz"))
+        check_release_lookup(long .. "-" .. major, release .. "-" .. short, release, "." .. (archive_type or "tar.gz"))
+    else
+        check(major .. "-" .. short, release .. "-" .. short, true, archive_type)
+        check(long .. "-" .. major, release .. "-" .. short, true, archive_type)
+    end
+end
+-- Only these distributions ask for another archive type besides tar.gz.
+requests = {}
+PLUGIN:PreInstall({ version = "21-rdht" })
+assert(requests[1]:find("&archive_type=tar.gz&archive_type=tar.xz&", 1, true), "21-rdht: " .. requests[1])
+requests = {}
+PLUGIN:PreInstall({ version = "21-tem" })
+assert(requests[1]:find("&archive_type=tar.gz&operating_system=", 1, true), "21-tem: " .. requests[1])
+-- Gluon GraalVM's 22.x releases install their JDK 17 build, which they share a
+-- version with the JDK 11 one, listed once by searching.
+check_release_lookup("22-gln", "22.1.0.1-gln", "22.1.0.1", "/graalvm-svm-java17-linux-gluon-22.1.0.1-Final.tar.gz")
+check_release_lookup("21-gln", "21.2-gln", "21.2", "/graalvm-svm-linux-gluon-21.2.0-dev.zip")
+requests = {}
+local gluon = PLUGIN:PreInstall({ version = "22.1.0.1-gln" })
+assert(gluon.url:find("/graalvm-svm-java17-", 1, true) and #requests == 2, "22.1.0.1-gln: " .. gluon.url)
+local gln = {}
+for _, item in ipairs(PLUGIN:Available({ args = { "gln" } })) do
+    table.insert(gln, item.version)
+end
+assert(
+    table.concat(gln, " ") == "23+25-gln 22.1.0.1-gln 21.2-gln",
+    "Available gln: unexpected " .. table.concat(gln, " ")
+)
+-- OpenLogic installs from a zip on macOS, where it ships no tar.gz.
+RUNTIME.osType = "darwin"
+check("25-opnlgc", "25.0.4+7-opnlgc", true, "zip")
 RUNTIME.osType = "linux"
 
 -- A distribution without a version, alone or after an empty one, asks for a

@@ -27,14 +27,14 @@ https://api.foojay.io/disco/v3.0/packages/jdks
 | `version` | `vfox search` 时为空，否则是你输入内容里的版本部分。`+` 会做百分号编码，因为 Foojay 会把没编码的 `+` 当成空格，进而丢掉构建号。`28.ea.19` 会变成 `28-ea+19` |
 | `architecture` | arm64 用 `aarch64`，Windows x64 用 `x64`，其他系统的 x64 用 `amd64`，其他 CPU 用 vfox 报告的名字 |
 | `operating_system` | `linux`、`macos` 或 `windows` |
-| `archive_type` | `tar.gz`；Windows 上是 `zip` 加 `tar.gz` |
+| `archive_type` | `tar.gz`；Windows 上是 `zip` 加 `tar.gz`。其他系统上，Red Hat 还要 `tar.xz`，OJDKBuild、OpenLogic 和 Gluon GraalVM 还要 `zip` |
 | `lib_c_type` | Linux 上是 `glibc` 或 `musl`，其他系统为空 |
 | `directly_downloadable` | 始终是 `true` |
 | `latest` | `available`，仅当版本只有大版本号（如 `21`）时才加 |
 
 不加 `latest=available` 时，`version=21` 只匹配 21 的 GA 构建（`21+35`）；加上之后，Foojay 会挑出最新的 21.x，`java@21-tem` 装的就是它。更具体的版本则按原样匹配。
 
-返回的是一个包列表。插件用 `java_version` 给版本命名；`javafx_bundled` 为真时加上 `-fx`；`term_of_support` 是 `lts` 时标注 LTS；在 Windows 上，同一版本既有 `zip` 又有 `tar.gz` 时优先用 `zip`。安装时，插件再取这个包的 `links.pkg_info_uri`，并从其中的 `direct_download_uri` 下载，那是厂商自己的服务器（Temurin 是 GitHub Releases）。这条记录里还有 `checksum`，但插件没有把它交给 vfox，所以 vfox 会打印 `WARNING: Checksum is not provided, skip verify...`，下载内容不做校验。
+返回的是一个包列表。插件用 `java_version` 给版本命名；`javafx_bundled` 为真时加上 `-fx`；`term_of_support` 是 `lts` 时标注 LTS；在 Windows 上，同一版本既有 `zip` 又有 `tar.gz` 时优先用 `zip`。Foojay 混在 OJDKBuild 的 Windows JDK 里的 JRE、installer bundle 包和 RHEL 6 构建，以及 Gluon GraalVM 22.x 的 JDK 11 构建，插件都会略过，见 [distributions.md](distributions.md)。安装时，插件再取这个包的 `links.pkg_info_uri`，并从其中的 `direct_download_uri` 下载，那是厂商自己的服务器（Temurin 是 GitHub Releases）。这条记录里还有 `checksum`，但插件没有把它交给 vfox，所以 vfox 会打印 `WARNING: Checksum is not provided, skip verify...`，下载内容不做校验。
 
 `vfox search` 与原始列表有几处不同：Foojay 里同一个名字有两条记录时，它只列一次；不给 GraalVM 的特性版本加 LTS 备注（见 [distributions.md](distributions.md#oracle-graalvm-与-graalvm-社区版的行为)）；只列 GA 版本。
 
@@ -66,7 +66,7 @@ zulu
 | macOS Intel | `architecture=amd64&operating_system=macos&archive_type=tar.gz` |
 | Windows x64 | `architecture=x64&operating_system=windows&archive_type=zip&archive_type=tar.gz` |
 
-返回结果里包含插件没有提供的发行版，名单见 [distributions.md](distributions.md#foojay-有但插件没有提供的发行版)。
+返回结果里的名字就是 [distributions.md](distributions.md) 里的长名，只有 `oracle_open_jdk` 例外，插件里叫它 `openjdk`（`open`）。只写 `archive_type=tar.gz` 时，结果里会缺 Linux 上的 Red Hat 和 OJDKBuild、macOS 上的 OpenLogic，因为它们在那里提供的是 tar.xz 或 zip 包。插件会为它们额外请求这些格式，见上面的表。
 
 ## 我的平台上哪些发行版有某个版本
 

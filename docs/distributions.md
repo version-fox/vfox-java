@@ -2,32 +2,55 @@
 
 [中文](zh-CN/distributions.md) | [English](distributions.md)
 
-The plugin gets the releases and download links of these 18 distributions from [Foojay](foojay.md). The short name or the long name goes wherever a distribution does: `21-tem`, `21-temurin`, `temurin-21`, `vfox search java tem`.
+The plugin gets the releases and download links of these 31 distributions from [Foojay](foojay.md), all that Foojay listed on 2026-10-20. The short name or the long name goes wherever a distribution does: `21-tem`, `21-temurin`, `temurin-21`, `vfox search java tem`.
+
+Unreleased: release 0.6.2 lacks `adpt`, `adptj9`, `eliya`, `gln`, `grl8`, `grl11`, `grl16`, `grl17`, `grl19`, `ojdkbld`, `opnlgc`, `rdht` and `semcrt`. For those its `vfox install` stops with `Could not extract a valid distribution` and `vfox search` with `Unsupported distribution`.
 
 | Short name | Long name | Distribution | Maintained by |
 | --- | --- | --- | --- |
-| `open` | `openjdk` | OpenJDK builds from jdk.java.net | Oracle, for the OpenJDK project |
-| `tem` | `temurin` | Temurin | Eclipse Adoptium |
-| `zulu` | `zulu` | Zulu | Azul |
-| `librca` | `liberica` | Liberica | BellSoft |
-| `amzn` | `corretto` | Corretto | Amazon |
-| `ms` | `microsoft` | Microsoft Build of OpenJDK | Microsoft |
-| `oracle` | `oracle` | Oracle JDK | Oracle |
-| `sem` | `semeru` | Semeru Runtimes, open edition | IBM |
-| `sapmchn` | `sap_machine` | SapMachine | SAP |
-| `kona` | `kona` | Tencent Kona JDK | Tencent |
+| `adpt` | `aoj` | AdoptOpenJDK with HotSpot | AdoptOpenJDK |
+| `adptj9` | `aoj_openj9` | AdoptOpenJDK with OpenJ9 | AdoptOpenJDK |
 | `albba` | `dragonwell` | Alibaba Dragonwell | Alibaba |
+| `amzn` | `corretto` | Corretto | Amazon |
 | `bsg` | `bisheng` | BiSheng JDK | Huawei |
+| `eliya` | `eliya` | Eliya JDK | Asymm Systems |
+| `gln` | `gluon_graalvm` | Gluon GraalVM | Gluon |
 | `graal` | `graalvm` | Oracle GraalVM | Oracle |
 | `graalce` | `graalvm_community` | GraalVM Community Edition | GraalVM project |
-| `nik` | `liberica_native` | Liberica Native Image Kit | BellSoft |
-| `mandrel` | `mandrel` | Mandrel | Red Hat |
+| `grl8` | `graalvm_ce8` | GraalVM CE for JDK 8 | GraalVM project |
+| `grl11` | `graalvm_ce11` | GraalVM CE for JDK 11 | GraalVM project |
+| `grl16` | `graalvm_ce16` | GraalVM CE for JDK 16 | GraalVM project |
+| `grl17` | `graalvm_ce17` | GraalVM CE for JDK 17 | GraalVM project |
+| `grl19` | `graalvm_ce19` | GraalVM CE for JDK 19 | GraalVM project |
 | `jb` | `jetbrains` | JetBrains Runtime | JetBrains |
+| `kona` | `kona` | Tencent Kona JDK | Tencent |
+| `librca` | `liberica` | Liberica | BellSoft |
+| `mandrel` | `mandrel` | Mandrel | Red Hat |
+| `ms` | `microsoft` | Microsoft Build of OpenJDK | Microsoft |
+| `nik` | `liberica_native` | Liberica Native Image Kit | BellSoft |
+| `ojdkbld` | `ojdk_build` | OJDKBuild | community |
+| `open` | `openjdk` | OpenJDK builds from jdk.java.net | Oracle, for the OpenJDK project |
+| `opnlgc` | `openlogic` | OpenLogic OpenJDK | OpenLogic |
+| `oracle` | `oracle` | Oracle JDK | Oracle |
+| `rdht` | `redhat` | Red Hat build of OpenJDK | Red Hat |
+| `sapmchn` | `sap_machine` | SapMachine | SAP |
+| `sem` | `semeru` | Semeru Runtimes, open edition | IBM |
+| `semcrt` | `semeru_certified` | Semeru Runtimes, certified edition | IBM |
+| `tem` | `temurin` | Temurin | Eclipse Adoptium |
 | `trava` | `trava` | TravaOpenJDK | community |
+| `zulu` | `zulu` | Zulu | Azul |
 
-The long names are the distribution names Foojay takes, except `openjdk`, which Foojay lists as Oracle OpenJDK and accepts as a synonym. The short names are SDKMAN's, except `jb`, which SDKMAN calls `jbr`. A `.sdkmanrc` accepts `jbr` as well as `jb`, see [sdkmanrc.md](sdkmanrc.md). `lnxabi1` and `lnxabi2` are not in the table because they do not come from Foojay, see [loongnix.md](loongnix.md).
+The long names are the distribution names Foojay takes, except `openjdk`, which Foojay lists as Oracle OpenJDK and accepts as a synonym. `lnxabi1` and `lnxabi2` are not in the table because they do not come from Foojay, see [loongnix.md](loongnix.md).
 
 Which operating systems and CPUs each distribution covers is in [platforms.md](platforms.md). `vfox search java <name>` lists what exists for the machine you run it on. Installed names carry the short name, except for OpenJDK, which has none (see [versions.md](versions.md)).
+
+## Short names and SDKMAN
+
+The short names follow the identifiers of [SDKMAN](https://sdkman.io/), where Temurin 21.0.8 is `21.0.8-tem` too. These are the differences, against SDKMAN's list of 2026-10-20:
+
+- JetBrains Runtime is `jb`, which SDKMAN calls `jbr`, and BiSheng is `bsg`, which SDKMAN calls `bisheng`, the plugin's long name for it. A `.sdkmanrc` takes SDKMAN's spellings, see [sdkmanrc.md](sdkmanrc.md).
+- SDKMAN no longer lists Dragonwell, TravaOpenJDK, AdoptOpenJDK, Gluon GraalVM or the GraalVM CE builds numbered after GraalVM. It called the last three `adpt`, `gln` and `grl`, and wrote the virtual machine or the JDK into the version: `11.0.10.hs-adpt` with HotSpot, `11.0.10.j9-adpt` with OpenJ9, `22.3.3.r17-grl` on JDK 17. Here each Foojay distribution has a name of its own, so that part moved into the name: `11.0.10-adpt`, `11.0.10-adptj9`, `22.3.3-grl17`. A `.sdkmanrc` with SDKMAN's spelling selects them.
+- SDKMAN has no identifier for Eliya, OJDKBuild, OpenLogic, Red Hat or Semeru certified. Their short names are the plugin's own, made the way SDKMAN makes its names: a short vendor name stays whole (`eliya`, like `zulu`), and a longer one is cut down, mostly by dropping vowels (`ojdkbld`, `opnlgc`, `rdht`, like `librca` and `sapmchn`). `semcrt` is SDKMAN's `sem` with certified. Eliya's own install instructions give `sdk install java 25.0.3-eliya`, and its site says the SDKMAN registration is in progress, but SDKMAN did not list it.
 
 ## OpenJDK builds
 
@@ -61,7 +84,7 @@ The builds of the [Eclipse Adoptium](https://adoptium.net/temurin/releases) proj
 
 ### Semeru (`sem`)
 
-[IBM's](https://developer.ibm.com/languages/java/semeru-runtimes/) runtimes: the OpenJDK class library on the Eclipse OpenJ9 virtual machine instead of HotSpot. Only the open edition is offered, not Foojay's `semeru_certified`.
+[IBM's](https://developer.ibm.com/languages/java/semeru-runtimes/) runtimes: the OpenJDK class library on the Eclipse OpenJ9 virtual machine instead of HotSpot. This is the open edition. The certified edition is `semcrt`, see [below](#semeru-certified-semcrt).
 
 ### SapMachine (`sapmchn`)
 
@@ -78,6 +101,30 @@ The builds of the [Eclipse Adoptium](https://adoptium.net/temurin/releases) proj
 ### BiSheng (`bsg`)
 
 [Huawei's](https://www.hikunpeng.com/developer/devkit/compilation_debugging?data=JDK) build of OpenJDK, aimed at ARM servers. Java 8, 11, 17, 21 and 25, for Linux only.
+
+### AdoptOpenJDK (`adpt`, `adptj9`)
+
+The builds of the [AdoptOpenJDK](https://adoptopenjdk.net/) project from before it moved to the Eclipse Foundation, with the HotSpot virtual machine (`adpt`) or with Eclipse OpenJ9 (`adptj9`). Java 8 to 16, up to 2021. Foojay marks both as no longer maintained. Temurin (`tem`) carries on the HotSpot builds and Semeru (`sem`) the OpenJ9 ones.
+
+### Eliya (`eliya`)
+
+[Asymm Systems'](https://asymm.systems/product/eliya) build of OpenJDK 25, whose `-XX:EliyaProfile=Production` turns on production settings such as a heap dump on `OutOfMemoryError`. Foojay lists one release, 25.0.3, for Linux x64 and arm64.
+
+### OJDKBuild (`ojdkbld`)
+
+The builds of the [ojdkbuild](https://github.com/ojdkbuild/ojdkbuild) project: Java 8 to 15 and 17 for Windows x64, and 8 and 11 for Linux x64, which come as zips. The project stopped in 2022, with 17.0.3. Among its Windows JDKs Foojay also lists JREs, installer bundles and RHEL 6 builds for Linux, which the plugin leaves out.
+
+### OpenLogic (`opnlgc`)
+
+[OpenLogic's](https://www.openlogic.com/openjdk-downloads) builds of OpenJDK. Java 8, 11, 17, 21, 22 and 25, for Linux x64, macOS Intel and Windows x64. The macOS builds come as zips.
+
+### Red Hat build of OpenJDK (`rdht`)
+
+[Red Hat's](https://developers.redhat.com/products/openjdk/overview) portable builds. Java 8, 11, 17 and 21 for Linux x64, as tar.xz. Foojay has 21.0.8 (July 2025) as the newest. It lists builds for Linux arm64 and one for Windows as well, but their downloads answer 404 (`source file not found`), and so do 11.0.15 and 11.0.16 for Linux x64.
+
+### Semeru certified (`semcrt`)
+
+IBM Semeru Runtime Certified Edition: Semeru's OpenJ9 runtimes, certified against the Java Compatibility Kit (JCK) and released under an IBM licence, not an open-source one. Java 11, 17, 21 and 25. Foojay has no macOS or Windows build of it.
 
 ## GraalVM family
 
@@ -99,6 +146,18 @@ The open-source edition of GraalVM, built on OpenJDK.
 
 Mandrel and Liberica NIK numbered their releases after themselves up to version 24 (Mandrel `23.1.12`), and number them after the JDK from 25 on (`25.0.4.1`).
 
+### GraalVM CE 8 to 19 (`grl8`, `grl11`, `grl16`, `grl17`, `grl19`)
+
+GraalVM Community Edition up to 22.3, from before it numbered its releases after the JDK. Foojay has one distribution per JDK: `grl8` (GraalVM 19.3 to 21.3.1), `grl11` (19.3 to 22.3.3), `grl16` (21.1 and 21.2), `grl17` (21.3 to 22.3.3) and `grl19` (22.3 and 22.3.1). GraalVM Community (`graalce`) followed them.
+
+### Gluon GraalVM (`gln`)
+
+[Gluon's](https://docs.gluonhq.com/#_graalvm) build of GraalVM, for compiling JavaFX applications into native images. 21.1 and 21.2 run on JDK 11. The 22.x releases, 22 to 22.1.0.1, come for JDK 11 and for JDK 17 under one version, and the plugin installs the JDK 17 build. 23+25 is a development build on JDK 23. Linux x64, macOS and Windows x64, with Apple silicon from 22.1.0.1.
+
+### Versions numbered after GraalVM
+
+GraalVM CE 8 to 19, and Gluon GraalVM before 23, carry GraalVM's version numbers, not Java's: `22.3.3-grl17` is GraalVM 22.3.3 and runs Java 17.0.8, and `21.3.1-grl11` runs Java 11. For a bare major vfox takes the highest installed version that starts with it, from any distribution, so with `21.3.1-grl11` and `21.0.12.1+1-tem` installed, `vfox use java@21` selects `21.3.1-grl11`. Name the distribution, as in `java@21-tem`.
+
 ### Behavior of Oracle GraalVM and GraalVM Community
 
 - Since 25.1 (June 2026) GraalVM puts out a feature release every month next to its 25.0 line: `25.1.3`, `25.2.4`, `25.3.4.1`, `25.4.4.1`. Each is replaced within about a month. Foojay marks them LTS because the JDK they build on is LTS, and `vfox search` leaves the LTS note off them.
@@ -116,7 +175,3 @@ The [fork of OpenJDK](https://github.com/JetBrains/JetBrainsRuntime) that JetBra
 ### TravaOpenJDK (`trava`)
 
 [OpenJDK with DCEVM](https://github.com/TravaOpenJDK) and a bundled HotswapAgent, for replacing classes in a running program. Java 8 and 11. Foojay marks it as no longer maintained. It has no Apple silicon build and one for Linux arm64 (`11.0.10+6`).
-
-## Foojay distributions the plugin does not offer
-
-Foojay lists more than these 18: `aoj` and `aoj_openj9` (AdoptOpenJDK, succeeded by Temurin and Semeru), `eliya`, `gluon_graalvm`, `graalvm_ce8`, `graalvm_ce11`, `graalvm_ce16`, `graalvm_ce17`, `graalvm_ce19` (old GraalVM Community releases), `ojdk_build`, `openlogic`, `redhat` and `semeru_certified`. They have no short name here, so `vfox install java@21-openlogic` fails with `Could not extract a valid distribution`. [development.md](development.md#adding-a-distribution) describes how to add one.

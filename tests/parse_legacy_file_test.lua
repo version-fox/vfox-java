@@ -127,6 +127,27 @@ local cases = {
     { "java=-tem\n", { "21.0.8+9-tem" }, nil },
     { "java=zulu-fx\n", { "21.0.12+7-zulu-fx" }, nil },
     { "java=open\n", { "25.0.2+10" }, nil },
+    -- SDKMAN wrote the VM or the JDK of the distributions it no longer offers
+    -- into the version, which is the plugin's short name (adpt, adptj9,
+    -- grl17, gln). SDKMAN's AdoptOpenJDK upstream builds and Gluon's JDK 11
+    -- builds are not the plugin's, so they select nothing.
+    { "java=11.0.10.hs-adpt\n", { "11.0.10-adpt", "11.0.10-adptj9" }, "11.0.10-adpt" },
+    { "java=11.0.10.j9-adpt\n", { "11.0.10-adpt", "11.0.10-adptj9" }, "11.0.10-adptj9" },
+    { "java=8.0.282.j9-adpt\n", { "8.0.282-adpt", "8.0.282-adptj9" }, "8.0.282-adptj9" },
+    { "java=11.0.9.open-adpt\n", { "11.0.9-adpt", "11.0.11-adpt" }, nil },
+    { "java=22.3.3.r17-grl\n", { "22.3.3-grl11", "22.3.3-grl17" }, "22.3.3-grl17" },
+    { "java=22.3.3.r11-grl\n", { "22.3.3-grl11", "22.3.3-grl17" }, "22.3.3-grl11" },
+    { "java=21.3.1.r8-grl\n", { "21.3.1-grl8", "21.3.1-grl11" }, "21.3.1-grl8" },
+    { "java=22.3.r19-grl\n", { "22.3-grl19", "22.3.1-grl19" }, "22.3-grl19" },
+    { "java=21.2.0.r16-grl\n", { "21.2-grl16" }, "21.2-grl16" },
+    { "java=22.3.3.r20-grl\n", { "22.3.3-grl17" }, nil },
+    { "java=22.1.0.1.r17-gln\n", { "22.1.0.1-gln" }, "22.1.0.1-gln" },
+    { "java=22.1.0.1.r11-gln\n", { "22.1.0.1-gln" }, nil },
+    -- The plugin's own spellings of them.
+    { "java=22.3.3-grl17\n", { "22.3.3-grl11", "22.3.3-grl17" }, "22.3.3-grl17" },
+    { "java=21.0.8-rdht\n", { "21.0.8+9-rdht" }, "21.0.8+9-rdht" },
+    { "java=25.0.4-semcrt\n", { "25.0.4-semcrt", "25.0.2+10-sem" }, "25.0.4-semcrt" },
+    { "java=25.0.2-sem\n", { "25.0.4-semcrt", "25.0.2+10-sem" }, "25.0.2+10-sem" },
     -- No java line at all selects nothing.
     { "maven=3.9.9\n", { "21.0.8+9-tem" }, nil },
 }

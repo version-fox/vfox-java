@@ -4,7 +4,7 @@
 
 [vfox](https://vfox.dev/) 的 Java 插件。
 
-它通过 [Foojay](https://foojay.io/) 查找并安装 18 个发行版的 JDK，包括 Temurin、Zulu、Liberica、Corretto、Microsoft、GraalVM 等。在 Linux loong64 上，则改从 Loongnix 归档安装。
+它通过 [Foojay](https://foojay.io/) 查找并安装 31 个发行版的 JDK，包括 Temurin、Zulu、Liberica、Corretto、Microsoft、GraalVM 等。在 Linux loong64 上，则改从 Loongnix 归档安装。
 
 ## 安装
 
@@ -32,6 +32,8 @@ java -version
 
 `vfox search java tem` 会列出 Temurin 的各个版本，在交互式终端里还可以直接选一个并安装。
 
+只存在于 `main`、还没进入最新发布版的行为，在下面各页里标有“未发布”。完整列表见 [docs/zh-CN/changes.md](docs/zh-CN/changes.md)，想直接用上 `main`，见 [docs/zh-CN/install-from-source.md](docs/zh-CN/install-from-source.md)。
+
 ## 版本与命名
 
 版本写成 `<版本>-<发行版>`，例如 `21.0.8-tem`，后面加 `-fx` 表示带 JavaFX。不写发行版时得到的是 jdk.java.net 上的 OpenJDK，它的 17 只到 17.0.2，21 只到 21.0.2。详见 [docs/zh-CN/versions.md](docs/zh-CN/versions.md)。
@@ -58,13 +60,23 @@ java -version
 | `mandrel` | Mandrel（Red Hat） |
 | `jb` | JetBrains Runtime |
 | `trava` | TravaOpenJDK |
+| `adpt`、`adptj9` | AdoptOpenJDK，HotSpot 版和 OpenJ9 版 |
+| `eliya` | Eliya JDK（Asymm Systems） |
+| `ojdkbld` | OJDKBuild |
+| `opnlgc` | OpenLogic OpenJDK |
+| `rdht` | Red Hat build of OpenJDK |
+| `semcrt` | Semeru 认证版（IBM） |
+| `gln` | Gluon GraalVM |
+| `grl8`、`grl11`、`grl16`、`grl17`、`grl19` | 基于 JDK 8 到 19 的 GraalVM CE |
 | `lnxabi1`、`lnxabi2` | Loongnix，仅限 Linux loong64 |
 
-每个发行版是什么，见 [docs/zh-CN/distributions.md](docs/zh-CN/distributions.md)；最后一行见 [docs/zh-CN/loongnix.md](docs/zh-CN/loongnix.md)。
+未发布：0.6.2 只有到 `trava` 为止的那些行，以及 Loongnix 那一行。
+
+简称沿用 SDKMAN 的标识符，有几处不同：JetBrains Runtime 在 SDKMAN 里叫 `jbr`；AdoptOpenJDK 和 GraalVM CE 的虚拟机或 JDK 版本，SDKMAN 当时写在版本号里（`11.0.10.j9-adpt`、`22.3.3.r17-grl`），插件则给每种各起一个简称（`adptj9`、`grl17`）。Eliya、OJDKBuild、OpenLogic、Red Hat 和 Semeru 认证版在 SDKMAN 里没有标识符，简称是插件自己起的。全部差别以及每个发行版是什么，见 [docs/zh-CN/distributions.md](docs/zh-CN/distributions.md)；最后一行见 [docs/zh-CN/loongnix.md](docs/zh-CN/loongnix.md)。
 
 ## 平台
 
-并非每个发行版都有 arm64、Alpine 或 Windows ARM 的构建。只有 Temurin、Zulu、Liberica、Microsoft 和 JetBrains Runtime 有 Windows ARM64 的构建，18 个发行版里有 10 个有 Alpine x64 的构建，7 个有 Alpine arm64 的构建。GraalVM 既没有 Windows ARM64，也没有 Alpine。完整的表格见 [docs/zh-CN/platforms.md](docs/zh-CN/platforms.md)。
+并非每个发行版都有 arm64、Alpine 或 Windows ARM 的构建。只有 Temurin、Zulu、Liberica、Microsoft 和 JetBrains Runtime 有 Windows ARM64 的构建，31 个发行版里有 11 个有 Alpine x64 的构建，7 个有 Alpine arm64 的构建。GraalVM 既没有 Windows ARM64，也没有 Alpine。完整的表格见 [docs/zh-CN/platforms.md](docs/zh-CN/platforms.md)。
 
 ## JavaFX
 

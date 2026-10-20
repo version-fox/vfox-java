@@ -4,7 +4,7 @@
 
 Java plugin for [vfox](https://vfox.dev/).
 
-It installs JDKs from 18 distributions, among them Temurin, Zulu, Liberica, Corretto, Microsoft and GraalVM, looked up through [Foojay](https://foojay.io/). On Linux loong64 it installs from the Loongnix archive instead.
+It installs JDKs from 31 distributions, among them Temurin, Zulu, Liberica, Corretto, Microsoft and GraalVM, looked up through [Foojay](https://foojay.io/). On Linux loong64 it installs from the Loongnix archive instead.
 
 ## Install
 
@@ -32,6 +32,8 @@ java -version
 
 `vfox search java tem` lists the Temurin releases, and in an interactive terminal it lets you pick one and installs it.
 
+Behavior that only exists on `main` and not in the latest release is marked "Unreleased" in the pages below. [docs/changes.md](docs/changes.md) lists it, and [docs/install-from-source.md](docs/install-from-source.md) gets you `main`.
+
 ## Versions and names
 
 A version is `<version>-<distribution>`, such as `21.0.8-tem`, with `-fx` after it for JavaFX. Without a distribution you get OpenJDK from jdk.java.net, which has nothing newer than 17.0.2 for 17 and 21.0.2 for 21. See [docs/versions.md](docs/versions.md) for details.
@@ -58,13 +60,23 @@ A version is `<version>-<distribution>`, such as `21.0.8-tem`, with `-fx` after 
 | `mandrel` | Mandrel (Red Hat) |
 | `jb` | JetBrains Runtime |
 | `trava` | TravaOpenJDK |
+| `adpt`, `adptj9` | AdoptOpenJDK with HotSpot, with OpenJ9 |
+| `eliya` | Eliya JDK (Asymm Systems) |
+| `ojdkbld` | OJDKBuild |
+| `opnlgc` | OpenLogic OpenJDK |
+| `rdht` | Red Hat build of OpenJDK |
+| `semcrt` | Semeru, certified edition (IBM) |
+| `gln` | Gluon GraalVM |
+| `grl8`, `grl11`, `grl16`, `grl17`, `grl19` | GraalVM CE for JDK 8 to 19 |
 | `lnxabi1`, `lnxabi2` | Loongnix, Linux loong64 only |
 
-See [docs/distributions.md](docs/distributions.md) for what each one is, and [docs/loongnix.md](docs/loongnix.md) for the last row.
+Unreleased: release 0.6.2 has the rows up to `trava`, and the Loongnix one.
+
+The short names follow SDKMAN's identifiers, with a few differences: SDKMAN calls JetBrains Runtime `jbr`, and it wrote the virtual machine or JDK of AdoptOpenJDK and GraalVM CE into the version (`11.0.10.j9-adpt`, `22.3.3.r17-grl`), where the plugin has a name for each (`adptj9`, `grl17`). Eliya, OJDKBuild, OpenLogic, Red Hat and Semeru certified have no SDKMAN identifier, so their short names are the plugin's own. See [docs/distributions.md](docs/distributions.md) for all the differences and for what each distribution is, and [docs/loongnix.md](docs/loongnix.md) for the last row.
 
 ## Platforms
 
-Not every distribution has builds for arm64, Alpine or Windows on ARM. Only Temurin, Zulu, Liberica, Microsoft and JetBrains Runtime have Windows ARM64 builds, 10 of the 18 have Alpine x64 builds and 7 have Alpine arm64. GraalVM has neither Windows ARM64 nor Alpine. See [docs/platforms.md](docs/platforms.md) for the table.
+Not every distribution has builds for arm64, Alpine or Windows on ARM. Only Temurin, Zulu, Liberica, Microsoft and JetBrains Runtime have Windows ARM64 builds, 11 of the 31 have Alpine x64 builds and 7 have Alpine arm64. GraalVM has neither Windows ARM64 nor Alpine. See [docs/platforms.md](docs/platforms.md) for the table.
 
 ## JavaFX
 

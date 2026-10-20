@@ -55,6 +55,11 @@ vfox 挂载到 Shell 之后，进入目录时会读取这个文件，并选中�
 | `21.0.8+1.1-tem` | Temurin 21.0.8，见下文 |
 | `27.0.0+36-librca`、`25.0.1.0+8-open` | `27+36-librca`、`25.0.1+8`：补的零会被去掉 |
 | `28.ea.19-open`、`28.0.0+ea.19-open` | EA 构建 `28-ea+19` |
+| `11.0.10.hs-adpt`、`11.0.10.j9-adpt` | AdoptOpenJDK 的 HotSpot 版 `11.0.10-adpt` 和 OpenJ9 版 `11.0.10-adptj9` |
+| `22.3.3.r17-grl` | 基于 JDK 17 的 GraalVM CE 22.3.3，`22.3.3-grl17` |
+| `22.1.0.1.r17-gln` | Gluon GraalVM 22.1.0.1，`22.1.0.1-gln` |
+
+最后三行是 SDKMAN 给它已经不再提供的发行版用过的标识符，虚拟机或 JDK 版本写在版本号里，见 [distributions.md](distributions.md#简称与-sdkman-的不同)。插件不安装 Gluon GraalVM 22 的 JDK 11 构建，也不安装 AdoptOpenJDK 的 upstream 构建，所以 `22.1.0.1.r11-gln` 和 `11.0.9.open-adpt` 什么都不会选中。未发布：0.6.2 对这三行都选不中任何 JDK。
 
 SDKMAN 新写法里 `+` 后面的数字（`21.0.8+1.1-tem`）是 SDKMAN 自己重新构建的次数，不是厂商的构建号，所以插件不会去找这个构建，而是按版本匹配。Foojay 和安装后的版本名都不补零，所以 `27.0.0` 指的就是 `27`。`sdk list java` 里补一个 `.0` 很常见（`25.0.1.0+8-open`、`21.0.9.0+116386-jbr`），插件同样能读。
 

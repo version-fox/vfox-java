@@ -20,6 +20,58 @@ local foojay = {}
 local URL =
     "https://api.foojay.io/disco/v3.0/packages/jdks?version=%s&distribution=%s&architecture=%s&%s&operating_system=%s&lib_c_type=%s&directly_downloadable=true"
 
+-- Outside Windows a few distributions ship some or all releases in another
+-- archive type than tar.gz, which vfox unpacks too: Red Hat's Linux builds
+-- are tar.xz, OJDKBuild's Linux builds and OpenLogic's macOS builds zip, and
+-- so are Gluon GraalVM's releases before 22.1.
+local other_archive_type = {
+    redhat = "tar.xz",
+    ojdk_build = "zip",
+    openlogic = "zip",
+    gluon_graalvm = "zip",
+}
+
+-- Fixes for the packages Foojay lists for a distribution, each returning the
+-- ones to keep.
+local fixes = {
+    -- Among OJDKBuild's Windows JDKs, Foojay lists JREs
+    -- (java-17-openjdk-17.0.3.0.6-1.jre.win.x86_64.zip), installer bundles,
+    -- which have the JDK one directory down, and RHEL 6 builds for Linux
+    -- (java-1.8.0-openjdk-1.8.0.161-3.b14.el6_9.x86_64.zip).
+    ojdk_build = function(packages)
+        local result = {}
+        for _, package in ipairs(packages) do
+            local filename = package.filename or ""
+            if
+                not filename:find(".jre.", 1, true)
+                and not filename:find("installer_bundle", 1, true)
+                and not filename:find("%.el%d")
+            then
+                table.insert(result, package)
+            end
+        end
+        return result
+    end,
+    -- Gluon GraalVM's 22.x releases come for JDK 11 and JDK 17 under one
+    -- java_version, with the JDK as distribution_version (11 and 17 for
+    -- 22.1.0.1), so an installed name could not tell them apart; the JDK 17
+    -- ones stay.
+    gluon_graalvm = function(packages)
+        local newest = {}
+        for _, package in ipairs(packages) do
+            local jdk = tonumber(package.distribution_version) or 0
+            newest[package.java_version] = math.max(newest[package.java_version] or 0, jdk)
+        end
+        local result = {}
+        for _, package in ipairs(packages) do
+            if (tonumber(package.distribution_version) or 0) == newest[package.java_version] then
+                table.insert(result, package)
+            end
+        end
+        return result
+    end,
+}
+
 --- Detects the libc type on Linux systems (glibc or musl)
 --- @return string "glibc" or "musl"
 local function detect_lib_c_type()
@@ -64,6 +116,8 @@ foojay.fetchtJdkList = function(distribution, version)
         if arch == "amd64" then
             arch = "x64"
         end
+    elseif other_archive_type[distribution] then
+        archive_types = archive_types .. "&archive_type=" .. other_archive_type[distribution]
     end
 
     local lib_c_type = ""
@@ -76,20 +130,34 @@ foojay.fetchtJdkList = function(distribution, version)
     -- latest=available would look at the major alone.
     local latest = version:match("^%d+$") and "&latest=available" or ""
 
-    local reqUrl = URL:format(encode(version), distribution, arch, archive_types, os, lib_c_type) .. latest
+    local function request(query, latest_query)
+        local reqUrl = URL:format(encode(query), distribution, arch, archive_types, os, lib_c_type) .. latest_query
 
-    local resp, err = http.get({
-        url = reqUrl,
-    })
-    if err ~= nil then
-        error("Failed to fetch jdk info from foojay: " .. err)
-    end
-    if resp.status_code ~= 200 then
-        error("Failed to fetch jdk info from foojay: status_code =>" .. resp.status_code)
+        local resp, err = http.get({
+            url = reqUrl,
+        })
+        if err ~= nil then
+            error("Failed to fetch jdk info from foojay: " .. err)
+        end
+        if resp.status_code ~= 200 then
+            error("Failed to fetch jdk info from foojay: status_code =>" .. resp.status_code)
+        end
+
+        local respBody = json.decode(resp.body)
+        return respBody.result
     end
 
-    local respBody = json.decode(resp.body)
-    local result = respBody.result
+    local result = request(version, latest)
+    local fix = fixes[distribution]
+    if fix and result then
+        -- latest=available answers with one package of the newest release
+        -- per archive type, which may be one the fix drops (OJDKBuild's
+        -- 17.0.3 JRE on Windows): ask for that release in full.
+        if latest ~= "" and result[1] then
+            result = request(result[1].java_version, "") or {}
+        end
+        result = fix(result)
+    end
 
     return result
 end

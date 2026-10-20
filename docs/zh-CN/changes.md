@@ -2,7 +2,11 @@
 
 [中文](changes.md) | [English](../changes.md)
 
-按发布版本列出用户能感受到的变化。GitHub 的 Release 页面列出了对应的 PR。
+按发布版本列出用户能感受到的变化。GitHub 的 Release 页面列出了对应的 PR。写这篇文档时最新的发布版是 0.6.2，`main` 比它多出“未发布”下面的所有内容。想现在就用上这些变化，见 [install-from-source.md](install-from-source.md)。
+
+## 未发布
+
+- 新增 13 个发行版，Foojay 列出的发行版从此全都有了：AdoptOpenJDK（`adpt`、`adptj9`）、Eliya（`eliya`）、OJDKBuild（`ojdkbld`）、OpenLogic（`opnlgc`）、Red Hat（`rdht`）、Semeru 认证版（`semcrt`）、Gluon GraalVM（`gln`），以及基于 JDK 8 到 19 的 GraalVM CE（`grl8`、`grl11`、`grl16`、`grl17`、`grl19`）。Red Hat 从 tar.xz 包安装；Linux 上的 OJDKBuild、macOS 上的 OpenLogic 和 22.1 以前的 Gluon GraalVM 从 zip 包安装。`.sdkmanrc` 里写 SDKMAN 以前给它们的标识符也认，例如 `11.0.10.j9-adpt`、`22.3.3.r17-grl`。见 [distributions.md](distributions.md)。
 
 ## 0.6.2（2026-10-18）
 

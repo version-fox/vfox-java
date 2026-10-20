@@ -17,14 +17,28 @@ local strings = require("vfox.strings")
 local distribution_version_parser = require("distribution_version")
 local installed_version = require("installed_version")
 
+--- The distributions SDKMAN no longer offers, for which it wrote the VM or
+--- the JDK into the version: AdoptOpenJDK with HotSpot or OpenJ9
+--- (11.0.10.hs-adpt, 11.0.10.j9-adpt), GraalVM CE on JDK 8 to 19
+--- (22.3.3.r17-grl) and Gluon GraalVM on JDK 17, the builds of it the plugin
+--- installs (22.1.0.1.r17-gln). Each flavour maps to the plugin's short name.
+local sdkman_flavours = {
+    adpt = { hs = "adpt", j9 = "adptj9" },
+    grl = { r8 = "grl8", r11 = "grl11", r16 = "grl16", r17 = "grl17", r19 = "grl19" },
+    gln = { r17 = "gln" },
+}
+
 --- Rewrites an SDKMAN identifier in the plugin's spelling, which parse_version
 --- reads. SDKMAN calls JetBrains jbr (the plugin's jb) and puts fx in the
 --- version of JavaFX builds: 21.0.12.fx-zulu, or 21.0.12-fx+1.1-librca in its
 --- semverish identifiers (the plugin's 21.0.12-zulu-fx, 21.0.12+1.1-librca-fx).
 --- The semverish ones spell early-access builds 28.0.0+ea.19-open, padded or
 --- not (28.0.0.0+ea.19-open), where SDKMAN used to write the plugin's
---- 28.ea.19-open (Foojay's 28-ea+19).
---- Any other spelling, the plugin's own included, is returned unchanged.
+--- 28.ea.19-open (Foojay's 28-ea+19). The VM or JDK of the distributions in
+--- sdkman_flavours becomes the short name (22.3.3.r17-grl is 22.3.3-grl17),
+--- and nil comes back for one the plugin does not install (11.0.9.open-adpt,
+--- 22.1.0.1.r11-gln). Any other spelling, the plugin's own included, is
+--- returned unchanged.
 local function plugin_spelling(identifier)
     local version, distribution = identifier:match("^(.+)%-([^-]+)$")
     if not version then
@@ -32,6 +46,15 @@ local function plugin_spelling(identifier)
     end
     if distribution == "jbr" then
         distribution = "jb"
+    end
+    local flavours = sdkman_flavours[distribution]
+    local flavoured, flavour = version:match("^(%d[%d.]*)%.(%a%w*)$")
+    if flavours and flavoured then
+        distribution = flavours[flavour]
+        if not distribution then
+            return nil
+        end
+        version = flavoured
     end
     local suffix = "-" .. distribution
     local release, build = version:match("^(%d[%d.]*)[.-]fx(.*)$")
@@ -79,7 +102,8 @@ function PLUGIN:ParseLegacyFile(ctx)
         return { version = javaVersion }
     end
 
-    local distributionVersion = distribution_version_parser.parse_version(plugin_spelling(javaVersion))
+    local spelling = plugin_spelling(javaVersion)
+    local distributionVersion = spelling and distribution_version_parser.parse_version(spelling)
     if not distributionVersion then
         return {}
     end

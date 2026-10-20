@@ -18,7 +18,8 @@ local distribution_version_parser = require("distribution_version")
 
 -- is_feature_release reads GraalVM's numbering only. Liberica NIK and Mandrel
 -- numbered their releases after themselves up to 24 (Mandrel 23.1.12 is LTS) and
--- follow the JDK from 25 on, so they stay out of it.
+-- follow the JDK from 25 on, so they stay out of it, and so do GraalVM CE 8 to
+-- 19 and Gluon GraalVM, which ended before the monthly feature releases began.
 local graalvm = { graal = true, graalce = true }
 
 --- Return all available versions provided by this plugin

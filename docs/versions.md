@@ -73,6 +73,8 @@ vfox uninstall java@21.0.8+9-tem
 
 If you name a build or a release, it does not cross over to another one (`21.0.12-tem` does not select `21.0.12.1+1-tem`). It does not cross to another distribution, between JavaFX and plain, or between early-access and GA either. A name that matches nothing is reported as `java@99-tem is not installed`.
 
+vfox's own match for `21` goes by the version alone, so it also takes GraalVM CE 8 to 19 and Gluon GraalVM, whose versions are GraalVM's: `21.3.1-grl11` runs Java 11, and `vfox use java@21` selects it over `21.0.12.1+1-tem`. See [distributions.md](distributions.md#versions-numbered-after-graalvm).
+
 Pick the scope with `vfox use`'s flags: `--global`, `--project` or `--session`, the default. In a shell without vfox's hook, Windows switches to the global scope with a warning, while Linux and macOS stop with `vfox requires hook support`. `--project` writes a `.vfox.toml` that holds the installed name (`java = "17.0.10+7-tem"`). A `.sdkmanrc` is read as well, see [sdkmanrc.md](sdkmanrc.md).
 
 ## Early-access builds
@@ -91,7 +93,7 @@ The installed name uses Foojay's spelling, `28-ea+19`, and `vfox use java@28-ea+
 ```bash
 vfox search java            # OpenJDK, the default
 vfox search java tem        # one distribution, short or long name
-vfox search java all        # every distribution, about 2,300 lines on Linux x64
+vfox search java all        # every distribution, about 2,500 lines on Linux x64
 ```
 
 Each line is a name that can follow `java@`, newest first, with notes for LTS and JavaFX (see [javafx.md](javafx.md)) and a mark for versions that are installed:

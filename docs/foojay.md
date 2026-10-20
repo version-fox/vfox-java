@@ -27,14 +27,14 @@ https://api.foojay.io/disco/v3.0/packages/jdks
 | `version` | empty for `vfox search`, else the version part of what you typed. A `+` is percent-encoded, because Foojay reads a bare one as a space and drops the build. `28.ea.19` becomes `28-ea+19` |
 | `architecture` | `aarch64` for arm64, `x64` on Windows x64, `amd64` for x64 elsewhere, and the name vfox reports for other CPUs |
 | `operating_system` | `linux`, `macos` or `windows` |
-| `archive_type` | `tar.gz`, and `zip` plus `tar.gz` on Windows |
+| `archive_type` | `tar.gz`, and `zip` plus `tar.gz` on Windows. Elsewhere `tar.xz` comes in for Red Hat, and `zip` for OJDKBuild, OpenLogic and Gluon GraalVM |
 | `lib_c_type` | `glibc` or `musl` on Linux, empty elsewhere |
 | `directly_downloadable` | always `true` |
 | `latest` | `available`, added only when the version is a bare major such as `21` |
 
 Without `latest=available`, `version=21` matches the 21 GA build only (`21+35`). With it Foojay picks the newest 21.x, which is what `java@21-tem` installs. Longer versions match as they are.
 
-The answer is a list of packages. The plugin names a release after `java_version`, adds `-fx` where `javafx_bundled` is true, marks it LTS where `term_of_support` is `lts`, and prefers a `zip` over a `tar.gz` of the same version on Windows. For the install it then fetches the package's `links.pkg_info_uri` and downloads its `direct_download_uri`, which is a vendor's own server (GitHub Releases for Temurin). That record also holds a `checksum`. The plugin does not pass it on, so vfox prints `WARNING: Checksum is not provided, skip verify...` and does not verify the download.
+The answer is a list of packages. The plugin names a release after `java_version`, adds `-fx` where `javafx_bundled` is true, marks it LTS where `term_of_support` is `lts`, and prefers a `zip` over a `tar.gz` of the same version on Windows. It leaves out the JREs, installer bundles and RHEL 6 builds that Foojay lists among OJDKBuild's Windows JDKs, and the JDK 11 builds of Gluon GraalVM's 22.x releases, see [distributions.md](distributions.md). For the install it then fetches the package's `links.pkg_info_uri` and downloads its `direct_download_uri`, which is a vendor's own server (GitHub Releases for Temurin). That record also holds a `checksum`. The plugin does not pass it on, so vfox prints `WARNING: Checksum is not provided, skip verify...` and does not verify the download.
 
 `vfox search` differs from the raw list in a few ways. It lists a name once where Foojay has two records for it, and it leaves the LTS note off GraalVM's feature releases (see [distributions.md](distributions.md#behavior-of-oracle-graalvm-and-graalvm-community)). It only lists GA releases.
 
@@ -66,7 +66,7 @@ For another platform change the three parameters that name it. Linux needs `lib_
 | macOS Intel | `architecture=amd64&operating_system=macos&archive_type=tar.gz` |
 | Windows x64 | `architecture=x64&operating_system=windows&archive_type=zip&archive_type=tar.gz` |
 
-The answer includes distributions the plugin does not offer. [distributions.md](distributions.md#foojay-distributions-the-plugin-does-not-offer) lists them.
+The names in the answer are the long names in [distributions.md](distributions.md), except `oracle_open_jdk`, which the plugin calls `openjdk` (`open`). With `archive_type=tar.gz` alone the answer misses Red Hat and OJDKBuild on Linux, and OpenLogic on macOS, which ship tar.xz or zip there. The plugin asks for those types for them, see the table above.
 
 ## Which distributions have a release for my platform
 

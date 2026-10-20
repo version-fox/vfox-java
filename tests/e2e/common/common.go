@@ -30,6 +30,7 @@ import (
 	"os"
 	"regexp"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -611,6 +612,70 @@ func BareMajorBuilds(searched []string, spec string) (builds []string, want stri
 		}
 	}
 	return builds, want
+}
+
+// nameOnly maps the distributions the suite checks by name only, by short
+// name, to the runner platforms Foojay lists packages of them for
+// (2026-10-20). Only Red Hat's Linux x64 builds still download, which the
+// check needs not.
+var nameOnly = map[string][]string{
+	"adpt":    {"linux/amd64", "linux/arm64", "windows/amd64"},
+	"adptj9":  {"linux/amd64", "linux/arm64", "windows/amd64"},
+	"eliya":   {"linux/amd64", "linux/arm64"},
+	"gln":     {"linux/amd64", "windows/amd64"},
+	"grl8":    {"linux/amd64", "windows/amd64"},
+	"grl11":   {"linux/amd64", "linux/arm64", "windows/amd64"},
+	"grl16":   {"linux/amd64", "linux/arm64", "windows/amd64"},
+	"grl17":   {"linux/amd64", "linux/arm64", "windows/amd64"},
+	"grl19":   {"linux/amd64", "linux/arm64", "windows/amd64"},
+	"ojdkbld": {"linux/amd64", "windows/amd64"},
+	"opnlgc":  {"linux/amd64", "windows/amd64"},
+	"rdht":    {"linux/amd64", "linux/arm64", "windows/amd64"},
+	"semcrt":  {"linux/amd64", "linux/arm64"},
+}
+
+// NameOnlyDistributions returns, sorted, the distributions in nameOnly that
+// Foojay has packages of for platform ("linux/amd64", "windows/arm64"). The
+// suite checks them by name only, installing no JDK. The plugin had no name
+// for them, so `vfox search java adpt` failed with "Unsupported
+// distribution" and `vfox install java@16-adpt` with "Could not extract a
+// valid distribution".
+func NameOnlyDistributions(platform string) []string {
+	var names []string
+	for name, platforms := range nameOnly {
+		if slices.Contains(platforms, platform) {
+			names = append(names, name)
+		}
+	}
+	slices.Sort(names)
+	return names
+}
+
+// ChecksNameOnly reports whether a combo also checks the distributions in
+// NameOnlyDistributions, which downloads nothing. Temurin's combos do: they
+// run on every runner.
+func ChecksNameOnly(distribution string) bool {
+	return Base(distribution) == "tem"
+}
+
+// leadingNumber matches the major of a Foojay java_version, which a dot
+// or a build follows (22.3.3, 23+25).
+var leadingNumber = regexp.MustCompile(`^\d+`)
+
+// NewestBareMajor picks the newest version `vfox search java <short>`
+// lists (22.3.3-grl17) and the bare major spec that must install it
+// (22-grl17). ok is false when there is none, or when the spec names the
+// version itself: vfox reports a spec naming an installed version as
+// installed without calling PreInstall.
+func NewestBareMajor(searched []string, short string) (spec, newest string, ok bool) {
+	if len(searched) == 0 {
+		return "", "", false
+	}
+	newest = searched[0]
+	core, found := strings.CutSuffix(newest, "-"+short)
+	major := leadingNumber.FindString(core)
+	spec = major + "-" + short
+	return spec, newest, found && major != "" && spec != newest
 }
 
 // ContainerName returns a unique container name per run: the combo slug stays
