@@ -51,6 +51,16 @@ func setupVfox(ctx context.Context, t *testing.T, ctr tc.Container, vfoxVersion 
 	t.Logf("PASS %s with the local java plugin", strings.TrimSpace(execOK(ctx, t, ctr, "vfox --version")))
 }
 
+// checkNotes proves the notes printed by `vfox info java` point to the
+// README (see common.ReadmeURL).
+func checkNotes(ctx context.Context, t *testing.T, ctr tc.Container) {
+	t.Helper()
+	out := execOK(ctx, t, ctr, "vfox info java")
+	require.Containsf(t, common.StripANSI(out), common.ReadmeURL,
+		"the notes of vfox info java must point to the README\n--- output ---\n%s", out)
+	t.Logf("PASS the notes of vfox info java point to %s", common.ReadmeURL)
+}
+
 // checkVersionlessRejected proves a distribution without a version (e.g.
 // java@tem, java@-tem, see common.VersionlessSpecs) fails both `vfox
 // install` and `vfox use` with an error asking for one. The hooks raise it

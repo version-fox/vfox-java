@@ -30,7 +30,7 @@ Windows 容器的覆盖（`tests/e2e/windows`）无法在开发容器里运行�
 
 每个组合都运行同样的流程（每个组合一个长期存活的容器，由 Go 通过类似 `docker exec` 的调用来驱动）；目标镜像里没有 JDK，所以 `java` 只能来自 vfox 安装的东西：
 
-1. 从指定的渠道安装 vfox，要么是最新发布版（`latest`），要么从源码构建（`main`），然后从当前检出的代码注册本地的 `java` 插件。在 Windows 上，runner 会在 `latest` 组合运行期间把 `main` 构建一次，`main` 的容器由 e2e 镜像加上这个 `vfox.exe` 启动。
+1. 从指定的渠道安装 vfox，要么是最新发布版（`latest`），要么从源码构建（`main`），然后从当前检出的代码注册本地的 `java` 插件。在 Windows 上，runner 会在 `latest` 组合运行期间把 `main` 构建一次，`main` 的容器由 e2e 镜像加上这个 `vfox.exe` 启动。接着，`vfox info java` 打印的 Notes 要链接到 README，README 里列了各个简称，也写了怎样搜索某个发行版。以前的 Notes 只给了五个简称，没说怎样列出它们的版本（[vfox#390](https://github.com/version-fox/vfox/issues/390)）。
 2. 只写发行版不写版本，无论单独写还是跟在空版本后面（`java@tem`、`java@-tem`），`vfox install` 和 `vfox use` 都应失败，并提示补上版本。以前，`java@tem` 会让钩子报 Lua 错误；`java@-tem` 则让 `PreInstall` 把空版本发给 Foojay，Foojay 列出所有版本，结果装上了最新的。没有任何发行版发布过的版本（`<大版本>.0.99`）应该安装失败，并且 `PreInstall` 要指出它搜索的平台（`linux/amd64`、`windows/arm64` 等），以此确认向 Foojay 查询的就是 runner 所在的平台。已固定版本里从未发布过的构建（`<版本>+99`，例如 `21.0.8+99-tem`）也一样，这证明查询保留了构建号：Foojay 会把没编码的 `+` 当成空格并丢掉构建号，于是会装上这个版本的最新构建。
 3. 在 `graalce` 这一行里，Oracle GraalVM 只写大版本号的 `25-graal` 应该装 25.0 系列的最新构建（`25.0.4.1-graal`），也就是 Oracle 官方 `25/latest` 下载跟的那个系列，而不是 Foojay 列在它前面的某个每月特性版本（比如 `25.4.4.1-graal`）。`vfox search java graal` 列出的 25 的各构建会先被模拟成已安装，这样 `vfox install` 报出的就是 `PreInstall` 选中的那个，而且不会下载任何东西。GA 版本 25 不放进去，因为那样 vfox 会发现 `25-graal` 已安装，根本不会去问 `PreInstall`。
 4. 在 `tem` 这几行里（这几行在每个 runner 上都会运行），只按名字检查的发行版（`adpt` 到 `semcrt`，即 `tests/e2e/common` 里的 `nameOnly`），只要 Foojay 在这个 runner 上有它的包，都要能用简称找到：`vfox search java <简称>` 能列出它；把它列出的最新版本模拟成已安装后，`vfox install java@<大版本>-<简称>`（`22-grl17`）要报告这个版本已经安装，所以不会下载任何东西。以前没有这些简称时，这两条命令分别报 `Unsupported distribution` 和 `Could not extract a valid distribution`。

@@ -7,6 +7,7 @@
 ## 未发布
 
 - 新增 13 个发行版，Foojay 列出的发行版从此全都有了：AdoptOpenJDK（`adpt`、`adptj9`）、Eliya（`eliya`）、OJDKBuild（`ojdkbld`）、OpenLogic（`opnlgc`）、Red Hat（`rdht`）、Semeru 认证版（`semcrt`）、Gluon GraalVM（`gln`），以及基于 JDK 8 到 19 的 GraalVM CE（`grl8`、`grl11`、`grl16`、`grl17`、`grl19`）。Red Hat 从 tar.xz 包安装；Linux 上的 OJDKBuild、macOS 上的 OpenLogic 和 22.1 以前的 Gluon GraalVM 从 zip 包安装。`.sdkmanrc` 里写 SDKMAN 以前给它们的标识符也认，例如 `11.0.10.j9-adpt`、`22.3.3.r17-grl`。见 [distributions.md](distributions.md)。
+- `vfox add java`、`vfox update java` 和 `vfox info java` 打印的 Notes 改成了一个 README 链接，README 里列了全部简称，也写了怎样搜索某个发行版。0.6.2 的 Notes 只给了五个简称，没说怎样列出它们的版本，而 `vfox search java` 只列 OpenJDK（[vfox#390](https://github.com/version-fox/vfox/issues/390)）。
 
 ## 0.6.2（2026-10-18）
 

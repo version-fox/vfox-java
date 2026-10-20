@@ -41,11 +41,5 @@ PLUGIN.legacyFilenames = {
 }
 -- Some things that need user to be attention!
 PLUGIN.notes = {
-    "Listed below are the supported distributions and their short names.",
-    " - Oracle:     x.y.z-oracle",
-    " - OpenJDK:    x.y.z-open",
-    " - GraalVM:    x.y.z-graal",
-    " - Temurin:    x.y.z-tem",
-    " - Zulu:       x.y.z-zulu",
-    "Others please see: https://github.com/version-fox/vfox-java",
+    "Short names and usage: https://github.com/version-fox/vfox-java/blob/main/README.md",
 }

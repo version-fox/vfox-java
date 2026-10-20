@@ -7,6 +7,7 @@ What changed in each release, as a user notices it. GitHub's release pages list 
 ## Unreleased
 
 - 13 more distributions, the rest of what Foojay lists: AdoptOpenJDK (`adpt`, `adptj9`), Eliya (`eliya`), OJDKBuild (`ojdkbld`), OpenLogic (`opnlgc`), Red Hat (`rdht`), Semeru certified (`semcrt`), Gluon GraalVM (`gln`) and GraalVM CE for JDK 8 to 19 (`grl8`, `grl11`, `grl16`, `grl17`, `grl19`). Red Hat installs from tar.xz, and OJDKBuild on Linux, OpenLogic on macOS and Gluon GraalVM before 22.1 from zips. A `.sdkmanrc` takes SDKMAN's old identifiers for them, such as `11.0.10.j9-adpt` and `22.3.3.r17-grl`. See [distributions.md](distributions.md).
+- The notes printed by `vfox add java`, `vfox update java` and `vfox info java` are a link to the README, which lists every short name and shows how to search a distribution. Release 0.6.2 gives five short names there but not how to list their versions, while `vfox search java` lists OpenJDK only ([vfox#390](https://github.com/version-fox/vfox/issues/390)).
 
 ## 0.6.2 (2026-10-18)
 

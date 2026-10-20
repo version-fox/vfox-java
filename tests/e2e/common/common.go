@@ -93,6 +93,12 @@ func ChecksOracleGraalVM(distribution string) bool {
 	return Base(distribution) == "graalce"
 }
 
+// ReadmeURL is the README the plugin's notes point to, for the short names
+// and how to search a distribution. The notes used to list five short names
+// but not how to list their versions, while a bare `vfox search java` lists
+// OpenJDK only (https://github.com/version-fox/vfox/issues/390).
+const ReadmeURL = "https://github.com/version-fox/vfox-java/blob/main/README.md"
+
 // PassThroughEnvs are host env knobs recorded in each target container's
 // environment, so `docker inspect` shows what a combo ran with. Forwarded
 // only when set, so unset stays default.
