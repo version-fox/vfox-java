@@ -86,6 +86,12 @@ Zulu, Liberica, Liberica NIK and Corretto (Java 8 only) have builds with JavaFX 
 
 vfox reads the `java=` line of SDKMAN's `.sdkmanrc` through this plugin and selects a JDK that is already installed. See [docs/sdkmanrc.md](docs/sdkmanrc.md) for details.
 
+## GitHub mirror
+
+Most distributions download from GitHub. If that is slow where you are, `export VFOX_JAVA_GITHUB_MIRROR=https://gh-proxy.org/` sends these downloads through a mirror. See [docs/mirror.md](docs/mirror.md) for details.
+
+Unreleased: release 0.6.2 has no mirror setting.
+
 ## Querying Foojay
 
 To see which JDKs exist for your platform, ask Foojay yourself. [docs/foojay.md](docs/foojay.md) has the Swagger UI and the commands.

@@ -16,6 +16,7 @@ local http = require("http")
 local json = require("json")
 
 local foojay = require("foojay")
+local github_mirror = require("github_mirror")
 local loongnix = require("loongnix")
 local distribution_version_parser = require("distribution_version")
 --- @class PreInstallContext
@@ -123,7 +124,7 @@ function PLUGIN:PreInstall(ctx)
     end
     return {
         -- [info.checksum_type] = checksum,
-        url = info.direct_download_uri,
+        url = github_mirror.url(info.direct_download_uri),
         version = finalV,
         note = jdk.major_version,
     }

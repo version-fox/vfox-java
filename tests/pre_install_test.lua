@@ -15,6 +15,7 @@
 dofile("tests/support.lua")
 local JDKS = "https://api.foojay.io/disco/v3.0/packages/jdks?"
 local IDS = "https://api.foojay.io/disco/v3.0/ids/"
+local GITHUB = "https://github.com/graalvm/graalvm-ce-builds/releases/download/"
 
 local function pkg(java_version, fx, archive_type)
     archive_type = archive_type or "tar.gz"
@@ -330,7 +331,11 @@ package.preload.http = function()
             else
                 assert(request.url:sub(1, #IDS) == IDS, "unexpected request: " .. request.url)
                 local id = request.url:sub(#IDS + 1)
-                body = { result = { { direct_download_uri = "https://download.invalid/" .. id } } }
+                -- The downloads of GraalVM Community that graal() gives the
+                -- host github are on GitHub, where the id puts the file after
+                -- it. All others are somewhere else.
+                local site = id:sub(1, 7) == "github/" and GITHUB or "https://download.invalid/"
+                body = { result = { { direct_download_uri = site .. id } } }
             end
             table.insert(responses, body)
             return { status_code = 200, body = tostring(#responses) }, nil
@@ -458,6 +463,50 @@ for distribution, version in pairs({ graalvm_community = "25.0.4.1", graalvm = "
     local found = require("foojay").fetchtJdkList(distribution, version)
     assert(#found == 0, distribution .. " " .. version .. ": found " .. tostring(found[1] and found[1].filename))
 end
+-- $VFOX_JAVA_GITHUB_MIRROR puts a mirror in front of the downloads from GitHub
+-- and leaves the others alone. Foojay links GraalVM Community's 25.4.4.1 to
+-- GitHub and its 25 to Oracle's download service. The mirror is a table field,
+-- as the error cases at the end of the file need.
+local mirror = {}
+local getenv = os.getenv
+os.getenv = function(name)
+    if name == "VFOX_JAVA_GITHUB_MIRROR" then
+        return mirror.value
+    end
+    return getenv(name)
+end
+local function download(version)
+    return PLUGIN:PreInstall({ version = version }).url
+end
+local github = GITHUB .. "github/graalvm-community-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz"
+local oracle = "https://download.invalid/gds/graalvm-community-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz"
+for _, case in ipairs({
+    { nil, github },
+    { "https://gh-proxy.org/", "https://gh-proxy.org/" .. github },
+    { "https://gh-proxy.org", "https://gh-proxy.org/" .. github },
+    { "", github },
+}) do
+    mirror.value = case[1]
+    assert(
+        download("25.4.4.1-graalce") == case[2],
+        "mirror " .. tostring(case[1]) .. ": " .. download("25.4.4.1-graalce")
+    )
+    assert(download("25-graalce") == oracle, "mirror " .. tostring(case[1]) .. " changed a download from Oracle")
+    assert(download("21-tem") == "https://download.invalid/21.0.12.1+1.tar.gz", "mirror changed a download of Temurin")
+    cases = cases + 3
+end
+-- Windows downloads the zip of the same file.
+RUNTIME.osType = "windows"
+mirror.value = "https://gh-proxy.org/"
+assert(
+    download("25.4.4.1-graalce")
+        == "https://gh-proxy.org/" .. GITHUB .. "github/graalvm-community-jdk-25i4-25.0.4.1.1_windows-x64_bin.zip",
+    "mirror on Windows: " .. download("25.4.4.1-graalce")
+)
+RUNTIME.osType = "linux"
+mirror.value = nil
+cases = cases + 1
+
 -- Early-access builds go by their Java version.
 check("26.ea.13-graal", "26-ea+13-graal", false)
 -- Anything longer than a major still matches exactly.
@@ -699,5 +748,16 @@ for _, version in ipairs({ "23.1.3-mandrel", "23.1.8+1-nik", "26-mandrel" }) do
     assert(not ok and tostring(err):find(want, 1, true), version .. ": unexpected " .. tostring(err))
     assert(#requests == 1, version .. ": expected one lookup, got " .. #requests)
 end
+
+-- A mirror that vfox would not download from stops a download from GitHub, with
+-- a message that names the variable, and leaves the others alone.
+mirror.value = "gh-proxy.org"
+local ok, err = pcall(PLUGIN.PreInstall, PLUGIN, { version = "25.4.4.1-graalce" })
+assert(
+    not ok and tostring(err):find("VFOX_JAVA_GITHUB_MIRROR must start with http:// or https://", 1, true),
+    "a mirror without a scheme: unexpected " .. tostring(err)
+)
+assert(download("25-graalce") == oracle, "a mirror without a scheme stopped a download from Oracle")
+cases = cases + 2
 
 print("PASS: " .. cases .. " PreInstall Foojay lookup cases")

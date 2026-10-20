@@ -14,6 +14,7 @@ hooks/pre_use.lua               vfox use：把输入映射到已安装的版本�
 hooks/parse_legacy_file.lua     .sdkmanrc
 lib/distribution_version.lua    发行版名称、版本写法的解析、GraalVM 特性版本的识别
 lib/foojay.lua                  向 Foojay 发出的请求，以及对返回结果的修正
+lib/github_mirror.lua           从 GitHub 下载时用的镜像
 lib/installed_version.lua       与已安装的版本名做匹配
 lib/loongnix.lua                Loongnix 归档
 tests/*_test.lua                离线的钩子测试
@@ -37,6 +38,7 @@ vfox 加载 `metadata.lua`，命令需要时调用相应的钩子，并向钩子
 几条容易踩坑的约定：
 
 - `PreInstall` 返回 `url`、`version` 和 `note`。`version` 会成为安装后的版本名，所以它带着构建号。包的校验和目前没有传给 vfox（`hooks/pre_install.lua` 里的 `TODO: checksum`），vfox 为此会打印警告。
+- Foojay 的包，`url` 就是它的 `direct_download_uri`；它在 GitHub 上时，前面会加上 `$VFOX_JAVA_GITHUB_MIRROR`（`lib/github_mirror.lua`，见 [mirror.md](mirror.md)）。vfox 只从 `http://` 和 `https://` 开头的地址下载，别的写法它会当成磁盘上的文件。它用 URL 路径的最后一段给下载的文件命名，再按这个名字的扩展名解压，在 URL 前面加个前缀不会影响这一点。
 - `PreUse` 返回 Lua 表或 `nil`。只写大版本号时返回 `nil`，让 vfox 自己去匹配。vfox 1.0.13 及以后会拒绝裸字符串，比如 `""`。
 - `ParseLegacyFile` 调用 `ctx.getInstalledVersions()` 时不能带参数。vfox 1.x 把它绑定成 Go 的 `func() []string`，会拒绝 `ctx:getInstalledVersions()` 多传的那个参数。vfox 会忽略这个钩子的错误，所以出错时没有任何提示。
 - vfox 把已安装的版本按字符串降序传给钩子，例如 `21.0.8+9-tem`、`21.0.12+8-tem`、`21.0.1+12-tem`。按前缀匹配时，第一个命中的不一定是最新的，所以 `lib/installed_version.lua` 逐段比较数字。
@@ -71,10 +73,11 @@ go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_install_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_use_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/parse_legacy_file_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/loongnix_test.lua
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/github_mirror_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
 ```
 
-请在仓库根目录运行。五个文件都会加载 `tests/support.lua`，它模拟 `vfox.strings`；`tests/pre_install_test.lua` 和 `tests/loongnix_test.lua` 还自己模拟了 `http` 和 `json`。`tests/pre_install_test.lua` 把 Foojay 的返回结果放在文件开头的一张表里，键是 `<发行版> [<版本>]`，Windows 和 macOS 的前面再分别加 `windows` 和 `macos`。新增用例需要的返回结果就加在那里，并注明观察到的日期。Lint、许可证头和容器测试见 [e2e.md](e2e.md#本地检查)。
+请在仓库根目录运行。六个文件都会加载 `tests/support.lua`，它模拟 `vfox.strings`；`tests/pre_install_test.lua` 和 `tests/loongnix_test.lua` 还自己模拟了 `http` 和 `json`。`tests/pre_install_test.lua` 把 Foojay 的返回结果放在文件开头的一张表里，键是 `<发行版> [<版本>]`，Windows 和 macOS 的前面再分别加 `windows` 和 `macos`。新增用例需要的返回结果就加在那里，并注明观察到的日期。Lint、许可证头和容器测试见 [e2e.md](e2e.md#本地检查)。
 
 想对着真实的 Foojay 调用单个钩子，可以用 vfox 1.0.13 及以后版本的 `vfox plugin run`。它不会注册插件，`--os` 和 `--arch` 可以模拟其他平台：
 

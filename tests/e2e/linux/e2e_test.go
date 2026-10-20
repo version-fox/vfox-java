@@ -170,6 +170,9 @@ func runOne(t *testing.T, ctx context.Context, image, platform, arch string, fro
 	checkNotes(ctx, t, ctr)
 	checkVersionlessRejected(ctx, t, ctr, c.Distribution)
 	checkMissingVersionRejected(ctx, t, ctr, c.Distribution, version, arch)
+	if common.ChecksGitHubMirror(c.Distribution) {
+		checkGitHubMirror(ctx, t, ctr, common.Spec(c.Distribution, version))
+	}
 	// The checks that compare a search with an install read what each asked
 	// Foojay through a stand-in for api.foojay.io.
 	comparesLookups := common.ChecksOracleGraalVM(c.Distribution) ||

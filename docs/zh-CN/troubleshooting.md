@@ -32,7 +32,11 @@ Foojay 在这个平台上没有对应的包：版本、发行版、带不带 Jav
 
 ### `source file not found`
 
-下载时服务器返回 404。厂商会下线旧的构建，而 Foojay 仍保留它们的记录。最常见的是 EA 构建（见 [versions.md](versions.md#早期访问ea构建)）。换一个较新的构建。Red Hat 除了 Linux x64 以外的构建都会报这个错，见 [distributions.md](distributions.md#red-hat-build-of-openjdkrdht)。
+下载时服务器返回 404。厂商会下线旧的构建，而 Foojay 仍保留它们的记录。最常见的是 EA 构建（见 [versions.md](versions.md#早期访问ea构建)）。换一个较新的构建。Red Hat 除了 Linux x64 以外的构建都会报这个错，见 [distributions.md](distributions.md#red-hat-build-of-openjdkrdht)。经过镜像（[mirror.md](mirror.md)）下载时，镜像返回的 404 也会走到这里：取消设置 `VFOX_JAVA_GITHUB_MIRROR` 再试一次。
+
+### `VFOX_JAVA_GITHUB_MIRROR must start with http:// or https://, such as https://gh-proxy.org/, but is gh-proxy.org`
+
+这个值不是以 `http://` 或 `https://` 开头。vfox 只从 `http://` 和 `https://` 开头的地址下载，别的写法它会当成磁盘上的文件，所以从 GitHub 下载时，插件在下载开始之前就停在这里；其他下载不读这个变量。改正这个值，或者取消设置这个变量，见 [mirror.md](mirror.md)。未发布：0.6.2 没有镜像设置。
 
 ### `java@21-tem is not installed`
 
@@ -48,7 +52,7 @@ Foojay 在这个平台上没有对应的包：版本、发行版、带不带 Jav
 
 ## 网络
 
-插件向 Foojay 取版本列表，压缩包则由 vfox 从厂商的服务器下载，常常是 GitHub Releases。插件没有镜像设置。
+插件向 Foojay 取版本列表，压缩包则由 vfox 从厂商的服务器下载，常常是 GitHub Releases。对从 GitHub 下载的部分，插件有镜像设置，见 [mirror.md](mirror.md)。未发布：0.6.2 没有。
 
 vfox 自己的代理设置对 Foojay 请求和下载都有效：
 

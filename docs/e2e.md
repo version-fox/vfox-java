@@ -81,6 +81,14 @@ JDK, so `java` can only come from what vfox installs:
    (`<version>+99`, e.g. `21.0.8+99-tem`), proving the lookup keeps the
    build number: Foojay reads an unencoded `+` as a space and drops the
    build, and the release's newest build would install instead.
+
+   On the Temurin rows an install through a mirror that does not exist must
+   fail too. With `VFOX_JAVA_GITHUB_MIRROR=https://invalid.example.invalid`
+   the mirror goes in front of Temurin's GitHub URL, so `vfox install` fails on
+   the download, and its error must name the URL it asked for: the mirror, a
+   slash and the GitHub URL. Before the plugin read the variable, it downloaded
+   the JDK from github.com and the install succeeded. Nothing is downloaded,
+   and no mirror that works is run.
 3. On the GraalVM Community rows, Oracle GraalVM's bare major `25-graal`
    installs the newest build of its 25.0 line (`25.0.5-graal` on
    2026-10-20), the line Oracle's own `25/latest` download follows, not one
@@ -204,13 +212,13 @@ JDK, so `java` can only come from what vfox installs:
 The default matrix runs every distribution against both vfox channels
 (`latest`, `main`):
 
-| Distribution | Release | Covers                                                                                         | amd64 | arm64 |
-| ------------ | ------- | ---------------------------------------------------------------------------------------------- | ----- | ----- |
-| `open`       | 25.0.2  | the default distribution, versions without a suffix                                            | ✓     |       |
-| `tem`        | 21.0.8  | the common path (tar.gz on Linux, zip on Windows); the name and number checks of items 4 and 6 | ✓     | ✓     |
-| `librca-fx`  | 25.0.4  | JavaFX bundled builds (`-fx`)                                                                  | ✓     | ✓     |
-| `jb`         | 21.0.5  | the tar.gz path on Windows, which has no zip for it                                            | ✓     | ✓     |
-| `graalce`    | 25.0.2  | a `GRAALVM_HOME` set beforehand keeps its value; Oracle GraalVM's `25-graal`                   | ✓     |       |
+| Distribution | Release | Covers                                                                                                    | amd64 | arm64 |
+| ------------ | ------- | --------------------------------------------------------------------------------------------------------- | ----- | ----- |
+| `open`       | 25.0.2  | the default distribution, versions without a suffix                                                       | ✓     |       |
+| `tem`        | 21.0.8  | the common path (tar.gz on Linux, zip on Windows); the mirror, name and number checks of items 2, 4 and 6 | ✓     | ✓     |
+| `librca-fx`  | 25.0.4  | JavaFX bundled builds (`-fx`)                                                                             | ✓     | ✓     |
+| `jb`         | 21.0.5  | the tar.gz path on Windows, which has no zip for it                                                       | ✓     | ✓     |
+| `graalce`    | 25.0.2  | a `GRAALVM_HOME` set beforehand keeps its value; Oracle GraalVM's `25-graal`                              | ✓     |       |
 
 Every pinned release is published through Foojay for each platform its row
 runs on. OpenJDK and GraalVM Community ship no `windows-aarch64` build, so
@@ -388,6 +396,7 @@ go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_install_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_use_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/parse_legacy_file_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/loongnix_test.lua
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/github_mirror_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
 ```
 

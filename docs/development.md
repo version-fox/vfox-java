@@ -14,6 +14,7 @@ hooks/pre_use.lua               vfox use: map what was typed to an installed nam
 hooks/parse_legacy_file.lua     .sdkmanrc
 lib/distribution_version.lua    distribution names, parsing of specs, GraalVM feature releases
 lib/foojay.lua                  the Foojay request, and fixes to what it answers
+lib/github_mirror.lua           the mirror of the downloads from GitHub
 lib/installed_version.lua       matching against installed names
 lib/loongnix.lua                the Loongnix archive
 tests/*_test.lua                offline hook tests
@@ -37,6 +38,7 @@ vfox loads `metadata.lua`, calls a hook when a command needs it, and puts `PLUGI
 A few contracts that cost time to find:
 
 - `PreInstall` returns `url`, `version` and `note`. `version` becomes the name of the install, which is why it carries the build number. The package's checksum is not passed on yet (`TODO: checksum` in `hooks/pre_install.lua`), and vfox prints a warning for that.
+- For a package from Foojay, `url` is its `direct_download_uri`, behind `$VFOX_JAVA_GITHUB_MIRROR` when it is on GitHub (`lib/github_mirror.lua`, [mirror.md](mirror.md)). vfox downloads from `http://` and `https://` addresses and takes anything else for a file on disk. It names the download after the last part of the URL's path and unpacks it by the extension of that name, which a prefix in front of the URL does not change.
 - `PreUse` returns a table or `nil`. For a bare major it returns `nil` so that vfox matches it itself. vfox 1.0.13 and later reject a bare string such as `""`.
 - `ParseLegacyFile` calls `ctx.getInstalledVersions()` with no argument. vfox 1.x binds it as a Go `func() []string` and rejects the extra argument that `ctx:getInstalledVersions()` adds. vfox ignores errors from this hook, so the failure is silent.
 - vfox hands over the installed versions sorted as strings, descending: `21.0.8+9-tem`, `21.0.12+8-tem`, `21.0.1+12-tem`. The first one that starts with a release is not the right one, so `lib/installed_version.lua` compares numbers one by one.
@@ -71,10 +73,11 @@ go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_install_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_use_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/parse_legacy_file_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/loongnix_test.lua
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/github_mirror_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
 ```
 
-Run them from the repository root. All five load `tests/support.lua`, which stubs `vfox.strings`, and `tests/pre_install_test.lua` and `tests/loongnix_test.lua` stub `http` and `json` themselves. `tests/pre_install_test.lua` keeps Foojay's answers in a table at the top, keyed by `<distribution> [<version>]`, with `windows` or `macos` in front for those systems. Add the answer a new case needs there, and note the day you observed it. Lint, license headers and the container tests are in [e2e.md](e2e.md#local-checks).
+Run them from the repository root. All six load `tests/support.lua`, which stubs `vfox.strings`, and `tests/pre_install_test.lua` and `tests/loongnix_test.lua` stub `http` and `json` themselves. `tests/pre_install_test.lua` keeps Foojay's answers in a table at the top, keyed by `<distribution> [<version>]`, with `windows` or `macos` in front for those systems. Add the answer a new case needs there, and note the day you observed it. Lint, license headers and the container tests are in [e2e.md](e2e.md#local-checks).
 
 To call a single hook against the real Foojay, vfox 1.0.13 and later has `vfox plugin run`. It does not register the plugin, and `--os` and `--arch` answer for another platform:
 

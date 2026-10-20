@@ -326,6 +326,32 @@ func checkMissingVersionRejected(ctx context.Context, t *testing.T, ctr tc.Conta
 	}
 }
 
+// checkGitHubMirror proves the plugin honours $VFOX_JAVA_GITHUB_MIRROR for the
+// downloads from GitHub, where Foojay links Temurin's JDKs: installing through
+// a mirror that does not exist (see common.BogusMirror) must fail on the
+// download, and vfox's error must name the URL it asked for, the mirror
+// followed by the GitHub URL (see common.AskedBogusMirror). Before the plugin
+// read the variable, it downloaded the JDK from github.com, and the install
+// succeeded.
+func checkGitHubMirror(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, spec string) {
+	t.Helper()
+	label := "vfox install java@" + spec + " through a mirror that does not exist"
+	env := append(slices.Clone(box.vars), common.GitHubMirrorEnv+"="+common.BogusMirror)
+	common.Retry(ctx, t, label+" (must fail)", func() (int, string) {
+		code, out := execRun(ctx, t, ctr, "vfox install "+pwshQuote("java@"+spec), env...)
+		if code == 0 {
+			t.Fatalf("%s unexpectedly succeeded\n--- output ---\n%s", label, out)
+		}
+		// Any other failure (e.g. Foojay unreachable) is retried like the
+		// other network-touching calls.
+		if common.AskedBogusMirror(out) {
+			return 0, out
+		}
+		return code, out
+	})
+	t.Logf("PASS the download of java@%s goes to the mirror that %s names", spec, common.GitHubMirrorEnv)
+}
+
 // checkGraalVMBareMajor proves Oracle GraalVM's bare major installs the
 // newest build of its 25.0 line, not one of the monthly feature releases
 // searching lists before it (see common.OracleGraalVMSpec), which `vfox

@@ -32,7 +32,11 @@ The request to Foojay failed. After `status_code =>` comes the HTTP status, othe
 
 ### `source file not found`
 
-The download answered 404. Vendors take old builds down while Foojay keeps their records. Early-access builds are the common case (see [versions.md](versions.md#early-access-builds)). Pick a newer build. Red Hat's builds for anything but Linux x64 all end here, see [distributions.md](distributions.md#red-hat-build-of-openjdk-rdht).
+The download answered 404. Vendors take old builds down while Foojay keeps their records. Early-access builds are the common case (see [versions.md](versions.md#early-access-builds)). Pick a newer build. Red Hat's builds for anything but Linux x64 all end here, see [distributions.md](distributions.md#red-hat-build-of-openjdk-rdht). Through a mirror ([mirror.md](mirror.md)), a 404 from the mirror ends here too: unset `VFOX_JAVA_GITHUB_MIRROR` and try again.
+
+### `VFOX_JAVA_GITHUB_MIRROR must start with http:// or https://, such as https://gh-proxy.org/, but is gh-proxy.org`
+
+The value does not start with `http://` or `https://`. vfox downloads from `http://` and `https://` addresses only and takes any other for a file on disk, so a download from GitHub stops here before it starts. Other downloads do not read the variable. Fix the value or unset the variable, see [mirror.md](mirror.md). Unreleased: release 0.6.2 has no mirror setting.
 
 ### `java@21-tem is not installed`
 
@@ -48,7 +52,7 @@ The download answered 404. Vendors take old builds down while Foojay keeps their
 
 ## Network
 
-The plugin talks to Foojay for the lists, and vfox downloads the archive from the vendor's server, often GitHub Releases. The plugin has no mirror setting.
+The plugin talks to Foojay for the lists, and vfox downloads the archive from the vendor's server, often GitHub Releases. For the downloads from GitHub the plugin has a mirror setting, see [mirror.md](mirror.md). Unreleased: release 0.6.2 has none.
 
 vfox's own proxy setting covers both the Foojay requests and the download:
 
