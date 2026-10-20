@@ -4,8 +4,6 @@
 
 插件从 [Foojay](foojay.md) 获取下面 31 个发行版的版本列表和下载链接，2026-10-20 时 Foojay 列出的发行版全在这里。凡是要写发行版的地方，简称和长名都可以：`21-tem`、`21-temurin`、`temurin-21`、`vfox search java tem`。
 
-未发布：0.6.2 没有 `adpt`、`adptj9`、`eliya`、`gln`、`grl8`、`grl11`、`grl16`、`grl17`、`grl19`、`ojdkbld`、`opnlgc`、`rdht` 和 `semcrt`。对这些发行版，0.6.2 的 `vfox install` 会报 `Could not extract a valid distribution`，`vfox search` 会报 `Unsupported distribution`。
-
 | 简称 | 长名 | 发行版 | 维护方 |
 | --- | --- | --- | --- |
 | `adpt` | `aoj` | AdoptOpenJDK（HotSpot） | AdoptOpenJDK |
@@ -150,7 +148,6 @@ GraalVM 的开源版本，基于 OpenJDK。
 - 只写大版本号时，这个大版本号同样是 GraalVM 的：`java@23-mandrel` 装最新的 23.x，即 `23.1.12.1-mandrel`，运行的是 Java 21；`java@21-mandrel` 装的是 `21.3.6-mandrel`，运行的是 Java 17。写得更具体的版本只装它指定的那一个：`java@23.1.12-mandrel` 装的是 23.1.12，不是 23.1.12.1；`java@23.1-mandrel` 装的是 23.1 系列的第一个版本 23.1.0。写了构建号则什么也找不到（`java@23.1.8+1-nik`）。
 - 以 `.0.0` 结尾的版本在列表里显示为只有大版本号的名字（`24-mandrel` 是 Mandrel 24.0.0），要写全版本号才能装：`java@24.0.0-mandrel`。装上之后，vfox 会按这个名字找到 `java@24-mandrel`，`vfox install` 和 `vfox use` 都一样。
 - 有些版本号下有几个构建，分别对应不同的 Java，比如 Mandrel 21.3.6 有 Java 11 和 Java 17 两个构建，插件装 Java 最新的那个；对 Mandrel 23.0.1.2 和 Liberica NIK 23.0.1 来说，那是 Java 20，不是 17。Liberica NIK 有几个版本为同一个 Java 构建了两次（`25.0.3`），装的是后一次的构建。版本名里既看不出 Java 版本，也看不出 BellSoft 的构建号，所以其他构建装不了。
-- 未发布：0.6.2 按 Foojay 的 `java_version` 给它们命名。这个字段原先放的就是这些版本号，2026 年 10 月起 Foojay 在这里改放 Java 的版本号。从那以后，0.6.2 装 `java@23.1.12-mandrel` 和 `java@23.1.8-nik` 都报 `No JDK found`，`vfox search` 里的 Mandrel 每个 Java 大版本只列一个名字（`21-mandrel`），`java@21-mandrel` 装的是 Mandrel 23.1.8，`java@23-nik` 装的是为 Java 23 构建的 Liberica NIK 24.1.2。
 
 ### GraalVM CE 8 到 19（`grl8`、`grl11`、`grl16`、`grl17`、`grl19`）
 
@@ -169,8 +166,7 @@ GraalVM CE 8 到 19、23 以前的 Gluon GraalVM，以及 25 以前的 Mandrel �
 - 从 25.1（2026 年 6 月）起，GraalVM 在 25.0 系列之外每月发布一个特性版本（feature release）：`25.1.3`、`25.2.4`、`25.3.4.1`、`25.4.4.1.1`，每个大约一个月后就被下一个取代。Foojay 把 Oracle GraalVM 的特性版本标成 STS；GraalVM 社区版按老办法列的那些（见下文），则因为基于的 JDK 是 LTS，也被标成了 LTS。`vfox search` 一律不给它们加 LTS 备注。
 - 版本名用的是 GraalVM 自己的版本号，也就是 Foojay 的 `distribution_version`。Foojay 的 `java_version` 是 JDK 的版本号，特性版本会和 25.0 系列的某个构建共用同一个值：`25.4.4.1.1-graal`、`25.3.4.1-graal`、`25.0.4.1.1-graal` 和 `25.0.4.1-graal` 的 `java_version` 都是 25.0.4.1。
 - GraalVM 社区版的特性版本，Foojay 还像 2026 年 10 月以前那样，按 GraalVM 的版本号另列了一份，下载地址在 GitHub。所以 0.6.2 给 25.4.4.1.1 构建起的名字 `java@25.4.4.1-graalce` 仍然能从 GitHub 装上这个构建，而 `java@25.4.4.1.1-graalce` 是从 Oracle 的 GraalVM Download Service 下载同一个文件。
-- 未发布：0.6.2 按 `java_version` 命名，所以 `java@25.0.4.1-graal` 装上的是特性版本 25.4.4.1.1；只要 25.0 系列最新构建所用的 JDK 上已经出了特性版本，`java@25-graal` 装上的也是特性版本；`vfox search java graal` 里也没有特性版本。
-- `java@25-graal` 装的是 25.0 系列的最新构建（2026-10-20 是 `25.0.5-graal`），Oracle 官方的 `25/latest` 下载链接跟的也是这个系列。特性版本要写全版本号：`java@25.4.4.1.1-graal`。`vfox use java@25-graal` 和 `.sdkmanrc` 里的 `java=25-graal` 选中的也是这个系列里已安装的最新构建，只有 25 里没有装别的版本时才会选特性版本。未发布：0.6.2 选中的是 25 里已安装的最新版本，所以一旦装了特性版本，选中的就是它。
+- `java@25-graal` 装的是 25.0 系列的最新构建（2026-10-20 是 `25.0.5-graal`），Oracle 官方的 `25/latest` 下载链接跟的也是这个系列。特性版本要写全版本号：`java@25.4.4.1.1-graal`。`vfox use java@25-graal` 和 `.sdkmanrc` 里的 `java=25-graal` 选中的也是这个系列里已安装的最新构建，只有 25 里没有装别的版本时才会选特性版本。
 - GraalVM 社区版的 25.0 系列到 `25.0.2` 为止，现在只发布特性版本。`java@25-graalce` 装其中最新的一个，截至 2026-10-20 是 `25.4.4.1.1-graalce`。
 - 插件只设置 `JAVA_HOME` 和 `PATH`，不设置 `GRAALVM_HOME`。你设置的、指向自己的 GraalVM 的 `GRAALVM_HOME` 保持原样；没有设置时，native-image 的构建插件会回退到 `JAVA_HOME`。
 - 没有 Windows ARM64 和 Alpine 的构建，Intel Mac 上 25.0.1 之后的版本也没有。见 [platforms.md](platforms.md#graalvm)。

@@ -40,7 +40,7 @@ vfox 挂载到 Shell 之后，进入目录时会读取这个文件，并选中�
 
 第 3 步不检查已装的版本是否低于你写的版本。只装了 `21.0.8+9-tem` 时，`java=21.0.12-tem` 会选中它，`java=21.0.3-tem` 也一样。写了没装的构建号，会退到这个版本已安装的最新构建（`21.0.8+7-tem` 选中 `21.0.8+9-tem`）。如果这个大版本根本没装，就什么也不选。
 
-对 Oracle GraalVM，第 3 步会跳过每月发布的特性版本（`25.4.4.1.1-graal`），和 `vfox use java@25-graal` 一样，所以 `java=25-graal` 和 `java=25.0.3-graal` 选中的是 25.0 系列里已安装的最新构建。如果 25 里没有装别的版本，就选特性版本。如果文件里写的是特性版本（SDKMAN 写作 `25.4.4+1-graal`），仍然选 25 里已安装的最新版本，和以前一样。未发布：0.6.2 对 `java=25-graal` 和 `java=25.0.3-graal` 选中的也是 25 里已安装的最新版本，所以一旦装了特性版本，选中的就是它。
+对 Oracle GraalVM，第 3 步会跳过每月发布的特性版本（`25.4.4.1.1-graal`），和 `vfox use java@25-graal` 一样，所以 `java=25-graal` 和 `java=25.0.3-graal` 选中的是 25.0 系列里已安装的最新构建。如果 25 里没有装别的版本，就选特性版本。如果文件里写的是特性版本（SDKMAN 写作 `25.4.4+1-graal`），选的是 25 里已安装的最新版本。
 
 它不会跨发行版，不会在带 JavaFX 和不带 JavaFX 的构建之间串用，也不会在 EA 构建和 GA 版本之间串用。
 
@@ -62,9 +62,9 @@ vfox 挂载到 Shell 之后，进入目录时会读取这个文件，并选中�
 | `22.3.3.r17-grl` | 基于 JDK 17 的 GraalVM CE 22.3.3，`22.3.3-grl17` |
 | `22.1.0.1.r17-gln` | Gluon GraalVM 22.1.0.1，`22.1.0.1-gln` |
 
-最后三行是 SDKMAN 给它已经不再提供的发行版用过的标识符，虚拟机或 JDK 版本写在版本号里，见 [distributions.md](distributions.md#简称与-sdkman-的不同)。插件不安装 Gluon GraalVM 22 的 JDK 11 构建，也不安装 AdoptOpenJDK 的 upstream 构建，所以 `22.1.0.1.r11-gln` 和 `11.0.9.open-adpt` 什么都不会选中。未发布：0.6.2 对这三行都选不中任何 JDK。
+最后三行是 SDKMAN 给它已经不再提供的发行版用过的标识符，虚拟机或 JDK 版本写在版本号里，见 [distributions.md](distributions.md#简称与-sdkman-的不同)。插件不安装 Gluon GraalVM 22 的 JDK 11 构建，也不安装 AdoptOpenJDK 的 upstream 构建，所以 `22.1.0.1.r11-gln` 和 `11.0.9.open-adpt` 什么都不会选中。
 
-SDKMAN 在一些 Mandrel 和 Liberica NIK 的版本号里也写了 JDK 版本，而插件只按 GraalVM 版本号给它们命名，见 [distributions.md](distributions.md#mandrel-与-liberica-nik-的行为)。一个版本同时为两个 JDK 发布时，插件只装较新 JDK 的构建，所以写了较旧 JDK 的标识符什么都不会选中：`22.1.r11-mandrel`、`23.0.1.r17-nik`。较旧的 JDK，在 21.3 到 22.3.5 是 JDK 11，在 23 到 23.0.1.2 是 JDK 17。`25.r25-mandrel` 只写了大版本号，会选中已安装的最新 Mandrel 25，和 `java=25-mandrel` 一样，而 SDKMAN 按这个标识符装的是 25.0.1.0。未发布：0.6.2 把 `25.0.4.r25` 当成版本号，找不到这个版本，就选中同一大版本里已安装的最新版本。
+SDKMAN 在一些 Mandrel 和 Liberica NIK 的版本号里也写了 JDK 版本，而插件只按 GraalVM 版本号给它们命名，见 [distributions.md](distributions.md#mandrel-与-liberica-nik-的行为)。一个版本同时为两个 JDK 发布时，插件只装较新 JDK 的构建，所以写了较旧 JDK 的标识符什么都不会选中：`22.1.r11-mandrel`、`23.0.1.r17-nik`。较旧的 JDK，在 21.3 到 22.3.5 是 JDK 11，在 23 到 23.0.1.2 是 JDK 17。`25.r25-mandrel` 只写了大版本号，会选中已安装的最新 Mandrel 25，和 `java=25-mandrel` 一样，而 SDKMAN 按这个标识符装的是 25.0.1.0。
 
 SDKMAN 新写法里 `+` 后面的数字（`21.0.8+1.1-tem`）是 SDKMAN 自己重新构建的次数，不是厂商的构建号，所以插件不会去找这个构建，而是按版本匹配。Foojay 和安装后的版本名都不补零，所以 `27.0.0` 指的就是 `27`。`sdk list java` 里补一个 `.0` 很常见（`25.0.1.0+8-open`、`21.0.9.0+116386-jbr`），插件同样能读。
 

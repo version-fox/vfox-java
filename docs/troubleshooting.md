@@ -20,7 +20,7 @@ The spec holds a distribution and no version. `java@-tem`, `java@temurin-` and `
 
 ### `Could not extract a valid distribution: 21-foo`
 
-Neither part of the spec is the name of a distribution. Names are lower case and come from the table in [distributions.md](distributions.md). Unreleased: release 0.6.2 ends here for the 13 distributions added after it, such as `java@21-opnlgc` and `java@21-openlogic`.
+Neither part of the spec is the name of a distribution. Names are lower case and come from the table in [distributions.md](distributions.md).
 
 ### `Unsupported distribution: foo`
 
@@ -36,7 +36,7 @@ The download answered 404. Vendors take old builds down while Foojay keeps their
 
 ### `VFOX_JAVA_GITHUB_MIRROR must start with http:// or https://, such as https://gh-proxy.org/, but is gh-proxy.org`
 
-The value does not start with `http://` or `https://`. vfox downloads from `http://` and `https://` addresses only and takes any other for a file on disk, so a download from GitHub stops here before it starts. Other downloads do not read the variable. Fix the value or unset the variable, see [mirror.md](mirror.md). Unreleased: release 0.6.2 has no mirror setting.
+The value does not start with `http://` or `https://`. vfox downloads from `http://` and `https://` addresses only and takes any other for a file on disk, so a download from GitHub stops here before it starts. Other downloads do not read the variable. Fix the value or unset the variable, see [mirror.md](mirror.md).
 
 ### `java@21-tem is not installed`
 
@@ -52,7 +52,7 @@ The value does not start with `http://` or `https://`. vfox downloads from `http
 
 ## Network
 
-The plugin talks to Foojay for the lists, and vfox downloads the archive from the vendor's server, often GitHub Releases. For the downloads from GitHub the plugin has a mirror setting, see [mirror.md](mirror.md). Unreleased: release 0.6.2 has none.
+The plugin talks to Foojay for the lists, and vfox downloads the archive from the vendor's server, often GitHub Releases. For the downloads from GitHub the plugin has a mirror setting, see [mirror.md](mirror.md).
 
 vfox's own proxy setting covers both the Foojay requests and the download:
 

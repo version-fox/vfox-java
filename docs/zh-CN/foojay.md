@@ -31,11 +31,11 @@ https://api.foojay.io/disco/v3.0/packages/jdks
 | `lib_c_type` | Linux 上是 `glibc` 或 `musl`，其他系统为空 |
 | `directly_downloadable` | 始终是 `true` |
 
-只写大版本号（如 `21`）时，返回结果里有全部版本，由插件自己挑出最新的 21.x，`java@21-tem` 装的就是它：`version=21` 只会匹配 21 的 GA 构建（`21+35`）。更具体的版本则按原样匹配。未发布：0.6.2 查的是 `version=21&latest=available`，由 Foojay 挑出最新的 21.x。
+只写大版本号（如 `21`）时，返回结果里有全部版本，由插件自己挑出最新的 21.x，`java@21-tem` 装的就是它：`version=21` 只会匹配 21 的 GA 构建（`21+35`）。更具体的版本则按原样匹配。
 
 只写大版本号时和搜索发同一个请求，这样安装时看到的构建和 `vfox search` 列出的才一致。Foojay 的结果按请求分别缓存，不同的请求拿到的结果可能新旧不一：2026-10-20 Oracle GraalVM 25.0.5 上了 Foojay 半小时后，GitHub 的 runner 用 `distribution_version=25` 查已经有它，搜索的结果里却还没有，`vfox install java@25-graal` 装上了 `vfox search java graal` 没有列出的构建（[#113](https://github.com/version-fox/vfox-java/issues/113)）。
 
-返回的是一个包列表。插件用 `java_version` 给版本命名（Mandrel 和 Liberica NIK 用 `distribution_version`，Oracle GraalVM 和 GraalVM 社区版用 GraalVM 自己的版本号）；`javafx_bundled` 为真时加上 `-fx`；`term_of_support` 是 `lts` 时标注 LTS；在 Windows 上，同一版本既有 `zip` 又有 `tar.gz` 时优先用 `zip`。Foojay 混在 OJDKBuild 的 Windows JDK 里的 JRE、installer bundle 包和 RHEL 6 构建，以及 Gluon GraalVM 22.x 的 JDK 11 构建，插件都会略过，见 [distributions.md](distributions.md)。安装时，插件再取这个包的 `links.pkg_info_uri`，并从其中的 `direct_download_uri` 下载，那是厂商自己的服务器（Temurin 是 GitHub Releases）。这条记录里还有 `checksum`，但插件没有把它交给 vfox，所以 vfox 会打印 `WARNING: Checksum is not provided, skip verify...`，下载内容不做校验。未发布：从 GitHub 下载时可以经过镜像，见 [mirror.md](mirror.md)。
+返回的是一个包列表。插件用 `java_version` 给版本命名（Mandrel 和 Liberica NIK 用 `distribution_version`，Oracle GraalVM 和 GraalVM 社区版用 GraalVM 自己的版本号）；`javafx_bundled` 为真时加上 `-fx`；`term_of_support` 是 `lts` 时标注 LTS；在 Windows 上，同一版本既有 `zip` 又有 `tar.gz` 时优先用 `zip`。Foojay 混在 OJDKBuild 的 Windows JDK 里的 JRE、installer bundle 包和 RHEL 6 构建，以及 Gluon GraalVM 22.x 的 JDK 11 构建，插件都会略过，见 [distributions.md](distributions.md)。安装时，插件再取这个包的 `links.pkg_info_uri`，并从其中的 `direct_download_uri` 下载，那是厂商自己的服务器（Temurin 是 GitHub Releases）。这条记录里还有 `checksum`，但插件没有把它交给 vfox，所以 vfox 会打印 `WARNING: Checksum is not provided, skip verify...`，下载内容不做校验。从 GitHub 下载时可以经过镜像，见 [mirror.md](mirror.md)。
 
 `vfox search` 与原始列表有几处不同：Foojay 里同一个名字有两条记录时，它只列一次；不给 GraalVM 的特性版本加 LTS 备注（见 [distributions.md](distributions.md#oracle-graalvm-与-graalvm-社区版的行为)）；只列 GA 版本。
 

@@ -27,7 +27,7 @@ The distribution is a short name (`tem`) or a long name (`temurin`). Both lists 
 - A longer version must match a release the distribution lists. `21.0.8-tem` installs `21.0.8+9-tem`, the newest build of 21.0.8. A release nobody published fails with `No JDK found for 21.0.99-tem on linux/amd64`.
 - A build number selects that build: `21.0.5+63130-jb`.
 - A release padded with zeros, as SDKMAN writes it, is accepted: `27.0.0-librca` installs `27+36-librca`.
-- Oracle GraalVM's bare major installs the newest build of its 25.0 line, not one of the monthly feature releases, which have to be named in full (`25.4.4.1.1-graal`). Unreleased: release 0.6.2 can install a feature release for the bare major. See [GraalVM](distributions.md#graalvm-family).
+- Oracle GraalVM's bare major installs the newest build of its 25.0 line, not one of the monthly feature releases, which have to be named in full (`25.4.4.1.1-graal`). See [GraalVM](distributions.md#graalvm-family).
 - With `-fx` only JavaFX builds are considered, without it only builds without JavaFX. The two are never mixed.
 - Mandrel and Liberica NIK go by the GraalVM version they carry, for a bare major too: `java@23-mandrel` installs `23.1.12.1-mandrel`, which runs Java 21. See [Mandrel and Liberica NIK](distributions.md#behavior-of-mandrel-and-liberica-nik).
 - On Windows a release shipped as zip and as tar.gz installs from the zip.
@@ -76,7 +76,7 @@ vfox uninstall java@21.0.8+9-tem
 
 If you name a build or a release, it does not cross over to another one (`21.0.12-tem` does not select `21.0.12.1+1-tem`). It does not cross to another distribution, between JavaFX and plain, or between early-access and GA either. A name that matches nothing is reported as `java@99-tem is not installed`.
 
-With Oracle GraalVM, `vfox use` of a bare major selects the build that installing it installs: `25-graal` selects the newest installed build of the 25.0 line (`25.0.5-graal`), not a monthly feature release such as `25.4.4.1.1-graal`, which it takes only where nothing else of 25 is installed. A feature release is selected by its full version. If `25-graal` itself is installed, the GA release 25 that release 0.6.1 installed, that one is selected, as for any installed name. Unreleased: release 0.6.2 selects the newest installed release of 25, which is a feature release as soon as one is installed.
+With Oracle GraalVM, `vfox use` of a bare major selects the build that installing it installs: `25-graal` selects the newest installed build of the 25.0 line (`25.0.5-graal`), not a monthly feature release such as `25.4.4.1.1-graal`, which it takes only where nothing else of 25 is installed. A feature release is selected by its full version. If `25-graal` itself is installed, the GA release 25 that release 0.6.1 installed, that one is selected, as for any installed name.
 
 vfox's own match for `21` goes by the version alone, so it also takes GraalVM CE 8 to 19, Gluon GraalVM, Mandrel and Liberica NIK, whose versions are GraalVM's: `21.3.1-grl11` runs Java 11, and `vfox use java@21` selects it over `21.0.12.1+1-tem`. See [distributions.md](distributions.md#versions-numbered-after-graalvm).
 

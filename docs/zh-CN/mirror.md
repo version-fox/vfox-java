@@ -2,8 +2,6 @@
 
 [中文](mirror.md) | [English](../mirror.md)
 
-未发布：0.6.2 没有镜像设置。
-
 Foojay 把大多数发行版的 JDK 链接到 GitHub Releases，所以 `vfox install java@21-tem` 是从 `github.com` 下载的。如果你那里访问 github.com 很慢，或者连不上，就设置 `VFOX_JAVA_GITHUB_MIRROR`，插件会让这些下载经过 GitHub 镜像。
 
 值是一个 URL 前缀。插件把它放在 GitHub 地址前面，值不以 `/` 结尾时会补上一个。以 Linux x64 上的 Temurin 21.0.8 为例：
