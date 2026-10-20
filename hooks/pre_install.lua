@@ -72,9 +72,9 @@ function PLUGIN:PreInstall(ctx)
         )
     end
 
-    -- For Oracle GraalVM, latest=available lists the monthly feature releases
-    -- (25.4.4.1) before the 25.0 line, which Oracle's own 25/latest download
-    -- tracks; a bare major takes the newest 25.0 build instead.
+    -- For Oracle GraalVM, the monthly feature releases (25.4.4.1.1) come
+    -- before the 25.0 line, which Oracle's own 25/latest download tracks; a
+    -- bare major takes the newest 25.0 build instead.
     if distribution_version.distribution.name == "graalvm" and distribution_version.version:match("^%d+$") then
         local releases = {}
         for _, candidate in ipairs(filtered_jdks) do

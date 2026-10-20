@@ -57,7 +57,8 @@ var DefaultVersions = map[string]string{
 	"jb": "21.0.5",
 	// GraalVM Community: vfox must leave GRAALVM_HOME alone even for
 	// GraalVM (vfox-java#27), and searching must not mark its feature
-	// releases LTS (vfox-java#95).
+	// releases LTS (vfox-java#95) nor list them under the JDK's version
+	// (vfox-java#105).
 	"graalce": "25.0.2",
 }
 
@@ -81,9 +82,11 @@ var distributions = map[string]distribution{
 
 // OracleGraalVMSpec is Oracle GraalVM's bare major 25. Since 25.1, Oracle
 // GraalVM puts out a feature release every month on top of its 25.0 line
-// (25.1.3 ... 25.4.4.1) and Foojay lists them first, but the bare major must
-// install the newest build of the 25.0 line, the one Oracle's own 25/latest
-// download follows (vfox-java#97).
+// (25.1.3 ... 25.4.4.1.1) and searching lists them first, but the bare major
+// must install the newest build of the 25.0 line, the line Oracle's own
+// 25/latest download follows (vfox-java#97). Since 2026-10 Foojay lists the
+// feature releases under the JDK's version, which the 25.0 line has too, so
+// that name took a feature release (vfox-java#105).
 const OracleGraalVMSpec = "25-graal"
 
 // ChecksOracleGraalVM reports whether a combo also checks Oracle GraalVM's
@@ -550,13 +553,14 @@ func CheckInstalled(t *testing.T, output, spec string) string {
 
 // featureReleaseEntry matches the `vfox search` entry of a GraalVM feature
 // release. GraalVM ships one every month since 25.1, numbered with the
-// feature release train as the minor version (25.4.4.1-graalce), which its
+// feature release train as the minor version (25.4.4.1.1-graalce), which its
 // other releases keep at zero (25.0.2-graalce).
 var featureReleaseEntry = regexp.MustCompile(`^\d+\.[1-9]`)
 
 // FeatureReleaseEntries returns the entries of GraalVM feature releases in
-// a GraalVM `vfox search`, without the leading " - ". Foojay marks them LTS,
-// as the JDK they build on is, and the Available hook passed that on, though
+// a GraalVM `vfox search`, without the leading " - ". Foojay marked them LTS,
+// as the JDK they build on is, and still does where it lists GraalVM
+// Community's the old way round; the Available hook passed that on, though
 // each is superseded within a month (vfox-java#95).
 func FeatureReleaseEntries(output string) []string {
 	var entries []string
@@ -567,6 +571,52 @@ func FeatureReleaseEntries(output string) []string {
 		}
 	}
 	return entries
+}
+
+// MixedSupportEntries returns the entries of a GraalVM `vfox search`,
+// without the leading " - ", that are no feature release but lack the LTS
+// note another release of their major carries (25.0.4.1-graal next to
+// 25.0.2-graal (LTS)). Foojay marks the 25.0 line LTS and, since 2026-10,
+// lists the feature releases under the JDK's version as STS, so a 25.0.x
+// entry without the note next to one with it stands for a feature release:
+// the plugin named them after that version (vfox-java#105).
+func MixedSupportEntries(output string) []string {
+	var entries []string
+	lts := map[string]bool{}
+	for _, line := range strings.Split(StripANSI(output), "\n") {
+		entry, ok := strings.CutPrefix(strings.TrimRight(line, "\r"), " - ")
+		if ok && !featureReleaseEntry.MatchString(entry) {
+			entries = append(entries, entry)
+			if strings.Contains(entry, "LTS") {
+				lts[leadingNumber.FindString(entry)] = true
+			}
+		}
+	}
+	var mixed []string
+	for _, entry := range entries {
+		if lts[leadingNumber.FindString(entry)] && !strings.Contains(entry, "LTS") {
+			mixed = append(mixed, entry)
+		}
+	}
+	return mixed
+}
+
+// CheckGraalVMSearch asserts that a GraalVM `vfox search` lists feature
+// releases, none of them noted LTS (see FeatureReleaseEntries), and notes the
+// other releases of each major alike (see MixedSupportEntries). Foojay lists
+// every feature release since 25.1.3 on each platform the suite runs GraalVM
+// on, so the checks cannot pass vacuously.
+func CheckGraalVMSearch(t *testing.T, cmd, output string) {
+	t.Helper()
+	features := FeatureReleaseEntries(output)
+	require.NotEmptyf(t, features, "%s lists no feature release\n--- output ---\n%s", cmd, output)
+	for _, feature := range features {
+		require.NotContainsf(t, feature, "LTS", "%s must not mark the feature release %s LTS", cmd, feature)
+	}
+	require.Emptyf(t, MixedSupportEntries(output),
+		"%s must note the releases of a major alike, feature releases aside\n--- output ---\n%s", cmd, output)
+	t.Logf("PASS %s marks no feature release LTS and the other releases of each major alike: %s",
+		cmd, strings.Join(features, ", "))
 }
 
 // SearchEntry finds the `vfox search` entry listing exactly version
@@ -601,8 +651,8 @@ var featureRelease = regexp.MustCompile(`^\d+\.[1-9]`)
 
 // BareMajorBuilds picks out of the versions `vfox search` lists, newest
 // first, the builds of a bare major spec's major and distribution
-// (25.4.4.1-graal ... 25.0.1-graal for 25-graal), and the one the spec must
-// install: the newest that is no feature release (25.0.4.1-graal). The
+// (25.4.4.1.1-graal ... 25.0.1-graal for 25-graal), and the one the spec must
+// install: the newest that is no feature release (25.0.4.1.1-graal). The
 // build named like the spec (25-graal, GA 25) is left out: vfox reports a
 // spec naming an installed version as installed without calling PreInstall.
 func BareMajorBuilds(searched []string, spec string) (builds []string, want string) {

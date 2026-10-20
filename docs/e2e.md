@@ -82,13 +82,21 @@ JDK, so `java` can only come from what vfox installs:
    build number: Foojay reads an unencoded `+` as a space and drops the
    build, and the release's newest build would install instead.
 3. On the GraalVM Community rows, Oracle GraalVM's bare major `25-graal`
-   installs the newest build of its 25.0 line (`25.0.4.1-graal`), the line
-   Oracle's own `25/latest` download follows, not one of the monthly feature
-   releases Foojay lists before it (`25.4.4.1-graal`). The builds of 25 that
-   `vfox search java graal` lists are faked as installed first, so
+   installs the newest build of its 25.0 line (`25.0.5-graal` on
+   2026-10-20), the line Oracle's own `25/latest` download follows, not one
+   of the monthly feature releases listed before it (`25.4.4.1.1-graal`).
+   `vfox search java graal` must list those under GraalVM's own version,
+   and mark the other releases of 25 alike, as in item 5. The plugin used to
+   name them after the JDK version Foojay has given them since October 2026,
+   which they share with the 25.0 line: the search then listed no feature
+   release, and `25.0.4.1-graal` had no LTS note and installed 25.4.4.1.1.
+   The builds of 25 that the search lists are faked as installed first, so
    `vfox install` names the one `PreInstall` picked and nothing downloads.
    GA 25 is left out, as vfox would find `25-graal` itself installed without
-   asking `PreInstall`.
+   asking `PreInstall`. The search and `PreInstall` ask Foojay the same
+   question, so they see the same builds
+   ([foojay.md](foojay.md#the-versions-of-one-distribution)): a build that
+   only `PreInstall` saw would download and fail the check.
 4. On the Temurin rows, which run on every runner, the distributions the
    suite checks by name only (`adpt` to `semcrt`, `nameOnly` in
    `tests/e2e/common`) go by their short names where Foojay has packages of
@@ -114,8 +122,11 @@ JDK, so `java` can only come from what vfox installs:
    `21.0.8+9-tem`). `vfox search java <distribution>` (the `Available` hook)
    lists that same name as installed, noting JavaFX on `-fx` builds. For
    GraalVM it must also list the feature releases GraalVM ships every month
-   since 25.1 (`25.4.4.1-graalce`), none of them noted LTS, though Foojay
-   marks them LTS, as the JDK they build on is; each lasts about a month.
+   since 25.1 (`25.4.4.1.1-graalce`), none of them noted LTS, though Foojay
+   marks some of them LTS, as the JDK they build on is; each lasts about a
+   month. Every other release of a major must carry the same note. The
+   plugin used to list the feature release 25.4.4.1.1 as `25.0.4.1-graalce`,
+   without the LTS note `25.0.2-graalce` has.
    On Windows the list includes JetBrains Runtime 21.0.5, which ships only as
    tar.gz there.
 6. Before any `vfox use`, a `.sdkmanrc` holding the SDKMAN identifier

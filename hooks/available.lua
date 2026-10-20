@@ -80,7 +80,8 @@ function PLUGIN:Available(ctx)
         if not seen[v] then
             seen[v] = true
             -- check if version exists
-            -- Foojay marks GraalVM's feature releases LTS, as the JDK they build on is.
+            -- Foojay marks GraalVM Community's feature releases LTS where it
+            -- lists them the old way round, as the JDK they build on is.
             local lts = jdk.term_of_support == "lts"
                 and not (graalvm[short] and distribution_version_parser.is_feature_release(jdk.java_version))
             local note = lts and "LTS" or ""

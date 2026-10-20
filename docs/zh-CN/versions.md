@@ -27,7 +27,7 @@ vfox install java@21                # 不写发行版：jdk.java.net 上的 Open
 - 写得更具体时，必须是这个发行版列出的版本。`21.0.8-tem` 装的是 21.0.8 的最新构建 `21.0.8+9-tem`。根本不存在的版本会失败，报 `No JDK found for 21.0.99-tem on linux/amd64`。
 - 写了构建号就装那个构建：`21.0.5+63130-jb`。
 - SDKMAN 写法里补了零的版本也能识别：`27.0.0-librca` 装的是 `27+36-librca`。
-- Oracle GraalVM 只写大版本号时，装 25.0 系列的最新构建，不装每月发布的特性版本（feature release）。特性版本要写全版本号（`25.4.4.1-graal`）。见 [GraalVM](distributions.md#graalvm-系列)。
+- Oracle GraalVM 只写大版本号时，装 25.0 系列的最新构建，不装每月发布的特性版本（feature release）。特性版本要写全版本号（`25.4.4.1.1-graal`）。未发布：0.6.2 只写大版本号时可能装上特性版本。见 [GraalVM](distributions.md#graalvm-系列)。
 - 写了 `-fx` 就只考虑带 JavaFX 的构建，没写就只考虑不带的，两者不会混用。
 - Mandrel 和 Liberica NIK 按它们沿用的 GraalVM 版本号来，只写大版本号时也一样：`java@23-mandrel` 装的是 `23.1.12.1-mandrel`，运行的是 Java 21。见 [Mandrel 与 Liberica NIK](distributions.md#mandrel-与-liberica-nik-的行为)。
 - 在 Windows 上，同一版本既有 zip 又有 tar.gz 时，装 zip。
@@ -37,7 +37,7 @@ vfox install java@21                # 不写发行版：jdk.java.net 上的 Open
 
 ## 安装后的版本名
 
-安装后的版本名取自 Foojay 返回的 `java_version`，Mandrel 和 Liberica NIK 取的是 `distribution_version`。`vfox search` 里显示的也是这些名字：
+安装后的版本名取自 Foojay 返回的 `java_version`，Mandrel 和 Liberica NIK 取的是 `distribution_version`，Oracle GraalVM 和 GraalVM 社区版取的是 GraalVM 自己的版本号。`vfox search` 里显示的也是这些名字：
 
 ```
 <java_version>[-<简称>][-fx]
@@ -49,6 +49,7 @@ vfox install java@21                # 不写发行版：jdk.java.net 上的 Open
 | `25.0.4+9-librca-fx` | 带 JavaFX 的 Liberica |
 | `25.0.2+10` | OpenJDK，没有后缀 |
 | `17.0.12-graal` | GraalVM，没有构建号 |
+| `25.4.4.1.1-graal` | Oracle GraalVM 和 GraalVM 社区版用的是 GraalVM 自己的版本号，不是 `java_version`，这里是一个每月发布的特性版本，见 [GraalVM](distributions.md#oracle-graalvm-与-graalvm-社区版的行为) |
 | `8.0.482+8-zulu` | Java 8 写成 `8.0.<更新号>+<构建号>` |
 | `23.1.12.1-mandrel` | Mandrel，按 GraalVM 编号，运行的是 Java 21 |
 | `28-ea+19` | EA 构建，见下文 |
@@ -115,4 +116,4 @@ Available versions:
 
 `vfox install java tem` 选的不是 Temurin：用空格分隔的参数表示多个 SDK。请写 `java@21-tem`。
 
-LTS 备注来自 Foojay，唯独 GraalVM 每月发布的特性版本（`25.4.4.1-graal`）不带这个备注，尽管 Foojay 把它们标成了 LTS。
+LTS 备注来自 Foojay，唯独 GraalVM 每月发布的特性版本（`25.4.4.1.1-graal`）不带这个备注，尽管 Foojay 把其中一些标成了 LTS。

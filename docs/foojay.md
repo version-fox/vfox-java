@@ -24,18 +24,18 @@ https://api.foojay.io/disco/v3.0/packages/jdks
 | Parameter | Value |
 | --- | --- |
 | `distribution` | the long name, see [distributions.md](distributions.md) |
-| `version` | empty for `vfox search`, else the version part of what you typed. A `+` is percent-encoded, because Foojay reads a bare one as a space and drops the build. `28.ea.19` becomes `28-ea+19`. Always empty for Mandrel and Liberica NIK |
+| `version` | empty for `vfox search`, else the version part of what you typed. A `+` is percent-encoded, because Foojay reads a bare one as a space and drops the build. `28.ea.19` becomes `28-ea+19`. Always empty for Mandrel and Liberica NIK, and for the GA releases of Oracle GraalVM and GraalVM Community |
 | `distribution_version` | for Mandrel and Liberica NIK only, the version part of what you typed, see [below](#mandrel-and-liberica-nik) |
 | `architecture` | `aarch64` for arm64, `x64` on Windows x64, `amd64` for x64 elsewhere, and the name vfox reports for other CPUs |
 | `operating_system` | `linux`, `macos` or `windows` |
 | `archive_type` | `tar.gz`, and `zip` plus `tar.gz` on Windows. Elsewhere `tar.xz` comes in for Red Hat, and `zip` for OJDKBuild, OpenLogic and Gluon GraalVM |
 | `lib_c_type` | `glibc` or `musl` on Linux, empty elsewhere |
 | `directly_downloadable` | always `true` |
-| `latest` | `available`, added only when the version is a bare major such as `21`, and never for Mandrel and Liberica NIK |
+| `latest` | `available`, added only when the version is a bare major such as `21`, and never for Mandrel, Liberica NIK, Oracle GraalVM and GraalVM Community |
 
 Without `latest=available`, `version=21` matches the 21 GA build only (`21+35`). With it Foojay picks the newest 21.x, which is what `java@21-tem` installs. Longer versions match as they are.
 
-The answer is a list of packages. The plugin names a release after `java_version` (Mandrel and Liberica NIK after `distribution_version`), adds `-fx` where `javafx_bundled` is true, marks it LTS where `term_of_support` is `lts`, and prefers a `zip` over a `tar.gz` of the same version on Windows. It leaves out the JREs, installer bundles and RHEL 6 builds that Foojay lists among OJDKBuild's Windows JDKs, and the JDK 11 builds of Gluon GraalVM's 22.x releases, see [distributions.md](distributions.md). For the install it then fetches the package's `links.pkg_info_uri` and downloads its `direct_download_uri`, which is a vendor's own server (GitHub Releases for Temurin). That record also holds a `checksum`. The plugin does not pass it on, so vfox prints `WARNING: Checksum is not provided, skip verify...` and does not verify the download.
+The answer is a list of packages. The plugin names a release after `java_version` (Mandrel and Liberica NIK after `distribution_version`, Oracle GraalVM and GraalVM Community after GraalVM's own version), adds `-fx` where `javafx_bundled` is true, marks it LTS where `term_of_support` is `lts`, and prefers a `zip` over a `tar.gz` of the same version on Windows. It leaves out the JREs, installer bundles and RHEL 6 builds that Foojay lists among OJDKBuild's Windows JDKs, and the JDK 11 builds of Gluon GraalVM's 22.x releases, see [distributions.md](distributions.md). For the install it then fetches the package's `links.pkg_info_uri` and downloads its `direct_download_uri`, which is a vendor's own server (GitHub Releases for Temurin). That record also holds a `checksum`. The plugin does not pass it on, so vfox prints `WARNING: Checksum is not provided, skip verify...` and does not verify the download.
 
 `vfox search` differs from the raw list in a few ways. It lists a name once where Foojay has two records for it, and it leaves the LTS note off GraalVM's feature releases (see [distributions.md](distributions.md#behavior-of-oracle-graalvm-and-graalvm-community)). It only lists GA releases.
 
@@ -122,7 +122,25 @@ curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=temurin&ver
 {"java_version":"21.0.8+9","distribution_version":"21.0.8","term_of_support":"lts","javafx_bundled":false,"archive_type":"tar.gz","filename":"OpenJDK21U-jdk_x64_linux_hotspot_21.0.8_9.tar.gz"}
 ```
 
-`java_version` is Java's version and the one the plugin uses. `distribution_version` is the vendor's own (Zulu's `27.28.101` for Java `27+35`), which the plugin uses for Mandrel and Liberica NIK only, see [above](#mandrel-and-liberica-nik).
+`java_version` is Java's version and the one the plugin uses. `distribution_version` is the vendor's own (Zulu's `27.28.101` for Java `27+35`), which the plugin uses for Mandrel and Liberica NIK, see [above](#mandrel-and-liberica-nik), and for Oracle GraalVM and GraalVM Community.
+
+For Oracle GraalVM and GraalVM Community, since October 2026, `distribution_version` is GraalVM's own version and `java_version` the JDK's, which a monthly feature release shares with a build of the 25.0 line:
+
+```bash
+curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=graalvm&version=25.0.4.1&architecture=amd64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
+  | jq -r '.result[] | [.java_version, .distribution_version, .filename] | join(" ")'
+```
+
+```
+25.0.4.1 25.4.4.1.1 graalvm-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz
+25.0.4.1 25.3.4.1 graalvm-jdk-25i3-25.0.4.1_linux-x64_bin.tar.gz
+25.0.4.1 25.0.4.1.1 graalvm-jdk-25.0.4.1.1_linux-x64_bin.tar.gz
+25.0.4.1 25.0.4.1 graalvm-jdk-25.0.4.1_linux-x64_bin.tar.gz
+```
+
+`version` cannot tell those apart, and `distribution_version` matches whole leading components (`25.0.4.1` also lists `25.0.4.1.1`). So the plugin asks for every package, as `vfox search` does, picks the release itself, and names it after GraalVM's version: the newer of a package's `java_version` and `distribution_version`, as GraalVM Community's feature releases are also listed the old way round, with GraalVM's version as `java_version`. `vfox search` lists them newest first by that version, and a file that Foojay lists under two versions once.
+
+Installing asks what searching asks so that the two see the same builds. Foojay's answers are cached per question, and two questions can get answers of different ages: half an hour after GraalVM 25.0.5 reached Foojay on 2026-10-20, GitHub's runners got it from a lookup with `distribution_version=25` but not from a search.
 
 ## Releases and support terms
 
