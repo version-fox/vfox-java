@@ -247,7 +247,7 @@ func runOne(t *testing.T, ctx context.Context, image, platform, arch string, c c
 	checkVersionlessRejected(ctx, t, ctr, box, activation, c.Distribution)
 	checkMissingVersionRejected(ctx, t, ctr, box, c.Distribution, version, arch)
 	if common.ChecksOracleGraalVM(c.Distribution) {
-		checkGraalVMBareMajor(ctx, t, ctr, box)
+		checkGraalVMBareMajor(ctx, t, ctr, box, activation)
 	}
 	if common.ChecksNameOnly(c.Distribution) {
 		checkNameOnly(ctx, t, ctr, box, platform)

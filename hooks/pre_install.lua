@@ -74,11 +74,13 @@ function PLUGIN:PreInstall(ctx)
 
     -- For Oracle GraalVM, the monthly feature releases (25.4.4.1.1) come
     -- before the 25.0 line, which Oracle's own 25/latest download tracks; a
-    -- bare major takes the newest 25.0 build instead.
-    if distribution_version.distribution.name == "graalvm" and distribution_version.version:match("^%d+$") then
+    -- bare major takes the newest 25.0 build instead. PreUse and
+    -- ParseLegacyFile skip the same releases among the installed ones.
+    local skip = distribution_version_parser.bare_major_skips(distribution_version.distribution)
+    if skip and distribution_version.version:match("^%d+$") then
         local releases = {}
         for _, candidate in ipairs(filtered_jdks) do
-            if not distribution_version_parser.is_feature_release(candidate.java_version) then
+            if not skip(candidate.java_version) then
                 table.insert(releases, candidate)
             end
         end

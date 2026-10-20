@@ -21,6 +21,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -331,27 +332,42 @@ func checkMissingVersionRejected(ctx context.Context, t *testing.T, ctr tc.Conta
 // search java graal` must list under their own versions (see
 // common.CheckGraalVMSearch). The builds of the major it lists are faked as
 // installed first (see common.BareMajorBuilds), so `vfox install` names the
-// one PreInstall picked and downloads nothing.
-func checkGraalVMBareMajor(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox) {
+// one PreInstall picked and downloads nothing. Of the same builds, `vfox use`
+// and a .sdkmanrc must then select that one too, and, once only the feature
+// releases are left installed, the newest of them.
+func checkGraalVMBareMajor(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, activation string) {
 	t.Helper()
 	spec := common.OracleGraalVMSpec
 	out := execRetry(ctx, t, ctr, "vfox search java graal", "vfox search java graal", box.vars...)
 	common.CheckGraalVMSearch(t, "vfox search java graal", out)
 	builds, want := common.BareMajorBuilds(common.SearchedVersions(out), spec)
 	require.NotEmptyf(t, want, "vfox search java graal lists no %s build but feature releases\n--- output ---\n%s", spec, out)
-	var create, remove []string
-	for _, build := range builds {
-		dir := fmt.Sprintf("(Join-Path $env:VFOX_HOME %s)", pwshQuote(`cache\java\v-`+build))
-		create = append(create, fmt.Sprintf("New-Item -ItemType Directory -Force -Path (Join-Path %s %s) | Out-Null",
-			dir, pwshQuote("java-"+build)))
-		remove = append(remove, fmt.Sprintf("Remove-Item -LiteralPath %s -Recurse -Force", dir))
-	}
-	execOK(ctx, t, ctr, strings.Join(create, "; "), box.vars...)
+	features := common.FeatureReleases(builds)
+	require.NotEmptyf(t, features, "vfox search java graal lists no feature release of %s\n--- output ---\n%s", spec, out)
+	fakeInstalls(ctx, t, ctr, box, builds)
 	out = execRetry(ctx, t, ctr, "vfox install java@"+spec, "vfox install "+pwshQuote("java@"+spec), box.vars...)
 	require.Containsf(t, common.StripANSI(out), "java@"+want+" is already installed",
 		"vfox install java@%s must take %s, the newest build that is no feature release", spec, want)
-	execOK(ctx, t, ctr, strings.Join(remove, "; "), box.vars...)
-	t.Logf("PASS java@%s takes %s out of %s", spec, want, strings.Join(builds, ", "))
+	checkBareMajorSelected(ctx, t, ctr, box, activation, spec, want, builds)
+	// Without the 25.0 line, the feature releases are all there is to select.
+	line := slices.DeleteFunc(slices.Clone(builds), func(build string) bool { return slices.Contains(features, build) })
+	removeInstalls(ctx, t, ctr, box, line)
+	checkBareMajorSelected(ctx, t, ctr, box, activation, spec, features[0], builds)
+	removeInstalls(ctx, t, ctr, box, features)
+	t.Logf("PASS java@%s takes %s out of %s, and %s where only %s are installed", spec, want,
+		strings.Join(builds, ", "), features[0], strings.Join(features, ", "))
+}
+
+// checkBareMajorSelected proves `vfox use java@<spec>` and a .sdkmanrc
+// holding spec both select want among the installed builds, which must be
+// faked (see fakeInstalls), and nothing is downloaded.
+func checkBareMajorSelected(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, activation, spec, want string, builds []string) {
+	t.Helper()
+	out := execOK(ctx, t, ctr, activated(activation, "vfox use "+pwshQuote("java@"+spec)), box.vars...)
+	require.Containsf(t, common.StripANSI(out), "Now using java@"+want+".",
+		"vfox use java@%s must select %s\n--- output ---\n%s", spec, want, out)
+	out = legacyRun(ctx, t, ctr, box, spec, printJava)
+	common.CheckSelects(t, out, common.LegacyCase{Identifier: spec, Selects: want}, builds)
 }
 
 // checkNameOnly proves the distributions checked by name only go by their

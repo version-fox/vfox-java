@@ -40,9 +40,13 @@ function PLUGIN:PreUse(ctx)
         end
         -- vfox uses the returned version as is, so return the installed one it
         -- names or, without a match, the name for vfox to report as not installed.
+        -- A bare major leaves out the releases that installing leaves out
+        -- (Oracle GraalVM's feature releases), unless they are all there is.
         local name = distribution_version.version .. suffix
+        local skip = distribution_version_parser.bare_major_skips(distribution_version.distribution)
         return {
-            version = installed_version.find(ctx.installedSdks or {}, distribution_version.version, suffix) or name,
+            version = installed_version.find(ctx.installedSdks or {}, distribution_version.version, suffix, skip)
+                or name,
         }
     else
         return {

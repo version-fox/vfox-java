@@ -163,11 +163,19 @@ function PLUGIN:ParseLegacyFile(ctx)
     --- (21.0.12+1.1-tem), else the newest installed release of the major
     --- (21.0.12+8-tem for 21.0.3-tem). A bare major (21-tem) skips the
     --- release, taking the newest one as vfox use java@21-tem does, while
-    --- SDKMAN's 21.0.0 still names the release 21 (21+35-tem).
+    --- SDKMAN's 21.0.0 still names the release 21 (21+35-tem). Where installing
+    --- a bare major skips releases (Oracle GraalVM's feature releases), so does
+    --- this step: java=25-graal and java=25.0.3-graal select 25.0.5-graal,
+    --- unless nothing else of the major is installed or the file names a
+    --- feature release itself (java=25.4.4+1-graal).
+    local skip = distribution_version_parser.bare_major_skips(distributionVersion.distribution)
+    if skip and skip(fullVersion) then
+        skip = nil
+    end
     local name = version .. build .. suffix
     return {
         version = installed[name] and name
             or not fullVersion:match("^%d+$") and installed_version.release(installed, version, suffix)
-            or installed_version.major(installed, majorVersion, suffix),
+            or installed_version.major(installed, majorVersion, suffix, skip),
     }
 end

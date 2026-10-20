@@ -546,6 +546,11 @@ func TestBareMajorBuilds(t *testing.T) {
 			if want != "25.0.4.1.1-graal" {
 				t.Errorf("want = %q, want 25.0.4.1.1-graal", want)
 			}
+			// The feature releases are what a bare major selects when
+			// they are all that is installed.
+			if features := FeatureReleases(builds); !slices.Equal(features, []string{"25.4.4.1.1-graal", "25.1.3-graal"}) {
+				t.Errorf("FeatureReleases = %q, want the two feature releases", features)
+			}
 		})
 	}
 	// GraalVM Community's versions are not Oracle GraalVM's.

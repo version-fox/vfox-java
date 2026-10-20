@@ -40,6 +40,8 @@ The plugin matches the identifier against the JDKs that are installed, in this o
 
 Step 3 does not check that the release is at least the one named. With only `21.0.8+9-tem` installed, `java=21.0.12-tem` selects it, and so does `java=21.0.3-tem`. A build number that is not installed falls back to the newest installed build of the release (`21.0.8+7-tem` selects `21.0.8+9-tem`). If the major is not installed at all, nothing is selected.
 
+For Oracle GraalVM, step 3 leaves out the monthly feature releases (`25.4.4.1.1-graal`), as `vfox use java@25-graal` does, so `java=25-graal` and `java=25.0.3-graal` select the newest installed build of the 25.0 line. If nothing else of 25 is installed, a feature release is taken. If the file names a feature release (SDKMAN spells one `25.4.4+1-graal`), the newest installed release of 25 is taken, as before. Unreleased: release 0.6.2 takes the newest installed release of 25 for `java=25-graal` and `java=25.0.3-graal` too, which is a feature release as soon as one is installed.
+
 It never crosses to another distribution, between a JavaFX build and a plain one, or between an early-access build and a release.
 
 ## SDKMAN's spellings
