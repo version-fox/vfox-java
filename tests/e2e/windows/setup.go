@@ -327,14 +327,16 @@ func checkMissingVersionRejected(ctx context.Context, t *testing.T, ctr tc.Conta
 
 // checkGraalVMBareMajor proves Oracle GraalVM's bare major installs the
 // newest build of its 25.0 line, not one of the monthly feature releases
-// Foojay lists before it (see common.OracleGraalVMSpec). The builds of the
-// major `vfox search java graal` lists are faked as installed first (see
-// common.BareMajorBuilds), so `vfox install` names the one PreInstall picked
-// and downloads nothing.
+// searching lists before it (see common.OracleGraalVMSpec), which `vfox
+// search java graal` must list under their own versions (see
+// common.CheckGraalVMSearch). The builds of the major it lists are faked as
+// installed first (see common.BareMajorBuilds), so `vfox install` names the
+// one PreInstall picked and downloads nothing.
 func checkGraalVMBareMajor(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox) {
 	t.Helper()
 	spec := common.OracleGraalVMSpec
 	out := execRetry(ctx, t, ctr, "vfox search java graal", "vfox search java graal", box.vars...)
+	common.CheckGraalVMSearch(t, "vfox search java graal", out)
 	builds, want := common.BareMajorBuilds(common.SearchedVersions(out), spec)
 	require.NotEmptyf(t, want, "vfox search java graal lists no %s build but feature releases\n--- output ---\n%s", spec, out)
 	var create, remove []string

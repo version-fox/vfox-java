@@ -130,6 +130,88 @@ local function encode(value)
     end))
 end
 
+-- Oracle GraalVM and GraalVM Community, whose packages are named after
+-- GraalVM's own version (see graalvm_version).
+local graalvm = {
+    graalvm = true,
+    graalvm_community = true,
+}
+
+--- Returns GraalVM's own version of a GA package. Since 2026-10 Foojay gives
+--- it as distribution_version and the JDK's as java_version, so the monthly
+--- feature releases share Java versions with the 25.0 line: GraalVM
+--- 25.4.4.1.1 (25i4), 25.3.4.1 (25i3), 25.0.4.1.1 and 25.0.4.1 all have the
+--- java_version 25.0.4.1. GraalVM Community's feature releases are listed
+--- the old way round too (java_version 25.4.4.1, distribution_version
+--- 25.0.4.1.1). GraalVM numbers a release after the JDK it builds on, with
+--- the feature release in the second component, so GraalVM's version is the
+--- newer of the two either way. For those old records that is 25.4.4.1, the
+--- name release 0.6.2 gave them, as their java_version stops at four
+--- components while the build is GraalVM 25.4.4.1.1.
+--- @param package table Foojay package
+--- @return string
+local function graalvm_version(package)
+    local version = package.distribution_version or package.java_version
+    return installed_version.newer(version, package.java_version) and version or package.java_version
+end
+
+--- Lists Oracle GraalVM's or GraalVM Community's packages under GraalVM's
+--- own version, newest first: those of version, every one of its major for
+--- a bare major, or every one for a search (version ""). Foojay's version
+--- parameter matches Java versions only, so every package is asked for, the
+--- way a search asks, and picked here. Asking the same question also keeps
+--- installing in step with searching: Foojay's answers are cached per
+--- question, and half an hour after GraalVM 25.0.5 came out, a search still
+--- left it out while a lookup by distribution_version had it.
+--- @param request function Foojay lookup taking the version and more query
+--- @param version string
+--- @return table
+local function graalvm_packages(request, version)
+    local packages = request("", "") or {}
+    local order = {}
+    for i, package in ipairs(packages) do
+        package.java_version = graalvm_version(package)
+        order[package] = i
+    end
+    -- table.sort is not stable, and a long list loses Foojay's order among
+    -- equal versions, so ties go by that order.
+    table.sort(packages, function(a, b)
+        if installed_version.newer(a.java_version, b.java_version) then
+            return true
+        end
+        return not installed_version.newer(b.java_version, a.java_version) and order[a] < order[b]
+    end)
+    local result = {}
+    if version == "" then
+        -- A download Foojay lists both ways round is searched once, under
+        -- its full version (25.4.4.1.1, not 25.4.4.1).
+        local seen = {}
+        for _, package in ipairs(packages) do
+            local filename = package.filename or ""
+            if filename == "" or not seen[filename] then
+                seen[filename] = true
+                table.insert(result, package)
+            end
+        end
+    elseif version:match("^%d+$") then
+        for _, package in ipairs(packages) do
+            if package.java_version:match("^%d+") == version then
+                table.insert(result, package)
+            end
+        end
+    else
+        -- That version alone, not one it is a prefix of (25.0.4.1 is not
+        -- 25.0.4.1.1), less any zeros padding it, which Foojay drops from
+        -- Java versions too (25.0 is 25).
+        for _, package in ipairs(packages) do
+            if installed_version.unpad(package.java_version) == installed_version.unpad(version) then
+                table.insert(result, package)
+            end
+        end
+    end
+    return result
+end
+
 foojay.fetchtJdkList = function(distribution, version)
     local os = RUNTIME.osType
     local arch = RUNTIME.archType
@@ -164,8 +246,8 @@ foojay.fetchtJdkList = function(distribution, version)
     -- latest=available would look at the major alone.
     local latest = version:match("^%d+$") and "&latest=available" or ""
 
-    local function request(query, latest_query)
-        local reqUrl = URL:format(encode(query), distribution, arch, archive_types, os, lib_c_type) .. latest_query
+    local function request(query, extra)
+        local reqUrl = URL:format(encode(query), distribution, arch, archive_types, os, lib_c_type) .. extra
 
         local resp, err = http.get({
             url = reqUrl,
@@ -179,6 +261,12 @@ foojay.fetchtJdkList = function(distribution, version)
 
         local respBody = json.decode(resp.body)
         return respBody.result
+    end
+
+    -- GraalVM goes by its own version, except for early-access builds, whose
+    -- Java version Foojay matches.
+    if graalvm[distribution] and not version:find("-ea", 1, true) then
+        return graalvm_packages(request, version)
     end
 
     if own_numbers[distribution] then

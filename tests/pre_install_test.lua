@@ -43,6 +43,76 @@ local function file(jdk, filename, distribution_version)
     return jdk
 end
 
+-- An Oracle GraalVM or GraalVM Community package as Foojay listed them on
+-- 2026-10-20: the JDK's version, GraalVM's (distribution_version), the term
+-- of support and the file, on Linux x64 unless the file says otherwise.
+-- Where Foojay lists a file twice, host tells the two downloads apart.
+local function graal(java_version, graalvm_version, term, filename, host)
+    local jdk = file(pkg(java_version, false, filename:match("%.zip$") and "zip" or nil), filename, graalvm_version)
+    jdk.term_of_support = term
+    jdk.host = host
+    if host then
+        jdk.links.pkg_info_uri = IDS .. host .. "/" .. filename
+    end
+    return jdk
+end
+
+-- Oracle GraalVM on Linux x64, in Foojay's order, observed on 2026-10-20
+-- before 25.0.5 came out; abridged before 25. The feature releases share Java
+-- versions with the 25.0 line, and come first for each. Most files are listed
+-- twice, and GA 25 comes as two files.
+local graalvm_linux = {
+    graal("25.0.4.1", "25.4.4.1.1", "sts", "graalvm-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz"),
+    graal("25.0.4.1", "25.3.4.1", "sts", "graalvm-jdk-25i3-25.0.4.1_linux-x64_bin.tar.gz"),
+    graal("25.0.4.1", "25.0.4.1.1", "lts", "graalvm-jdk-25.0.4.1.1_linux-x64_bin.tar.gz"),
+    graal("25.0.4.1", "25.0.4.1", "lts", "graalvm-jdk-25.0.4.1_linux-x64_bin.tar.gz"),
+    graal("25.0.4", "25.2.4", "sts", "graalvm-jdk-25i2-25.0.4_linux-x64_bin.tar.gz"),
+    graal("25.0.4", "25.0.4", "lts", "graalvm-jdk-25.0.4_linux-x64_bin.tar.gz"),
+    graal("25.0.4", "25.0.4", "lts", "graalvm-jdk-25.0.4_linux-x64_bin.tar.gz"),
+    graal("25.0.3", "25.1.3", "sts", "graalvm-jdk-25i1-25.0.3_linux-x64_bin.tar.gz"),
+    graal("25.0.3", "25.0.3", "lts", "graalvm-jdk-25.0.3_linux-x64_bin.tar.gz"),
+    graal("25.0.3", "25.0.3", "lts", "graalvm-jdk-25.0.3_linux-x64_bin.tar.gz"),
+    graal("25.0.2", "25.0.2", "lts", "graalvm-jdk-25.0.2_linux-x64_bin.tar.gz"),
+    graal("25.0.2", "25.0.2", "lts", "graalvm-jdk-25.0.2_linux-x64_bin.tar.gz"),
+    graal("25.0.1", "25.0.1", "lts", "graalvm-jdk-25.0.1_linux-x64_bin.tar.gz"),
+    graal("25.0.1", "25.0.1", "lts", "graalvm-jdk-25.0.1_linux-x64_bin.tar.gz"),
+    graal("25", "25", "lts", "graalvm-jdk-25.0.0_linux-x64_bin.tar.gz"),
+    graal("25", "25", "lts", "graalvm-jdk-25_linux-x64_bin.tar.gz"),
+    graal("24.0.2", "24.0.2", "sts", "graalvm-jdk-24.0.2_linux-x64_bin.tar.gz"),
+    graal("21.0.12", "21.0.12", "lts", "graalvm-jdk-21.0.12_linux-x64_bin.tar.gz"),
+    graal("17.0.12", "17.0.12", "lts", "graalvm-jdk-17.0.12_linux-x64_bin.tar.gz"),
+    graal("17.0.11", "17.0.11", "lts", "graalvm-jdk-17.0.11_linux-x64_bin.tar.gz"),
+}
+
+-- GraalVM Community on Linux x64, observed on 2026-10-20; abridged before 25.
+-- Its feature releases are listed under GraalVM's version, as they used to
+-- be, with downloads from GitHub, and again under the JDK's, as Oracle
+-- GraalVM's are, from Oracle's GraalVM Download Service; its 25.0 line ended
+-- with 25.0.2.
+local graalvm_community_linux = {
+    graal("25.4.4.1", "25.0.4.1.1", "lts", "graalvm-community-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz", "github"),
+    graal("25.3.4.1", "25.0.4.1", "lts", "graalvm-community-jdk-25i3-25.0.4.1_linux-x64_bin.tar.gz", "github"),
+    graal("25.2.4", "25.0.4", "lts", "graalvm-community-jdk-25i2-25.0.4_linux-x64_bin.tar.gz", "github"),
+    graal("25.1.3", "25.0.3", "lts", "graalvm-community-jdk-25i1-25.0.3_linux-x64_bin.tar.gz", "github"),
+    graal("25.0.4.1", "25.4.4.1.1", "sts", "graalvm-community-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz", "gds"),
+    graal("25.0.4.1", "25.3.4.1", "sts", "graalvm-community-jdk-25i3-25.0.4.1_linux-x64_bin.tar.gz", "gds"),
+    graal("25.0.4", "25.2.4", "sts", "graalvm-community-jdk-25i2-25.0.4_linux-x64_bin.tar.gz", "gds"),
+    graal("25.0.3", "25.1.3", "sts", "graalvm-ce-jdk-25i1-25.0.3_linux-x64_bin.tar.gz", "gds"),
+    graal("25.0.2", "25.0.2", "lts", "graalvm-community-jdk-25.0.2_linux-x64_bin.tar.gz"),
+    graal("25", "25", "lts", "graalvm-community-jdk-25.0.0_linux-x64_bin.tar.gz"),
+    graal("24.0.2", "24.0.2", "sts", "graalvm-community-jdk-24.0.2_linux-x64_bin.tar.gz"),
+}
+
+-- The same packages for windows/amd64, where Foojay lists them as zips.
+local function zips(list)
+    local result = {}
+    for _, jdk in ipairs(list) do
+        local filename = jdk.filename:gsub("_linux%-x64_bin%.tar%.gz$", "_windows-x64_bin.zip")
+        table.insert(result, graal(jdk.java_version, jdk.distribution_version, jdk.term_of_support, filename, jdk.host))
+    end
+    return result
+end
+
 -- Foojay answers observed on 2026-10-17 for linux/amd64 tar.gz packages, keyed
 -- by "<distribution>[ <version>][ <latest>]", and for windows/amd64 zip and
 -- tar.gz packages, keyed by "windows <distribution>[ <version>][ <latest>]"
@@ -53,27 +123,8 @@ local foojay = {
     ["temurin 21.0.8"] = { pkg("21.0.8+9") },
     -- latest=available looks at the major alone.
     ["temurin 21.0.8 available"] = { pkg("21.0.12.1+1") },
-    ["graalvm 17"] = {},
-    ["graalvm 17 available"] = { pkg("17.0.12") },
-    -- Observed on 2026-10-18: Oracle GraalVM's monthly feature releases come
-    -- before its 25.0 line, and so do GraalVM Community's, whose 25.0 line
-    -- ended with 25.0.2.
-    ["graalvm 25 available"] = {
-        pkg("25.4.4.1"),
-        pkg("25.3.4.1"),
-        pkg("25.2.4"),
-        pkg("25.1.3"),
-        pkg("25.0.4.1"),
-        pkg("25.0.4"),
-    },
-    ["graalvm 25.4.4.1"] = { pkg("25.4.4.1") },
-    ["graalvm_community 25 available"] = {
-        pkg("25.4.4.1"),
-        pkg("25.3.4.1"),
-        pkg("25.2.4"),
-        pkg("25.1.3"),
-        pkg("25.0.2"),
-    },
+    -- Oracle GraalVM's early-access builds are asked for by version.
+    ["graalvm 26-ea+13"] = { graal("26-ea+13", "26", "sts", "graalvm-jdk-26.0.0-ea.13_linux-x64_bin.tar.gz") },
     ["zulu 21"] = { pkg("21+35"), pkg("21+35", true) },
     ["zulu 21 available"] = { pkg("21.0.12.1+1"), pkg("21.0.12.1+1", true) },
     ["openjdk 21"] = { pkg("21+35") },
@@ -87,23 +138,18 @@ local foojay = {
     -- Searching asks for no version; abridged.
     ["openjdk"] = { pkg("25.0.2+10"), pkg("21.0.2+13") },
     ["temurin"] = { pkg("25.0.2+10"), pkg("21.0.8+9") },
-    -- Observed on 2026-10-18: Foojay marks GraalVM's feature releases LTS, as
-    -- 25.0 is; abridged.
-    ["graalvm"] = { lts(pkg("25.4.4.1")), lts(pkg("25.1.3")), lts(pkg("25.0.4.1")), lts(pkg("25")), pkg("24.0.2") },
-    ["graalvm_community"] = { lts(pkg("25.4.4.1")), lts(pkg("25.0.2")) },
+    -- Installing Oracle GraalVM or GraalVM Community asks for every package,
+    -- as searching does.
+    ["graalvm"] = graalvm_linux,
+    ["graalvm_community"] = graalvm_community_linux,
     -- JetBrains Runtime ships Windows zips for its newer builds only, and Foojay
     -- lists a version's zip and tar.gz in either order; abridged.
     ["windows jetbrains 21"] = { pkg("21+2121") },
     ["windows jetbrains 21 available"] = { pkg("21.0.11+1163116"), pkg("21.0.11+1163116", false, "zip") },
     ["windows jetbrains 21.0.5"] = { pkg("21.0.5+79248"), pkg("21.0.5+76240") },
-    ["windows graalvm 25 available"] = {
-        pkg("25.4.4.1", false, "zip"),
-        pkg("25.3.4.1", false, "zip"),
-        pkg("25.2.4", false, "zip"),
-        pkg("25.1.3", false, "zip"),
-        pkg("25.0.4.1", false, "zip"),
-        pkg("25.0.4", false, "zip"),
-    },
+    -- Windows lists the same GraalVM packages as zips.
+    ["windows graalvm"] = zips(graalvm_linux),
+    ["windows graalvm_community"] = zips(graalvm_community_linux),
     ["windows jetbrains"] = {
         pkg("21.0.11+1163116"),
         pkg("21.0.11+1163116", false, "zip"),
@@ -367,6 +413,8 @@ local function check(version, expected, latest, archive_type)
         if url:sub(1, #JDKS) == JDKS then
             lookups = lookups + 1
             assert((url:find("&latest=available", 1, true) ~= nil) == latest, version .. ": unexpected lookup " .. url)
+            -- Only Mandrel and Liberica NIK ask by distribution_version.
+            assert(not url:find("distribution_version=", 1, true), version .. ": unexpected lookup " .. url)
         end
     end
     assert(lookups > 0, version .. ": no Foojay lookup")
@@ -398,6 +446,34 @@ local function check_release_lookup(version, expected, release, filename)
     cases = cases + 1
 end
 
+-- Installs version of Oracle GraalVM or GraalVM Community from the named file.
+-- The plugin asks Foojay the question searching asks, as Foojay's answers are
+-- cached per question and two of them can disagree for a while.
+local function check_graalvm(version, expected, filename)
+    local short = require("distribution_version").parse_version(version).distribution.short_name
+    requests = {}
+    PLUGIN:Available({ args = { short } })
+    local searched = requests[1]
+    requests = {}
+    local result = PLUGIN:PreInstall({ version = version })
+    assert(result.version == expected, version .. ": expected " .. expected .. ", got " .. tostring(result.version))
+    assert(
+        result.url:sub(-#filename - 1) == "/" .. filename,
+        version .. ": expected " .. filename .. ", got " .. result.url
+    )
+    local lookups = {}
+    for _, url in ipairs(requests) do
+        if url:sub(1, #JDKS) == JDKS then
+            table.insert(lookups, url)
+        end
+    end
+    assert(
+        #lookups == 1 and lookups[1] == searched,
+        version .. ": asked " .. table.concat(lookups, " ") .. ", searching asks " .. searched
+    )
+    cases = cases + 1
+end
+
 -- A bare major installs its newest release, not the GA build.
 check("21-tem", "21.0.12.1+1-tem", true)
 check("temurin-21", "21.0.12.1+1-tem", true)
@@ -405,14 +481,46 @@ check("21", "21.0.2+13", true)
 check("21-zulu", "21.0.12.1+1-zulu", true)
 check("21-zulu-fx", "21.0.12.1+1-zulu-fx", true)
 -- Foojay lists no GraalVM 17 GA build, so this found nothing before.
-check("17-graal", "17.0.12-graal", true)
+check_graalvm("17-graal", "17.0.12-graal", "graalvm-jdk-17.0.12_linux-x64_bin.tar.gz")
 -- Oracle GraalVM's bare major takes the newest build of its 25.0 line, not a
 -- monthly feature release, which installs when named in full.
-check("25-graal", "25.0.4.1-graal", true)
-check("graalvm-25", "25.0.4.1-graal", true)
-check("25.4.4.1-graal", "25.4.4.1-graal", false)
+check_graalvm("25-graal", "25.0.4.1.1-graal", "graalvm-jdk-25.0.4.1.1_linux-x64_bin.tar.gz")
+check_graalvm("graalvm-25", "25.0.4.1.1-graal", "graalvm-jdk-25.0.4.1.1_linux-x64_bin.tar.gz")
+check_graalvm("25.4.4.1.1-graal", "25.4.4.1.1-graal", "graalvm-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz")
+-- Oracle GraalVM and GraalVM Community go by GraalVM's own version, which
+-- Foojay gives as distribution_version since 2026-10-20. A version names one
+-- release, though 25.0.4.1 shares its Java version with 25.0.4.1.1 and two
+-- feature releases, which came first and installed (vfox-java#105).
+check_graalvm("25.0.4.1-graal", "25.0.4.1-graal", "graalvm-jdk-25.0.4.1_linux-x64_bin.tar.gz")
+check_graalvm("25.0.4.1.1-graal", "25.0.4.1.1-graal", "graalvm-jdk-25.0.4.1.1_linux-x64_bin.tar.gz")
+check_graalvm("25.0.4-graal", "25.0.4-graal", "graalvm-jdk-25.0.4_linux-x64_bin.tar.gz")
+check_graalvm("25.0.3-graal", "25.0.3-graal", "graalvm-jdk-25.0.3_linux-x64_bin.tar.gz")
+-- Zeros padding the release are left out, as Foojay leaves them out of Java
+-- versions.
+check_graalvm("25.0.4.1.0-graal", "25.0.4.1-graal", "graalvm-jdk-25.0.4.1_linux-x64_bin.tar.gz")
+check_graalvm("25.0-graal", "25-graal", "graalvm-jdk-25.0.0_linux-x64_bin.tar.gz")
 -- GraalVM Community's feature releases are the only ones it still updates.
-check("25-graalce", "25.4.4.1-graalce", true)
+-- The newest comes from the GraalVM Download Service, where Foojay links its
+-- record under the JDK's version. Foojay lists them under GraalVM's version
+-- as well, as it used to, with GitHub downloads, so 25.4.4.1-graalce still
+-- installs from there, and a release with a record of each kind installs
+-- from the one Foojay lists first.
+check_graalvm("25-graalce", "25.4.4.1.1-graalce", "gds/graalvm-community-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz")
+check_graalvm(
+    "25.4.4.1-graalce",
+    "25.4.4.1-graalce",
+    "github/graalvm-community-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz"
+)
+check_graalvm("25.3.4.1-graalce", "25.3.4.1-graalce", "github/graalvm-community-jdk-25i3-25.0.4.1_linux-x64_bin.tar.gz")
+check_graalvm("25.0.2-graalce", "25.0.2-graalce", "graalvm-community-jdk-25.0.2_linux-x64_bin.tar.gz")
+-- Its 25.0 line ended with 25.0.2, so Foojay's Java version 25.0.4.1 names
+-- no release of it, and Oracle GraalVM has no 25.4.4.1.
+for distribution, version in pairs({ graalvm_community = "25.0.4.1", graalvm = "25.4.4.1" }) do
+    local found = require("foojay").fetchtJdkList(distribution, version)
+    assert(#found == 0, distribution .. " " .. version .. ": found " .. tostring(found[1] and found[1].filename))
+end
+-- Early-access builds go by their Java version.
+check("26.ea.13-graal", "26-ea+13-graal", false)
 -- Anything longer than a major still matches exactly.
 check("21.0.8-tem", "21.0.8+9-tem", false)
 check("28.ea", "28-ea+19", false)
@@ -448,11 +556,12 @@ assert(all["25.0.2+10-tem"] and all["21.0.8+9-tem"], "Available all: Temurin ver
 -- GraalVM's other releases keep it, and so do Mandrel's, though their GraalVM
 -- numbers have a non-zero minor up to 24.
 for version, note in pairs({
-    ["25.4.4.1-graal"] = "",
+    ["25.4.4.1.1-graal"] = "",
     ["25.1.3-graal"] = "",
     ["25.0.4.1-graal"] = "LTS",
     ["25-graal"] = "LTS",
-    ["25.4.4.1-graalce"] = "",
+    ["25.4.4.1.1-graalce"] = "",
+    ["25.3.4.1-graalce"] = "",
     ["25.0.2-graalce"] = "LTS",
     ["23.1.12-mandrel"] = "LTS",
 }) do
@@ -468,7 +577,30 @@ end
 RUNTIME.osType = "windows"
 assert(check("21-jb", "21.0.11+1163116-jb", true, "zip") == 1, "21-jb: expected one lookup")
 assert(check("21.0.5-jb", "21.0.5+79248-jb", false, "tar.gz") == 1, "21.0.5-jb: expected one lookup")
-check("25-graal", "25.0.4.1-graal", true, "zip")
+check_graalvm("25-graal", "25.0.4.1.1-graal", "graalvm-jdk-25.0.4.1.1_windows-x64_bin.zip")
+check_graalvm("25-graalce", "25.4.4.1.1-graalce", "gds/graalvm-community-jdk-25i4-25.0.4.1.1_windows-x64_bin.zip")
+-- Searching GraalVM lists each release once, under GraalVM's own version and
+-- newest first. Of the releases of 25 compared here, the 25.0 line alone has
+-- the LTS note. GraalVM Community's 25i4 is listed as 25.4.4.1.1, though
+-- Foojay has it as 25.4.4.1 too.
+for short, want in pairs({
+    graal = "25.4.4.1.1-graal, 25.3.4.1-graal, 25.2.4-graal, 25.1.3-graal, 25.0.4.1.1-graal (LTS), "
+        .. "25.0.4.1-graal (LTS), 25.0.4-graal (LTS), 25.0.3-graal (LTS), 25.0.2-graal (LTS), "
+        .. "25.0.1-graal (LTS), 25-graal (LTS)",
+    graalce = "25.4.4.1.1-graalce, 25.3.4.1-graalce, 25.2.4-graalce, 25.1.3-graalce, 25.0.2-graalce (LTS), "
+        .. "25-graalce (LTS)",
+}) do
+    for _, query in ipairs({ short, "all" }) do
+        local entries = {}
+        for _, item in ipairs(PLUGIN:Available({ args = { query } })) do
+            if item.version:sub(-#short - 1) == "-" .. short and item.version:match("^25") then
+                table.insert(entries, item.version .. (item.note == "" and "" or " (" .. item.note .. ")"))
+            end
+        end
+        local got = table.concat(entries, ", ")
+        assert(got == want, ("Available %s on Windows lists %s, want %s"):format(query, got, want))
+    end
+end
 local jb = {}
 for _, item in ipairs(PLUGIN:Available({ args = { "jb" } })) do
     table.insert(jb, item.version)

@@ -24,18 +24,18 @@ https://api.foojay.io/disco/v3.0/packages/jdks
 | 参数 | 取值 |
 | --- | --- |
 | `distribution` | 发行版的长名，见 [distributions.md](distributions.md) |
-| `version` | `vfox search` 时为空，否则是你输入内容里的版本部分。`+` 会做百分号编码，因为 Foojay 会把没编码的 `+` 当成空格，进而丢掉构建号。`28.ea.19` 会变成 `28-ea+19`。查 Mandrel 和 Liberica NIK 时始终为空 |
+| `version` | `vfox search` 时为空，否则是你输入内容里的版本部分。`+` 会做百分号编码，因为 Foojay 会把没编码的 `+` 当成空格，进而丢掉构建号。`28.ea.19` 会变成 `28-ea+19`。查 Mandrel、Liberica NIK，以及 Oracle GraalVM 和 GraalVM 社区版的 GA 版本时始终为空 |
 | `distribution_version` | 只用于 Mandrel 和 Liberica NIK，是你输入内容里的版本部分，见[下文](#mandrel-与-liberica-nik) |
 | `architecture` | arm64 用 `aarch64`，Windows x64 用 `x64`，其他系统的 x64 用 `amd64`，其他 CPU 用 vfox 报告的名字 |
 | `operating_system` | `linux`、`macos` 或 `windows` |
 | `archive_type` | `tar.gz`；Windows 上是 `zip` 加 `tar.gz`。其他系统上，Red Hat 还要 `tar.xz`，OJDKBuild、OpenLogic 和 Gluon GraalVM 还要 `zip` |
 | `lib_c_type` | Linux 上是 `glibc` 或 `musl`，其他系统为空 |
 | `directly_downloadable` | 始终是 `true` |
-| `latest` | `available`，仅当版本只有大版本号（如 `21`）时才加；查 Mandrel 和 Liberica NIK 时一律不加 |
+| `latest` | `available`，仅当版本只有大版本号（如 `21`）时才加；查 Mandrel、Liberica NIK、Oracle GraalVM 和 GraalVM 社区版时一律不加 |
 
 不加 `latest=available` 时，`version=21` 只匹配 21 的 GA 构建（`21+35`）；加上之后，Foojay 会挑出最新的 21.x，`java@21-tem` 装的就是它。更具体的版本则按原样匹配。
 
-返回的是一个包列表。插件用 `java_version` 给版本命名（Mandrel 和 Liberica NIK 用 `distribution_version`）；`javafx_bundled` 为真时加上 `-fx`；`term_of_support` 是 `lts` 时标注 LTS；在 Windows 上，同一版本既有 `zip` 又有 `tar.gz` 时优先用 `zip`。Foojay 混在 OJDKBuild 的 Windows JDK 里的 JRE、installer bundle 包和 RHEL 6 构建，以及 Gluon GraalVM 22.x 的 JDK 11 构建，插件都会略过，见 [distributions.md](distributions.md)。安装时，插件再取这个包的 `links.pkg_info_uri`，并从其中的 `direct_download_uri` 下载，那是厂商自己的服务器（Temurin 是 GitHub Releases）。这条记录里还有 `checksum`，但插件没有把它交给 vfox，所以 vfox 会打印 `WARNING: Checksum is not provided, skip verify...`，下载内容不做校验。
+返回的是一个包列表。插件用 `java_version` 给版本命名（Mandrel 和 Liberica NIK 用 `distribution_version`，Oracle GraalVM 和 GraalVM 社区版用 GraalVM 自己的版本号）；`javafx_bundled` 为真时加上 `-fx`；`term_of_support` 是 `lts` 时标注 LTS；在 Windows 上，同一版本既有 `zip` 又有 `tar.gz` 时优先用 `zip`。Foojay 混在 OJDKBuild 的 Windows JDK 里的 JRE、installer bundle 包和 RHEL 6 构建，以及 Gluon GraalVM 22.x 的 JDK 11 构建，插件都会略过，见 [distributions.md](distributions.md)。安装时，插件再取这个包的 `links.pkg_info_uri`，并从其中的 `direct_download_uri` 下载，那是厂商自己的服务器（Temurin 是 GitHub Releases）。这条记录里还有 `checksum`，但插件没有把它交给 vfox，所以 vfox 会打印 `WARNING: Checksum is not provided, skip verify...`，下载内容不做校验。
 
 `vfox search` 与原始列表有几处不同：Foojay 里同一个名字有两条记录时，它只列一次；不给 GraalVM 的特性版本加 LTS 备注（见 [distributions.md](distributions.md#oracle-graalvm-与-graalvm-社区版的行为)）；只列 GA 版本。
 
@@ -122,7 +122,25 @@ curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=temurin&ver
 {"java_version":"21.0.8+9","distribution_version":"21.0.8","term_of_support":"lts","javafx_bundled":false,"archive_type":"tar.gz","filename":"OpenJDK21U-jdk_x64_linux_hotspot_21.0.8_9.tar.gz"}
 ```
 
-`java_version` 是 Java 的版本号，插件用的就是它。`distribution_version` 是厂商自己的版本号（Java `27+35` 对应 Zulu 的 `27.28.101`），插件只对 Mandrel 和 Liberica NIK 用它，见[上文](#mandrel-与-liberica-nik)。
+`java_version` 是 Java 的版本号，插件用的就是它。`distribution_version` 是厂商自己的版本号（Java `27+35` 对应 Zulu 的 `27.28.101`），插件对 Mandrel 和 Liberica NIK 用它（见[上文](#mandrel-与-liberica-nik)），对 Oracle GraalVM 和 GraalVM 社区版也用它。
+
+从 2026 年 10 月起，Oracle GraalVM 和 GraalVM 社区版的 `distribution_version` 是 GraalVM 自己的版本号，`java_version` 则是 JDK 的版本号，而每月的特性版本和 25.0 系列的某个构建会共用同一个 JDK 版本号：
+
+```bash
+curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=graalvm&version=25.0.4.1&architecture=amd64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
+  | jq -r '.result[] | [.java_version, .distribution_version, .filename] | join(" ")'
+```
+
+```
+25.0.4.1 25.4.4.1.1 graalvm-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz
+25.0.4.1 25.3.4.1 graalvm-jdk-25i3-25.0.4.1_linux-x64_bin.tar.gz
+25.0.4.1 25.0.4.1.1 graalvm-jdk-25.0.4.1.1_linux-x64_bin.tar.gz
+25.0.4.1 25.0.4.1 graalvm-jdk-25.0.4.1_linux-x64_bin.tar.gz
+```
+
+用 `version` 分不开这几个包，而 `distribution_version` 按开头的完整几段来匹配（`25.0.4.1` 也会列出 `25.0.4.1.1`）。所以插件像 `vfox search` 那样查出全部的包，具体是哪个版本由它自己挑，并按 GraalVM 的版本号命名，也就是每个包的 `java_version` 和 `distribution_version` 中较新的那个：GraalVM 社区版的特性版本还有一份按老办法列的记录，GraalVM 的版本号放在 `java_version` 里。`vfox search` 按这个版本号从新到旧列出，Foojay 在两个版本号下各列一次的同一个文件，只列一次。
+
+安装和搜索发的是同一个请求，这样两者看到的构建才一致。Foojay 的结果按请求分别缓存，不同的请求拿到的结果可能新旧不一：2026-10-20 GraalVM 25.0.5 上了 Foojay 半小时后，GitHub 的 runner 用 `distribution_version=25` 查已经有它，搜索的结果里却还没有。
 
 ## 版本与支持期限
 

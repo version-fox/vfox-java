@@ -130,7 +130,7 @@ IBM Semeru Runtime Certified Edition：Semeru 的 OpenJ9 运行时，通过了 J
 
 ### Oracle GraalVM（`graal`）
 
-Oracle 发行的 GraalVM，基于 Oracle JDK。版本号沿用 GraalVM 自己的编号：`17.0.12-graal`、`25.0.4.1-graal`。
+Oracle 发行的 GraalVM，基于 Oracle JDK。版本号沿用 GraalVM 自己的编号：`17.0.12-graal`、`25.0.4.1.1-graal`、`25.4.4.1.1-graal`。
 
 ### GraalVM 社区版（`graalce`）
 
@@ -166,9 +166,12 @@ GraalVM CE 8 到 19、23 以前的 Gluon GraalVM，以及 25 以前的 Mandrel �
 
 ### Oracle GraalVM 与 GraalVM 社区版的行为
 
-- 从 25.1（2026 年 6 月）起，GraalVM 在 25.0 系列之外每月发布一个特性版本（feature release）：`25.1.3`、`25.2.4`、`25.3.4.1`、`25.4.4.1`，每个大约一个月后就被下一个取代。它们基于的 JDK 是 LTS，所以 Foojay 也把它们标成了 LTS，而 `vfox search` 不给它们加 LTS 备注。
-- `java@25-graal` 装的是 25.0 系列的最新构建（`25.0.4.1-graal`），Oracle 官方的 `25/latest` 下载链接跟的也是这个系列。特性版本要写全版本号：`java@25.4.4.1-graal`。
-- GraalVM 社区版的 25.0 系列到 `25.0.2` 为止，现在只发布特性版本。`java@25-graalce` 装其中最新的一个，截至 2026-10-18 是 `25.4.4.1-graalce`。
+- 从 25.1（2026 年 6 月）起，GraalVM 在 25.0 系列之外每月发布一个特性版本（feature release）：`25.1.3`、`25.2.4`、`25.3.4.1`、`25.4.4.1.1`，每个大约一个月后就被下一个取代。Foojay 把 Oracle GraalVM 的特性版本标成 STS；GraalVM 社区版按老办法列的那些（见下文），则因为基于的 JDK 是 LTS，也被标成了 LTS。`vfox search` 一律不给它们加 LTS 备注。
+- 版本名用的是 GraalVM 自己的版本号，也就是 Foojay 的 `distribution_version`。Foojay 的 `java_version` 是 JDK 的版本号，特性版本会和 25.0 系列的某个构建共用同一个值：`25.4.4.1.1-graal`、`25.3.4.1-graal`、`25.0.4.1.1-graal` 和 `25.0.4.1-graal` 的 `java_version` 都是 25.0.4.1。
+- GraalVM 社区版的特性版本，Foojay 还像 2026 年 10 月以前那样，按 GraalVM 的版本号另列了一份，下载地址在 GitHub。所以 0.6.2 给 25.4.4.1.1 构建起的名字 `java@25.4.4.1-graalce` 仍然能从 GitHub 装上这个构建，而 `java@25.4.4.1.1-graalce` 是从 Oracle 的 GraalVM Download Service 下载同一个文件。
+- 未发布：0.6.2 按 `java_version` 命名，所以 `java@25.0.4.1-graal` 装上的是特性版本 25.4.4.1.1；只要 25.0 系列最新构建所用的 JDK 上已经出了特性版本，`java@25-graal` 装上的也是特性版本；`vfox search java graal` 里也没有特性版本。
+- `java@25-graal` 装的是 25.0 系列的最新构建（2026-10-20 是 `25.0.5-graal`），Oracle 官方的 `25/latest` 下载链接跟的也是这个系列。特性版本要写全版本号：`java@25.4.4.1.1-graal`。
+- GraalVM 社区版的 25.0 系列到 `25.0.2` 为止，现在只发布特性版本。`java@25-graalce` 装其中最新的一个，截至 2026-10-20 是 `25.4.4.1.1-graalce`。
 - 插件只设置 `JAVA_HOME` 和 `PATH`，不设置 `GRAALVM_HOME`。你设置的、指向自己的 GraalVM 的 `GRAALVM_HOME` 保持原样；没有设置时，native-image 的构建插件会回退到 `JAVA_HOME`。
 - 没有 Windows ARM64 和 Alpine 的构建，Intel Mac 上 25.0.1 之后的版本也没有。见 [platforms.md](platforms.md#graalvm)。
 

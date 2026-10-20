@@ -130,7 +130,7 @@ IBM Semeru Runtime Certified Edition: Semeru's OpenJ9 runtimes, certified agains
 
 ### Oracle GraalVM (`graal`)
 
-Oracle's distribution of GraalVM, built on Oracle JDK. Releases carry GraalVM's numbers: `17.0.12-graal`, `25.0.4.1-graal`.
+Oracle's distribution of GraalVM, built on Oracle JDK. Releases carry GraalVM's numbers: `17.0.12-graal`, `25.0.4.1.1-graal`, `25.4.4.1.1-graal`.
 
 ### GraalVM Community (`graalce`)
 
@@ -166,9 +166,12 @@ GraalVM CE 8 to 19, Gluon GraalVM before 23, and Mandrel and Liberica NIK before
 
 ### Behavior of Oracle GraalVM and GraalVM Community
 
-- Since 25.1 (June 2026) GraalVM puts out a feature release every month next to its 25.0 line: `25.1.3`, `25.2.4`, `25.3.4.1`, `25.4.4.1`. Each is replaced within about a month. Foojay marks them LTS because the JDK they build on is LTS, and `vfox search` leaves the LTS note off them.
-- `java@25-graal` installs the newest build of the 25.0 line (`25.0.4.1-graal`), the line Oracle's own `25/latest` download follows. A feature release needs its full version: `java@25.4.4.1-graal`.
-- GraalVM Community's 25.0 line ended with `25.0.2`, and the feature releases are all it still ships. `java@25-graalce` installs the newest of them, `25.4.4.1-graalce` on 2026-10-18.
+- Since 25.1 (June 2026) GraalVM puts out a feature release every month next to its 25.0 line: `25.1.3`, `25.2.4`, `25.3.4.1`, `25.4.4.1.1`. Each is replaced within about a month. Foojay marks Oracle GraalVM's STS, but GraalVM Community's LTS where it lists them the old way round (see below), as the JDK they build on is LTS. `vfox search` leaves the LTS note off them all.
+- Releases are named after GraalVM's own version, which Foojay gives as `distribution_version`. Foojay's `java_version` is the JDK's version, which a feature release shares with the 25.0 line: `25.4.4.1.1-graal`, `25.3.4.1-graal`, `25.0.4.1.1-graal` and `25.0.4.1-graal` all have the `java_version` 25.0.4.1.
+- Foojay lists GraalVM Community's feature releases under GraalVM's version too, as it did before October 2026, with downloads from GitHub. So `java@25.4.4.1-graalce`, the name release 0.6.2 gives the 25.4.4.1.1 build, still installs it from GitHub, while `java@25.4.4.1.1-graalce` gets the same file from Oracle's GraalVM Download Service.
+- Unreleased: release 0.6.2 names releases after `java_version`, so `java@25.0.4.1-graal` installs the feature release 25.4.4.1.1, `java@25-graal` installs a feature release whenever one is out on the JDK of the newest 25.0 build, and `vfox search java graal` lists no feature release.
+- `java@25-graal` installs the newest build of the 25.0 line (`25.0.5-graal` on 2026-10-20), the line Oracle's own `25/latest` download follows. A feature release needs its full version: `java@25.4.4.1.1-graal`.
+- GraalVM Community's 25.0 line ended with `25.0.2`, and the feature releases are all it still ships. `java@25-graalce` installs the newest of them, `25.4.4.1.1-graalce` on 2026-10-20.
 - The plugin sets `JAVA_HOME` and `PATH`, and no `GRAALVM_HOME`. A `GRAALVM_HOME` that points at a GraalVM of your own stays as it is, and the native-image build plugins fall back to `JAVA_HOME` when it is unset.
 - There is no Windows ARM64 and no Alpine build, and Intel Macs get nothing after 25.0.1. See [platforms.md](platforms.md#graalvm).
 

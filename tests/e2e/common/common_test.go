@@ -16,6 +16,7 @@ package common
 
 import (
 	"slices"
+	"strings"
 	"testing"
 )
 
@@ -319,34 +320,51 @@ func TestDistributionFacts(t *testing.T) {
 	}
 }
 
+// lineEnding is how output ends its lines: LF, or CRLF as vfox and java write
+// them in the Windows containers. A raw string cannot hold a carriage return,
+// so the tests write their output with LF and check it with each lineEnding.
+type lineEnding struct{ name, newline string }
+
+var lineEndings = []lineEnding{{"LF", "\n"}, {"CRLF", "\r\n"}}
+
+// apply returns output, written with LF, with this line ending.
+func (e lineEnding) apply(output string) string {
+	return strings.ReplaceAll(output, "\n", e.newline)
+}
+
 func TestJavaProperties(t *testing.T) {
 	// Abridged `java -XshowSettings:properties -version` output, with a
-	// multi-line value and Windows line endings.
-	out := "Property settings:\r\n" +
-		"    java.class.path = \r\n" +
-		"    java.home = /root/.vfox/cache/java/v-21.0.8+9-tem/java-21.0.8+9-tem\r\n" +
-		"    java.library.path = /usr/java/packages/lib\r\n" +
-		"        /usr/lib64\r\n" +
-		"    java.vendor = Eclipse Adoptium\r\n" +
-		"    java.version = 21.0.8\r\n" +
-		"    os.arch = amd64\r\n" +
-		"\r\n" +
-		"openjdk version \"21.0.8\" 2025-07-15 LTS\r\n"
-	props := JavaProperties(out)
-	for k, want := range map[string]string{
-		"java.class.path":   "",
-		"java.home":         "/root/.vfox/cache/java/v-21.0.8+9-tem/java-21.0.8+9-tem",
-		"java.library.path": "/usr/java/packages/lib",
-		"java.vendor":       "Eclipse Adoptium",
-		"java.version":      "21.0.8",
-		"os.arch":           "amd64",
-	} {
-		if got, ok := props[k]; !ok || got != want {
-			t.Errorf("%s = %q, %v; want %q", k, got, ok, want)
-		}
-	}
-	if len(props) != 6 {
-		t.Errorf("props = %v, want 6 entries", props)
+	// multi-line value. java.class.path is empty, so its line ends in a space.
+	output := `Property settings:
+    java.class.path = 
+    java.home = /root/.vfox/cache/java/v-21.0.8+9-tem/java-21.0.8+9-tem
+    java.library.path = /usr/java/packages/lib
+        /usr/lib64
+    java.vendor = Eclipse Adoptium
+    java.version = 21.0.8
+    os.arch = amd64
+
+openjdk version "21.0.8" 2025-07-15 LTS
+`
+	for _, ending := range lineEndings {
+		t.Run(ending.name, func(t *testing.T) {
+			props := JavaProperties(ending.apply(output))
+			for k, want := range map[string]string{
+				"java.class.path":   "",
+				"java.home":         "/root/.vfox/cache/java/v-21.0.8+9-tem/java-21.0.8+9-tem",
+				"java.library.path": "/usr/java/packages/lib",
+				"java.vendor":       "Eclipse Adoptium",
+				"java.version":      "21.0.8",
+				"os.arch":           "amd64",
+			} {
+				if got, ok := props[k]; !ok || got != want {
+					t.Errorf("%s = %q, %v; want %q", k, got, ok, want)
+				}
+			}
+			if len(props) != 6 {
+				t.Errorf("props = %v, want 6 entries", props)
+			}
+		})
 	}
 }
 
@@ -374,13 +392,20 @@ func TestListedVersions(t *testing.T) {
 }
 
 func TestFromTarball(t *testing.T) {
-	tarball := "Preinstalling java@21.0.5+79248-jb...\r\n" +
-		"Unpacking C:\\Users\\John Doe\\.vfox\\cache\\java\\v-21.0.5+79248-jb\\jbrsdk_jcef-21.0.5-windows-x64-b792.48.tar.gz...\r\n"
-	if !FromTarball(tarball) {
-		t.Error("FromTarball missed a .tar.gz unpack")
-	}
-	if FromTarball("Unpacking C:\\tmp\\OpenJDK21U-jdk_x64_windows_hotspot_21.0.8_9.zip...\n") {
-		t.Error("FromTarball matched a .zip unpack")
+	tarball := `Preinstalling java@21.0.5+79248-jb...
+Unpacking C:\Users\John Doe\.vfox\cache\java\v-21.0.5+79248-jb\jbrsdk_jcef-21.0.5-windows-x64-b792.48.tar.gz...
+`
+	zipped := `Unpacking C:\tmp\OpenJDK21U-jdk_x64_windows_hotspot_21.0.8_9.zip...
+`
+	for _, ending := range lineEndings {
+		t.Run(ending.name, func(t *testing.T) {
+			if !FromTarball(ending.apply(tarball)) {
+				t.Error("FromTarball missed a .tar.gz unpack")
+			}
+			if FromTarball(ending.apply(zipped)) {
+				t.Error("FromTarball matched a .zip unpack")
+			}
+		})
 	}
 }
 
@@ -398,59 +423,129 @@ func TestCheckInstalled(t *testing.T) {
 }
 
 func TestFeatureReleaseEntries(t *testing.T) {
-	out := "Available versions:\r\n" +
-		" - 25.4.4.1-graalce (LTS)\r\n" +
-		" - 25.1.3-graalce\r\n" +
-		" - 25.0.2-graalce (LTS) (installed)\r\n" +
-		" - 25-graalce (LTS)\r\n" +
-		" - 24.0.2-graalce\r\n"
+	output := `Available versions:
+ - 25.4.4.1-graalce (LTS)
+ - 25.1.3-graalce
+ - 25.0.2-graalce (LTS) (installed)
+ - 25-graalce (LTS)
+ - 24.0.2-graalce
+`
 	want := []string{"25.4.4.1-graalce (LTS)", "25.1.3-graalce"}
-	if got := FeatureReleaseEntries(out); !slices.Equal(got, want) {
-		t.Errorf("FeatureReleaseEntries = %q, want %q", got, want)
+	for _, ending := range lineEndings {
+		t.Run(ending.name, func(t *testing.T) {
+			if got := FeatureReleaseEntries(ending.apply(output)); !slices.Equal(got, want) {
+				t.Errorf("FeatureReleaseEntries = %q, want %q", got, want)
+			}
+		})
+	}
+}
+
+func TestMixedSupportEntries(t *testing.T) {
+	// Abridged `vfox search` output, observed on 2026-10-20 with the plugin
+	// before and after vfox-java#105: Foojay lists the feature releases
+	// under the JDK's version, and the name of each stood for a feature
+	// release first.
+	before := map[string]string{
+		"graal": `Available versions:
+ - 25.0.4.1-graal
+ - 25.0.4-graal
+ - 25.0.3-graal
+ - 25.0.2-graal (LTS)
+ - 25-graal (LTS)
+ - 24.0.2-graal
+ - 24-graal
+ - 21.0.12-graal (LTS)
+`,
+		"graalce": `Available versions:
+ - 25.4.4.1-graalce
+ - 25.1.3-graalce
+ - 25.0.4.1-graalce
+ - 25.0.3-graalce
+ - 25.0.2-graalce (LTS) (installed)
+ - 25-graalce (LTS)
+ - 24.0.2-graalce
+`,
+	}
+	after := `Available versions:
+ - 25.4.4.1.1-graal
+ - 25.1.3-graal
+ - 25.0.4.1.1-graal (LTS)
+ - 25.0.4.1-graal (LTS)
+ - 25-graal (LTS)
+ - 24.0.2-graal
+ - 24-graal
+ - 21.0.12-graal (LTS) (installed)
+`
+	for _, ending := range lineEndings {
+		t.Run(ending.name, func(t *testing.T) {
+			for distribution, want := range map[string][]string{
+				"graal":   {"25.0.4.1-graal", "25.0.4-graal", "25.0.3-graal"},
+				"graalce": {"25.0.4.1-graalce", "25.0.3-graalce"},
+			} {
+				if got := MixedSupportEntries(ending.apply(before[distribution])); !slices.Equal(got, want) {
+					t.Errorf("MixedSupportEntries(%s before) = %q, want %q", distribution, got, want)
+				}
+			}
+			if got := MixedSupportEntries(ending.apply(after)); len(got) != 0 {
+				t.Errorf("MixedSupportEntries(after) = %q, want none", got)
+			}
+		})
 	}
 }
 
 func TestSearchEntry(t *testing.T) {
-	out := "Available versions:\n" +
-		" - 25.0.4+9-librca (LTS)\n" +
-		" - 25.0.4+9-librca-fx (LTS, JavaFX) (installed)\n" +
-		" - 25.0.2+10\n"
-	if got, ok := SearchEntry(out, "25.0.4+9-librca-fx"); !ok || got != "25.0.4+9-librca-fx (LTS, JavaFX) (installed)" {
-		t.Errorf("SearchEntry(fx) = %q, %v", got, ok)
-	}
-	// The non-FX build must not match the FX entry, nor vice versa.
-	if got, ok := SearchEntry(out, "25.0.4+9-librca"); !ok || got != "25.0.4+9-librca (LTS)" {
-		t.Errorf("SearchEntry(non-fx) = %q, %v", got, ok)
-	}
-	if got, ok := SearchEntry(out, "25.0.2+10"); !ok || got != "25.0.2+10" {
-		t.Errorf("SearchEntry(bare) = %q, %v", got, ok)
-	}
-	if _, ok := SearchEntry(out, "25.0.4"); ok {
-		t.Error("SearchEntry matched a version prefix")
+	output := `Available versions:
+ - 25.0.4+9-librca (LTS)
+ - 25.0.4+9-librca-fx (LTS, JavaFX) (installed)
+ - 25.0.2+10
+`
+	for _, ending := range lineEndings {
+		t.Run(ending.name, func(t *testing.T) {
+			out := ending.apply(output)
+			if got, ok := SearchEntry(out, "25.0.4+9-librca-fx"); !ok || got != "25.0.4+9-librca-fx (LTS, JavaFX) (installed)" {
+				t.Errorf("SearchEntry(fx) = %q, %v", got, ok)
+			}
+			// The non-FX build must not match the FX entry, nor vice versa.
+			if got, ok := SearchEntry(out, "25.0.4+9-librca"); !ok || got != "25.0.4+9-librca (LTS)" {
+				t.Errorf("SearchEntry(non-fx) = %q, %v", got, ok)
+			}
+			if got, ok := SearchEntry(out, "25.0.2+10"); !ok || got != "25.0.2+10" {
+				t.Errorf("SearchEntry(bare) = %q, %v", got, ok)
+			}
+			if _, ok := SearchEntry(out, "25.0.4"); ok {
+				t.Error("SearchEntry matched a version prefix")
+			}
+		})
 	}
 }
 
 func TestBareMajorBuilds(t *testing.T) {
-	// Abridged `vfox search java graal` output, observed on 2026-10-18.
-	searched := SearchedVersions("Available versions:\r\n" +
-		" - 25.4.4.1-graal (LTS)\r\n" +
-		" - 25.1.3-graal (LTS)\r\n" +
-		" - 25.0.4.1-graal (LTS)\r\n" +
-		" - 25.0.4-graal (LTS) (installed)\r\n" +
-		" - 25-graal (LTS)\r\n" +
-		" - 24.0.2-graal\r\n" +
-		" - 21.0.12-graal (LTS)\r\n")
-	if want := []string{"25.4.4.1-graal", "25.1.3-graal", "25.0.4.1-graal", "25.0.4-graal", "25-graal", "24.0.2-graal", "21.0.12-graal"}; !slices.Equal(searched, want) {
-		t.Fatalf("SearchedVersions = %q, want %q", searched, want)
-	}
-	builds, want := BareMajorBuilds(searched, OracleGraalVMSpec)
-	// GA 25 is named like the spec, so vfox would find it installed before
-	// asking PreInstall.
-	if expected := []string{"25.4.4.1-graal", "25.1.3-graal", "25.0.4.1-graal", "25.0.4-graal"}; !slices.Equal(builds, expected) {
-		t.Errorf("builds = %q, want %q", builds, expected)
-	}
-	if want != "25.0.4.1-graal" {
-		t.Errorf("want = %q, want 25.0.4.1-graal", want)
+	// Abridged `vfox search java graal` output, observed on 2026-10-20.
+	output := `Available versions:
+ - 25.4.4.1.1-graal
+ - 25.1.3-graal
+ - 25.0.4.1.1-graal (LTS)
+ - 25.0.4.1-graal (LTS) (installed)
+ - 25-graal (LTS)
+ - 24.0.2-graal
+ - 21.0.12-graal (LTS)
+`
+	for _, ending := range lineEndings {
+		t.Run(ending.name, func(t *testing.T) {
+			searched := SearchedVersions(ending.apply(output))
+			if want := []string{"25.4.4.1.1-graal", "25.1.3-graal", "25.0.4.1.1-graal", "25.0.4.1-graal", "25-graal", "24.0.2-graal", "21.0.12-graal"}; !slices.Equal(searched, want) {
+				t.Fatalf("SearchedVersions = %q, want %q", searched, want)
+			}
+			builds, want := BareMajorBuilds(searched, OracleGraalVMSpec)
+			// GA 25 is named like the spec, so vfox would find it installed
+			// before asking PreInstall.
+			if expected := []string{"25.4.4.1.1-graal", "25.1.3-graal", "25.0.4.1.1-graal", "25.0.4.1-graal"}; !slices.Equal(builds, expected) {
+				t.Errorf("builds = %q, want %q", builds, expected)
+			}
+			if want != "25.0.4.1.1-graal" {
+				t.Errorf("want = %q, want 25.0.4.1.1-graal", want)
+			}
+		})
 	}
 	// GraalVM Community's versions are not Oracle GraalVM's.
 	if builds, want := BareMajorBuilds([]string{"25.4.4.1-graalce", "25.0.2-graalce"}, OracleGraalVMSpec); len(builds) != 0 || want != "" {
