@@ -28,6 +28,30 @@ local sdkman_flavours = {
     gln = { r17 = "gln" },
 }
 
+--- Mandrel and Liberica NIK, which SDKMAN still offers. The plugin names them
+--- after the version of the GraalVM they are built from, and SDKMAN adds the
+--- JDK to some of those versions: 25.0.4.r25-nik is the plugin's 25.0.4-nik.
+local sdkman_jdks = {
+    mandrel = true,
+    nik = true,
+}
+
+--- Returns the JDK whose build of a Mandrel or Liberica NIK release the
+--- plugin does not install, if any. Their releases from 21.3 to 23.0.1.2 come
+--- for two JDKs, and the plugin installs the build for the newer one, so the
+--- older one is 11 up to 22.3.5 (Mandrel 22.3 has no JDK 11 build at all)
+--- and 17 from 23 to 23.0.1.2.
+local function older_jdk(release)
+    if installed_version.newer("21.3", release) then
+        return nil
+    elseif installed_version.newer("23", release) then
+        return "11"
+    elseif installed_version.newer("23.0.2", release) then
+        return "17"
+    end
+    return nil
+end
+
 --- Rewrites an SDKMAN identifier in the plugin's spelling, which parse_version
 --- reads. SDKMAN calls JetBrains jbr (the plugin's jb) and puts fx in the
 --- version of JavaFX builds: 21.0.12.fx-zulu, or 21.0.12-fx+1.1-librca in its
@@ -36,9 +60,10 @@ local sdkman_flavours = {
 --- not (28.0.0.0+ea.19-open), where SDKMAN used to write the plugin's
 --- 28.ea.19-open (Foojay's 28-ea+19). The VM or JDK of the distributions in
 --- sdkman_flavours becomes the short name (22.3.3.r17-grl is 22.3.3-grl17),
---- and nil comes back for one the plugin does not install (11.0.9.open-adpt,
---- 22.1.0.1.r11-gln). Any other spelling, the plugin's own included, is
---- returned unchanged.
+--- the JDK of those in sdkman_jdks is dropped (25.0.4.r25-nik is
+--- 25.0.4-nik), and nil comes back for a build the plugin does not install
+--- (11.0.9.open-adpt, 22.1.0.1.r11-gln, 22.1.r11-mandrel). Any other
+--- spelling, the plugin's own included, is returned unchanged.
 local function plugin_spelling(identifier)
     local version, distribution = identifier:match("^(.+)%-([^-]+)$")
     if not version then
@@ -55,6 +80,13 @@ local function plugin_spelling(identifier)
             return nil
         end
         version = flavoured
+    end
+    local own_number, jdk = version:match("^(%d[%d.]*)%.r(%d+)$")
+    if sdkman_jdks[distribution] and own_number then
+        if jdk == older_jdk(own_number) then
+            return nil
+        end
+        version = own_number
     end
     local suffix = "-" .. distribution
     local release, build = version:match("^(%d[%d.]*)[.-]fx(.*)$")

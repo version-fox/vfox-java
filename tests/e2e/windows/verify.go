@@ -115,12 +115,46 @@ func verifyLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, box s
 	execOK(ctx, t, ctr, fmt.Sprintf("Remove-Item -LiteralPath %s -Recurse -Force", eaDir), box.vars...)
 }
 
+// verifyOwnNumberLegacyFile proves a .sdkmanrc holding SDKMAN's identifiers
+// of Mandrel and Liberica NIK that carry the JDK after .r (e.g.
+// java=25.0.4.r25-nik) selects the release they name, not a newer one of its
+// major, and nothing for the JDK 11 build of Mandrel 22.1, which the plugin
+// does not install (see common.OwnNumberIdentifiers). The installs are faked,
+// each with a stand-in java (a java.cmd) that only prints its name. It runs
+// before any `vfox use`, so java can only come from the legacy file.
+func verifyOwnNumberLegacyFile(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox) {
+	t.Helper()
+	cases, installs := common.OwnNumberIdentifiers()
+	var create, remove []string
+	for _, name := range installs {
+		dir := fmt.Sprintf("(Join-Path $env:VFOX_HOME %s)", pwshQuote(`cache\java\v-`+name))
+		create = append(create, fmt.Sprintf(
+			"$bin = Join-Path %s %s; New-Item -ItemType Directory -Force -Path $bin | Out-Null; "+
+				"Set-Content -Path (Join-Path $bin 'java.cmd') -Value %s",
+			dir, pwshQuote(`java-`+name+`\bin`), pwshQuote("@echo "+name)))
+		remove = append(remove, fmt.Sprintf("Remove-Item -LiteralPath %s -Recurse -Force", dir))
+	}
+	execOK(ctx, t, ctr, strings.Join(create, "; "), box.vars...)
+	for _, c := range cases {
+		out := legacyRun(ctx, t, ctr, box, c.Identifier, "if (Get-Command java -ErrorAction SilentlyContinue) { java }")
+		common.CheckSelects(t, out, c, installs)
+	}
+	execOK(ctx, t, ctr, strings.Join(remove, "; "), box.vars...)
+}
+
 // legacyJava writes java=<identifier> to a .sdkmanrc and returns what java
+// prints next to it.
+func legacyJava(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, identifier string) string {
+	t.Helper()
+	return legacyRun(ctx, t, ctr, box, identifier, "java "+showSettings)
+}
+
+// legacyRun writes java=<identifier> to a .sdkmanrc and returns what command
 // prints next to it. The probe activates its own PowerShell process.
 // Activation pins __VFOX_PID, which scopes the `vfox env` state cache, but
 // Windows may reuse a just-exited PID and legacy files are not among the
 // cache's tracked inputs, so the cache file is removed before the export.
-func legacyJava(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, identifier string) string {
+func legacyRun(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, identifier, command string) string {
 	t.Helper()
 	const dir = `C:\e2e-legacy-sdkmanrc`
 	execOK(ctx, t, ctr, fmt.Sprintf(
@@ -132,7 +166,7 @@ func legacyJava(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox
 			"if ($env:__VFOX_CURTMPPATH) { Remove-Item -LiteralPath (Join-Path $env:__VFOX_CURTMPPATH 'env-state.json') -Force -ErrorAction SilentlyContinue }; "+
 			"$__vfoxExport = vfox env -s pwsh | Out-String; "+
 			"if ($__vfoxExport.Trim()) { Invoke-Expression -Command $__vfoxExport }; "+
-			"java %s", pwshQuote(dir), showSettings)
+			"%s", pwshQuote(dir), command)
 	return execRetry(ctx, t, ctr, ".sdkmanrc java="+identifier, script, box.vars...)
 }
 

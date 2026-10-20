@@ -16,6 +16,7 @@ package common
 
 import (
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 )
@@ -658,5 +659,81 @@ func TestNewestBareMajor(t *testing.T) {
 			t.Errorf("NewestBareMajor(%q, %s) = %q, %q, %v; want %q, %q, %v",
 				c.searched, c.short, spec, found, ok, c.spec, c.found, c.ok)
 		}
+	}
+}
+
+// releaseNumbers returns the numbers of a release such as 25.0.4.1.
+func releaseNumbers(release string) []int {
+	var numbers []int
+	for _, part := range strings.Split(release, ".") {
+		n, _ := strconv.Atoi(part)
+		numbers = append(numbers, n)
+	}
+	return numbers
+}
+
+func TestOwnNumberIdentifiers(t *testing.T) {
+	cases, installs := OwnNumberIdentifiers()
+	none := 0
+	for _, c := range cases {
+		release, rest, _ := strings.Cut(c.Identifier, ".r")
+		jdk, short, _ := strings.Cut(rest, "-")
+		if strings.Trim(release, "0123456789.") != "" || strings.Trim(jdk, "0123456789") != "" ||
+			release == "" || jdk == "" {
+			t.Errorf("%s does not carry the JDK after .r", c.Identifier)
+			continue
+		}
+		major := Major(release)
+		if _, ok := ownNumbers[short]; !ok {
+			t.Errorf("%s is no identifier of Mandrel or Liberica NIK", c.Identifier)
+		}
+		// The plugin took the newest release of the major, so one newer than
+		// the release named must be faked too (any one, for an identifier
+		// that selects nothing), or the check passes by chance.
+		if !slices.ContainsFunc(installs, func(name string) bool {
+			core, ok := strings.CutSuffix(name, "-"+short)
+			return ok && Major(core) == major &&
+				(c.Selects == "" || slices.Compare(releaseNumbers(core), releaseNumbers(release)) > 0)
+		}) {
+			t.Errorf("no release of %s-%s that the plugin took for %s is faked", major, short, c.Identifier)
+		}
+		if c.Selects == "" {
+			none++
+			continue
+		}
+		if c.Selects != release+"-"+short || !slices.Contains(installs, c.Selects) {
+			t.Errorf("%s selects %s, not the faked install of the release it names", c.Identifier, c.Selects)
+		}
+	}
+	if none == 0 {
+		t.Error("no identifier must select nothing")
+	}
+	// Each stand-in java prints its name, which must hold no other one.
+	for _, a := range installs {
+		for _, b := range installs {
+			if a != b && strings.Contains(a, b) {
+				t.Errorf("%s holds %s, so their output cannot tell them apart", a, b)
+			}
+		}
+	}
+}
+
+func TestPrintedNames(t *testing.T) {
+	_, installs := OwnNumberIdentifiers()
+	// The stand-in java of a faked install prints its name, and nothing
+	// prints when none is selected.
+	for _, ending := range lineEndings {
+		t.Run(ending.name, func(t *testing.T) {
+			for output, want := range map[string]string{
+				"25.0.4-nik\n":                 "25.0.4-nik",
+				"25.0.4.1-mandrel\n":           "25.0.4.1-mandrel",
+				"22.1-mandrel\n22.2-mandrel\n": "22.1-mandrel 22.2-mandrel",
+				"":                             "",
+			} {
+				if got := printedNames(ending.apply(output), installs); got != want {
+					t.Errorf("printedNames(%q) = %q, want %q", ending.apply(output), got, want)
+				}
+			}
+		})
 	}
 }

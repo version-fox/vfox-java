@@ -55,11 +55,14 @@ It never crosses to another distribution, between a JavaFX build and a plain one
 | `21.0.8+1.1-tem` | Temurin 21.0.8, see below |
 | `27.0.0+36-librca`, `25.0.1.0+8-open` | `27+36-librca`, `25.0.1+8`: the zeros are dropped |
 | `28.ea.19-open`, `28.0.0+ea.19-open` | the early-access build `28-ea+19` |
+| `25.0.4.r25-nik`, `25.0.2.r25-mandrel` | `25.0.4-nik`, `25.0.2-mandrel`: `.r` and the JDK after it are dropped |
 | `11.0.10.hs-adpt`, `11.0.10.j9-adpt` | AdoptOpenJDK with HotSpot, `11.0.10-adpt`, and with OpenJ9, `11.0.10-adptj9` |
 | `22.3.3.r17-grl` | GraalVM CE 22.3.3 for JDK 17, `22.3.3-grl17` |
 | `22.1.0.1.r17-gln` | Gluon GraalVM 22.1.0.1, `22.1.0.1-gln` |
 
 The last three rows are SDKMAN's identifiers for distributions it no longer lists, with the virtual machine or the JDK in the version, see [distributions.md](distributions.md#short-names-and-sdkman). The plugin installs no JDK 11 build of Gluon GraalVM 22 and no AdoptOpenJDK upstream build, so `22.1.0.1.r11-gln` and `11.0.9.open-adpt` select nothing. Unreleased: release 0.6.2 selects nothing for any of the three.
+
+SDKMAN writes the JDK into some versions of Mandrel and Liberica NIK as well, which the plugin names after the GraalVM version alone, see [distributions.md](distributions.md#behavior-of-mandrel-and-liberica-nik). Of a release that comes for two JDKs, the plugin installs only the build for the newer one, so an identifier with the older one selects nothing: `22.1.r11-mandrel`, `23.0.1.r17-nik`. The older JDK is 11 from 21.3 to 22.3.5 and 17 from 23 to 23.0.1.2. `25.r25-mandrel` has only the major and selects the newest installed Mandrel 25, as `java=25-mandrel` does, while SDKMAN installs 25.0.1.0 for it. Unreleased: release 0.6.2 takes `25.0.4.r25` for a release, finds none and selects the newest installed release of the major.
 
 The number after `+` in SDKMAN's newer identifiers (`21.0.8+1.1-tem`) counts SDKMAN's own rebuilds. It is not a build number of the vendor, so the plugin does not look for one and takes the release. Foojay, and so the installed name, has no zero padding, which is why `27.0.0` means the release `27`. A `.0` padding in `sdk list java` is common (`25.0.1.0+8-open`, `21.0.9.0+116386-jbr`), and the plugin reads it as well.
 

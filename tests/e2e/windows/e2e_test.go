@@ -260,6 +260,9 @@ func runOne(t *testing.T, ctx context.Context, image, platform, arch string, c c
 	verifySearch(ctx, t, ctr, box, c.Distribution, installed)
 	// Before any `vfox use`, so java can only come from the legacy file.
 	verifyLegacyFile(ctx, t, ctr, box, c.Distribution, version, installed, arch)
+	if common.ChecksOwnNumbers(c.Distribution) {
+		verifyOwnNumberLegacyFile(ctx, t, ctr, box)
+	}
 
 	useJava(ctx, t, ctr, box, activation, installed)
 	verifyToolchain(ctx, t, ctr, box, activation, c.Distribution, version, installed, arch)

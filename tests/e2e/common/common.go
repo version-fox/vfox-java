@@ -794,10 +794,74 @@ func NewestOfMajor(searched []string, bare string) (newest string, ok bool) {
 }
 
 // ChecksOwnNumbers reports whether a combo also checks the distributions in
-// OwnNumberedDistributions, which downloads nothing. Temurin's combos do: they
+// OwnNumberedDistributions and SDKMAN's identifiers of them
+// (OwnNumberIdentifiers), which downloads nothing. Temurin's combos do: they
 // run on every runner.
 func ChecksOwnNumbers(distribution string) bool {
 	return Base(distribution) == "tem"
+}
+
+// LegacyCase is a java= value of a .sdkmanrc and the installed version it
+// must select, "" for none.
+type LegacyCase struct {
+	Identifier, Selects string
+}
+
+// ownNumberIdentifiers lists identifiers of Mandrel and Liberica NIK in
+// SDKMAN's spelling, with the JDK after .r, and what each selects out of
+// ownNumberInstalls: three that `sdk list java` shows (2026-10-20), and
+// 22.1.r17-mandrel for the JDK 17 build of the release 22.1.r11-mandrel
+// names.
+var ownNumberIdentifiers = []LegacyCase{
+	{"25.0.4.r25-nik", "25.0.4-nik"},
+	{"25.0.2.r25-mandrel", "25.0.2-mandrel"},
+	{"22.1.r17-mandrel", "22.1-mandrel"},
+	{"22.1.r11-mandrel", ""},
+}
+
+// ownNumberInstalls holds the release each of ownNumberIdentifiers names and a
+// newer release of its major.
+var ownNumberInstalls = []string{
+	"25.0.4-nik", "25.0.4.1-nik", "25.0.2-mandrel", "25.0.4.1-mandrel", "22.1-mandrel", "22.2-mandrel",
+}
+
+// OwnNumberIdentifiers returns identifiers of Mandrel and Liberica NIK in
+// SDKMAN's spelling, with the JDK after .r (25.0.4.r25-nik), each with what a
+// .sdkmanrc holding it must select, and the installs to fake for them: the
+// releases they name, each next to a newer release of its major
+// (25.0.4.1-nik). ParseLegacyFile read 25.0.4.r25 as the release, found no
+// such install and took that newer one (vfox-java#109). Mandrel 22.1 comes for
+// JDK 11 and 17, and the plugin installs the build for 17 only, so
+// 22.1.r11-mandrel must select nothing.
+func OwnNumberIdentifiers() (cases []LegacyCase, installs []string) {
+	return ownNumberIdentifiers, ownNumberInstalls
+}
+
+// printedNames returns those of names that output holds, in the order of
+// names, joined by spaces.
+func printedNames(output string, names []string) string {
+	var printed []string
+	for _, name := range names {
+		if strings.Contains(output, name) {
+			printed = append(printed, name)
+		}
+	}
+	return strings.Join(printed, " ")
+}
+
+// CheckSelects fails t unless a .sdkmanrc holding c.Identifier selected what
+// c.Selects names among installs, whose stand-in java prints its name: out is
+// what java printed next to the file, nothing when none was selected.
+func CheckSelects(t *testing.T, out string, c LegacyCase, installs []string) {
+	t.Helper()
+	selected := printedNames(out, installs)
+	if c.Selects == "" {
+		require.Emptyf(t, selected, ".sdkmanrc java=%s must select nothing\n--- output ---\n%s", c.Identifier, out)
+		t.Logf("PASS .sdkmanrc java=%s selects nothing", c.Identifier)
+		return
+	}
+	require.Equalf(t, c.Selects, selected, ".sdkmanrc java=%s must select %s\n--- output ---\n%s", c.Identifier, c.Selects, out)
+	t.Logf("PASS .sdkmanrc java=%s selects %s", c.Identifier, c.Selects)
 }
 
 // ContainerName returns a unique container name per run: the combo slug stays
