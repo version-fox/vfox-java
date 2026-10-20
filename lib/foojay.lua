@@ -163,11 +163,11 @@ end
 --- installing in step with searching: Foojay's answers are cached per
 --- question, and half an hour after GraalVM 25.0.5 came out, a search still
 --- left it out while a lookup by distribution_version had it.
---- @param request function Foojay lookup taking the version and more query
+--- @param request function Foojay lookup taking the version
 --- @param version string
 --- @return table
 local function graalvm_packages(request, version)
-    local packages = request("", "") or {}
+    local packages = request("") or {}
     local order = {}
     for i, package in ipairs(packages) do
         package.java_version = graalvm_version(package)
@@ -241,13 +241,8 @@ foojay.fetchtJdkList = function(distribution, version)
         lib_c_type = detect_lib_c_type()
     end
 
-    -- A bare major such as 21 matches only its GA build (21+35); latest=available
-    -- picks the newest 21.x instead. Longer versions keep matching exactly, as
-    -- latest=available would look at the major alone.
-    local latest = version:match("^%d+$") and "&latest=available" or ""
-
-    local function request(query, extra)
-        local reqUrl = URL:format(encode(query), distribution, arch, archive_types, os, lib_c_type) .. extra
+    local function request(query)
+        local reqUrl = URL:format(encode(query), distribution, arch, archive_types, os, lib_c_type)
 
         local resp, err = http.get({
             url = reqUrl,
@@ -269,21 +264,33 @@ foojay.fetchtJdkList = function(distribution, version)
         return graalvm_packages(request, version)
     end
 
+    -- A bare major such as 21 asks for every package, as a search does, and
+    -- the major's packages are picked here. version=21 alone matches the GA
+    -- build only (21+35), and latest=available, which picks the newest 21.x,
+    -- is another question, which Foojay's cache answers on its own: for half
+    -- an hour after a release, it could install a build that a search leaves
+    -- out.
+    local major = version:match("^%d+$")
+
     if own_numbers[distribution] then
-        -- Foojay matches distribution_version by the numbers given, so 23.1.12
-        -- lists 23.1.12.1 as well, and its latest=available takes an older
-        -- release (23.1.8 for 23.1). A bare major takes the newest release
-        -- itself, and a longer version the release it names, whose zeros
-        -- Foojay leaves out (23.1.12.0 is 23.1.12).
-        local bare = version == "" or version:match("^%d+$")
+        -- Every package is asked for whatever the version, as Foojay's version
+        -- parameter matches the JDK, and the releases are picked by the number
+        -- they go by: a bare major takes the newest release of the major, as
+        -- latest=available takes an older one (23.1.8 for 23.1), and a longer
+        -- version the release it names, whose zeros Foojay leaves out
+        -- (23.1.12.0 is 23.1.12).
         local release = installed_version.unpad(version)
+        local function wanted(number)
+            if version == "" then
+                return true
+            elseif major then
+                return number:match("^%d+") == major
+            end
+            return installed_version.unpad(number) == release
+        end
         local result = {}
-        local query = version ~= "" and "&distribution_version=" .. encode(version) or ""
-        for _, package in ipairs(request("", query) or {}) do
-            if
-                package.distribution_version
-                and (bare or installed_version.unpad(package.distribution_version) == release)
-            then
+        for _, package in ipairs(request("") or {}) do
+            if package.distribution_version and wanted(package.distribution_version) then
                 table.insert(result, package)
             end
         end
@@ -294,16 +301,19 @@ foojay.fetchtJdkList = function(distribution, version)
         return result
     end
 
-    local result = request(version, latest)
+    local result = request(major and "" or version) or {}
     local fix = fixes[distribution]
-    if fix and result then
-        -- latest=available answers with one package of the newest release
-        -- per archive type, which may be one the fix drops (OJDKBuild's
-        -- 17.0.3 JRE on Windows): ask for that release in full.
-        if latest ~= "" and result[1] then
-            result = request(result[1].java_version, "") or {}
-        end
+    if fix then
         result = fix(result)
+    end
+    if major then
+        local packages = {}
+        for _, package in ipairs(result) do
+            if package.java_version:match("^%d+") == major then
+                table.insert(packages, package)
+            end
+        end
+        result = packages
     end
 
     return result

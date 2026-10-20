@@ -93,10 +93,8 @@ JDK, so `java` can only come from what vfox installs:
    The builds of 25 that the search lists are faked as installed first, so
    `vfox install` names the one `PreInstall` picked and nothing downloads.
    GA 25 is left out, as vfox would find `25-graal` itself installed without
-   asking `PreInstall`. The search and `PreInstall` ask Foojay the same
-   question, so they see the same builds
-   ([foojay.md](foojay.md#the-versions-of-one-distribution)): a build that
-   only `PreInstall` saw would download and fail the check.
+   asking `PreInstall`. On Linux the install must also ask Foojay what the
+   search asked, as at the end of item 4.
 4. On the Temurin rows, which run on every runner, the distributions the
    suite checks by name only (`adpt` to `semcrt`, `nameOnly` in
    `tests/e2e/common`) go by their short names where Foojay has packages of
@@ -117,6 +115,18 @@ JDK, so `java` can only come from what vfox installs:
    version in October 2026, the search listed one name per Java major,
    `23.1.12-mandrel` was not found, and `java@23-mandrel` installed Mandrel
    24.1.2, built for Java 23.
+
+   On Linux these rows, and the GraalVM Community rows of item 3, reach
+   Foojay through a stand-in for api.foojay.io, built from
+   `tests/e2e/linux/front`, which logs what the plugin asks. Each install
+   above must ask what the search before it asked (`AsksAsSearch` in
+   `tests/e2e/common`). Foojay's answers are cached per question, so for half
+   an hour after a release another question can take a build that the search
+   does not list yet, which would download and fail the check
+   ([foojay.md](foojay.md#what-the-plugin-asks)). Before
+   [#113](https://github.com/version-fox/vfox-java/issues/113) a bare major
+   asked for `latest=available`, and Mandrel and Liberica NIK by
+   `distribution_version`.
 5. The pinned release installs under the name `PreInstall` gives it: the
    requested version plus the build number (`21.0.8-tem` installs as
    `21.0.8+9-tem`). `vfox search java <distribution>` (the `Available` hook)

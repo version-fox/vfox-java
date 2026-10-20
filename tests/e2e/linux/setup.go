@@ -112,12 +112,14 @@ func checkMissingVersionRejected(ctx context.Context, t *testing.T, ctr tc.Conta
 // search java graal` must list under their own versions (see
 // common.CheckGraalVMSearch). The builds of the major it lists are faked as
 // installed first (see common.BareMajorBuilds), so `vfox install` names the
-// one PreInstall picked and downloads nothing.
+// one PreInstall picked and downloads nothing. The install must ask Foojay
+// what the search asked (see common.AsksAsSearch).
 func checkGraalVMBareMajor(ctx context.Context, t *testing.T, ctr tc.Container) {
 	t.Helper()
 	spec := common.OracleGraalVMSpec
-	out := execRetry(ctx, t, ctr, "vfox search java graal", "vfox search java graal")
-	common.CheckGraalVMSearch(t, "vfox search java graal", out)
+	search := "vfox search java graal"
+	out, searchLookups := asked(ctx, t, ctr, search)
+	common.CheckGraalVMSearch(t, search, out)
 	builds, want := common.BareMajorBuilds(common.SearchedVersions(out), spec)
 	require.NotEmptyf(t, want, "vfox search java graal lists no %s build but feature releases\n--- output ---\n%s", spec, out)
 	var dirs, javaDirs []string
@@ -127,7 +129,9 @@ func checkGraalVMBareMajor(ctx context.Context, t *testing.T, ctr tc.Container) 
 		javaDirs = append(javaDirs, dir+"/"+shQuote("java-"+build))
 	}
 	execOK(ctx, t, ctr, "mkdir --parents "+strings.Join(javaDirs, " "))
-	out = execRetry(ctx, t, ctr, "vfox install java@"+spec, "vfox install java@"+spec)
+	out, installLookups := asked(ctx, t, ctr, "vfox install java@"+spec)
+	require.NoErrorf(t, common.AsksAsSearch(searchLookups, installLookups),
+		"vfox install java@%s must ask what %s asks", spec, search)
 	require.Containsf(t, common.StripANSI(out), "java@"+want+" is already installed",
 		"vfox install java@%s must take %s, the newest build that is no feature release", spec, want)
 	execOK(ctx, t, ctr, "rm --recursive "+strings.Join(dirs, " "))
@@ -138,20 +142,23 @@ func checkGraalVMBareMajor(ctx context.Context, t *testing.T, ctr tc.Container) 
 // short names (see common.NameOnlyDistributions): `vfox search java
 // <short>` lists each, and with the newest version it lists faked as
 // installed, `vfox install java@<major>-<short>` finds that one installed,
-// so nothing downloads (see common.NewestBareMajor).
+// so nothing downloads (see common.NewestBareMajor). The install must ask
+// Foojay what the search asked (see common.AsksAsSearch).
 func checkNameOnly(ctx context.Context, t *testing.T, ctr tc.Container, platform string) {
 	t.Helper()
 	names := common.NameOnlyDistributions(platform)
 	var dirs []string
 	for _, name := range names {
 		search := "vfox search java " + name
-		out := execRetry(ctx, t, ctr, search, search)
+		out, searchLookups := asked(ctx, t, ctr, search)
 		spec, newest, ok := common.NewestBareMajor(common.SearchedVersions(out), name)
 		require.Truef(t, ok, "%s lists no newest version that a bare major names\n--- output ---\n%s", search, out)
 		dir := `"${VFOX_HOME:-$HOME/.vfox}"/cache/java/` + shQuote("v-"+newest)
 		dirs = append(dirs, dir)
 		execOK(ctx, t, ctr, "mkdir --parents "+dir+"/"+shQuote("java-"+newest))
-		out = execRetry(ctx, t, ctr, "vfox install java@"+spec, "vfox install java@"+spec)
+		out, installLookups := asked(ctx, t, ctr, "vfox install java@"+spec)
+		require.NoErrorf(t, common.AsksAsSearch(searchLookups, installLookups),
+			"vfox install java@%s must ask what %s asks", spec, search)
 		require.Containsf(t, common.StripANSI(out), "java@"+newest+" is already installed",
 			"vfox install java@%s must take %s, the newest version %s lists", spec, newest, search)
 	}
@@ -167,13 +174,14 @@ func checkNameOnly(ctx context.Context, t *testing.T, ctr tc.Container, platform
 // and the newest release of its major faked as installed, `vfox install
 // java@<long>-<release>` and `vfox install java@<major>-<short>` find those
 // installed (see common.OwnNumberSpecs and common.NewestOfMajor), so nothing
-// downloads.
+// downloads. Both installs must ask Foojay what the search asked (see
+// common.AsksAsSearch).
 func checkOwnNumbers(ctx context.Context, t *testing.T, ctr tc.Container, platform string) {
 	t.Helper()
 	names := common.OwnNumberedDistributions(platform)
 	for _, name := range names {
 		search := "vfox search java " + name
-		out := execRetry(ctx, t, ctr, search, search)
+		out, searchLookups := asked(ctx, t, ctr, search)
 		searched := common.SearchedVersions(out)
 		spec, installed, bare := common.OwnNumberSpecs(name)
 		require.Containsf(t, searched, installed, "%s must list %s\n--- output ---\n%s", search, installed, out)
@@ -186,7 +194,9 @@ func checkOwnNumbers(ctx context.Context, t *testing.T, ctr tc.Container, platfo
 			execOK(ctx, t, ctr, "mkdir --parents "+dir+"/"+shQuote("java-"+version))
 		}
 		for _, c := range []struct{ spec, want string }{{spec, installed}, {bare, newest}} {
-			out = execRetry(ctx, t, ctr, "vfox install java@"+c.spec, "vfox install java@"+c.spec)
+			out, installLookups := asked(ctx, t, ctr, "vfox install java@"+c.spec)
+			require.NoErrorf(t, common.AsksAsSearch(searchLookups, installLookups),
+				"vfox install java@%s must ask what %s asks", c.spec, search)
 			require.Containsf(t, common.StripANSI(out), "java@"+c.want+" is already installed",
 				"vfox install java@%s must take %s, which %s lists", c.spec, c.want, search)
 		}

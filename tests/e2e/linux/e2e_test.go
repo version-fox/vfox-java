@@ -64,6 +64,7 @@ func TestE2E(t *testing.T) {
 
 	ctx := context.Background()
 	buildImage(t, ctx, repoRoot, image, platform)
+	front := buildFront(t, here, arch)
 
 	combos, err := common.Matrix()
 	if err != nil {
@@ -80,7 +81,7 @@ func TestE2E(t *testing.T) {
 			t.Parallel()
 			sem <- struct{}{}
 			defer func() { <-sem }()
-			runOne(t, ctx, image, platform, arch, c)
+			runOne(t, ctx, image, platform, arch, front, c)
 		})
 	}
 }
@@ -127,7 +128,7 @@ func buildImage(t *testing.T, ctx context.Context, repoRoot, image, platform str
 // E2E flow (setup -> install -> verify) through exec calls, asserting in Go.
 // A combo passes when every phase exits 0 and the outputs carry the expected
 // markers.
-func runOne(t *testing.T, ctx context.Context, image, platform, arch string, c common.Combo) {
+func runOne(t *testing.T, ctx context.Context, image, platform, arch string, front frontFiles, c common.Combo) {
 	t.Helper()
 	prefix := c.Prefix(platform)
 
@@ -169,6 +170,13 @@ func runOne(t *testing.T, ctx context.Context, image, platform, arch string, c c
 	checkNotes(ctx, t, ctr)
 	checkVersionlessRejected(ctx, t, ctr, c.Distribution)
 	checkMissingVersionRejected(ctx, t, ctr, c.Distribution, version, arch)
+	// The checks that compare a search with an install read what each asked
+	// Foojay through a stand-in for api.foojay.io.
+	comparesLookups := common.ChecksOracleGraalVM(c.Distribution) ||
+		common.ChecksNameOnly(c.Distribution) || common.ChecksOwnNumbers(c.Distribution)
+	if comparesLookups {
+		startFront(ctx, t, ctr, front)
+	}
 	if common.ChecksOracleGraalVM(c.Distribution) {
 		checkGraalVMBareMajor(ctx, t, ctr)
 	}
@@ -177,6 +185,9 @@ func runOne(t *testing.T, ctx context.Context, image, platform, arch string, c c
 	}
 	if common.ChecksOwnNumbers(c.Distribution) {
 		checkOwnNumbers(ctx, t, ctr, platform)
+	}
+	if comparesLookups {
+		stopFront(ctx, t, ctr)
 	}
 
 	installed := installJava(ctx, t, ctr, common.Spec(c.Distribution, version))
