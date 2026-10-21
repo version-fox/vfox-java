@@ -77,6 +77,15 @@ vfox config proxy.url http://127.0.0.1:7890
 
 `JAVA_HOME` 是一个链接，由 `vfox use` 指向你选的 JDK：`--global` 时是 `~/.vfox/sdks/java`，`--project` 时是项目里的 `.vfox/sdks/java`，会话作用域下是 `~/.vfox/tmp` 下的一个目录。想让 IDE 或构建工具跟随全局选择，可以直接指向 `~/.vfox/sdks/java`。要固定指向某个 JDK，`vfox info java@21.0.8+9-tem` 会打印一个目录，JDK 就在其中的 `java-21.0.8+9-tem` 目录里。`~/.vfox` 是 `$VFOX_HOME` 的默认值。设置了 `VFOX_HOME` 之后，JDK（`cache/`）和插件放在那里，`sdks/java` 链接和会话目录仍留在 `~/.vfox`。`storage.sdkPath` 同样可以改变 JDK 的存放位置，见 vfox 的[配置文档](https://vfox.dev/zh-hans/guides/configuration.html)。
 
+IntelliJ IDEA 只会列出它在固定几个位置找到的 JDK：系统常见的 JDK 目录、`JAVA_HOME` 和 `PATH`、它自己下载 JDK 的目录，以及 SDKMAN、asdf、mise、jabba 这类版本管理工具的目录。vfox 不在其中，所以 IDEA 只列出正在使用的那个 JDK（通过 `JAVA_HOME` 和 `PATH` 找到），`cache/` 里的其他 JDK 都不会出现。可以像上面说的那样按路径添加它们，也可以把它们链接到 IDEA 的下载目录 `~/.jdks`（macOS 上是 `~/Library/Java/JavaVirtualMachines`）：
+
+```bash
+mkdir -p ~/.jdks
+for d in ~/.vfox/cache/java/v-*/java-*; do ln -sfn "$d" ~/.jdks/"$(basename "$d")"; done
+```
+
+装了新的 JDK 后再执行一遍，卸载了的 JDK 留下的链接删掉即可。Windows 上的目录是 `%USERPROFILE%\.jdks`，链接用 `mklink /J` 建立。想让 IDEA 不用这些步骤就能找到 JDK，得由 JetBrains 把 vfox 的目录（`~/.vfox/cache/java/v-<版本>/java-<版本>`）加进它的扫描清单。[IDEA-341256](https://youtrack.jetbrains.com/issue/IDEA-341256) 为 RTX（现在叫 mise）提过同样的需求，已经修复；vfox 的需求可以照样到 [IDEA 项目](https://youtrack.jetbrains.com/newIssue?project=IDEA)里提。
+
 ## 报告问题
 
 请到 [version-fox/vfox-java](https://github.com/version-fox/vfox-java/issues) 提 issue，附上 `vfox --version` 和 `vfox info java` 的输出、操作系统和 CPU、你执行的命令以及它打印的全部内容。`vfox --debug <命令>` 会打印更多信息。Foojay 数据本身的错误请向 [Foojay](https://github.com/foojayio/discoapi) 反馈。

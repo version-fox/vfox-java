@@ -77,6 +77,15 @@ While `proxy.enable` is `false`, the usual `HTTP_PROXY`, `HTTPS_PROXY` and `NO_P
 
 `JAVA_HOME` is a link that `vfox use` points at the JDK you chose. For `--global` it is `~/.vfox/sdks/java`, for `--project` it is `.vfox/sdks/java` in the project, and for a session it is a directory under `~/.vfox/tmp`. An IDE or a build tool that should follow your global choice can point at the first. For a fixed JDK, `vfox info java@21.0.8+9-tem` prints a directory, and the JDK is the `java-21.0.8+9-tem` directory inside it. `~/.vfox` is the default `$VFOX_HOME`. When `VFOX_HOME` is set, the JDKs (`cache/`) and the plugins live there, while the `sdks/java` link and the session directories stay in `~/.vfox`. `storage.sdkPath` moves the JDKs too, see vfox's [configuration](https://vfox.dev/guides/configuration.html).
 
+IntelliJ IDEA lists the JDKs it finds in a fixed set of places: the usual system directories, `JAVA_HOME` and `PATH`, the folder it downloads JDKs to, and the directories of version managers such as SDKMAN, asdf, mise and jabba. vfox is not among them, so IDEA offers only the JDK in use, which `JAVA_HOME` and `PATH` lead to, and none of the others in `cache/`. Add those by path as above, or link them into IDEA's download folder, `~/.jdks` (`~/Library/Java/JavaVirtualMachines` on macOS):
+
+```bash
+mkdir -p ~/.jdks
+for d in ~/.vfox/cache/java/v-*/java-*; do ln -sfn "$d" ~/.jdks/"$(basename "$d")"; done
+```
+
+Run it again after installing a JDK, and delete the links of JDKs you uninstalled. On Windows the folder is `%USERPROFILE%\.jdks` and `mklink /J` makes the links. For IDEA to find the JDKs without this, JetBrains has to add vfox's directory, `~/.vfox/cache/java/v-<version>/java-<version>`, to its list. [IDEA-341256](https://youtrack.jetbrains.com/issue/IDEA-341256) asked for that for RTX, now called mise, and was fixed. A request for vfox can be filed the same way in the [IDEA project](https://youtrack.jetbrains.com/newIssue?project=IDEA).
+
 ## Reporting a problem
 
 Open an issue at [version-fox/vfox-java](https://github.com/version-fox/vfox-java/issues) with the output of `vfox --version` and `vfox info java`, the operating system and CPU, the command, and everything it printed. `vfox --debug <command>` prints more. Data that Foojay gets wrong belongs with [Foojay](https://github.com/foojayio/discoapi).
