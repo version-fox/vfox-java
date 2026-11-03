@@ -81,4 +81,4 @@ JDK 没有切换时，依次检查：
 
 ## 与 SDKMAN 的区别
 
-`sdk env install` 会安装 `.sdkmanrc` 里指明的 JDK。vfox 只在已安装的版本里选择，安装要用 `vfox install java@<版本>`。从文件里复制的标识符不一定能直接给 `vfox install` 用：`21.0.8-tem` 可以，`21.0.12.fx-zulu` 不行，`21.0.12-zulu-fx` 可以。
+`sdk env install` 会安装 `.sdkmanrc` 里指明的 JDK。vfox 只在已安装的版本里选择，安装要用 `vfox install java@<版本>`。从文件里复制的标识符不一定能直接给 `vfox install` 用：`21.0.8-tem` 可以，`21.0.12.fx-zulu` 不行，`21.0.12-zulu-fx` 可以。两个工具其余的命令对照见 [sdkman.md](sdkman.md)。
