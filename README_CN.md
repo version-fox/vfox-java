@@ -78,6 +78,16 @@ java -version
 
 Zulu、Liberica、Liberica NIK 和 Corretto（只有 Java 8）提供内置 JavaFX 的构建，在发行版后面加 `-fx` 即可，比如 `java@21-zulu-fx`。详见 [docs/zh-CN/javafx.md](docs/zh-CN/javafx.md)。
 
+## Native Image
+
+GraalVM 的安装和使用与别的 JDK 没有两样。只有用来构建原生可执行文件的 `native-image` 还需要 C 编译器和 zlib 的头文件，而最小化的 Ubuntu（比如它的容器镜像）两样都没有。第一次构建原生镜像之前装一次：
+
+```bash
+sudo apt install --assume-yes build-essential zlib1g-dev
+```
+
+GraalVM CE 8 到 19 不带 `native-image`，要先添加。没有这些包时 `native-image` 的报错、其他系统的做法以及怎样添加，见 [docs/zh-CN/distributions.md](docs/zh-CN/distributions.md#native-image-与-c-工具链)。
+
 ## `.sdkmanrc`
 
 vfox 通过这个插件读取 SDKMAN 的 `.sdkmanrc` 里的 `java=` 一行，并选中已经安装的 JDK。详见 [docs/zh-CN/sdkmanrc.md](docs/zh-CN/sdkmanrc.md)。
@@ -92,7 +102,7 @@ vfox 通过这个插件读取 SDKMAN 的 `.sdkmanrc` 里的 `java=` 一行，并
 
 ## 问题排查
 
-插件的各种提示、代理设置和 JDK 的位置，见 [docs/zh-CN/troubleshooting.md](docs/zh-CN/troubleshooting.md)。
+插件和 `native-image` 的各种提示、代理设置和 JDK 的位置，见 [docs/zh-CN/troubleshooting.md](docs/zh-CN/troubleshooting.md)。
 
 ## 从源码安装
 

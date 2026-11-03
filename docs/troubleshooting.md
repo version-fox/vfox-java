@@ -80,6 +80,8 @@ While `proxy.enable` is `false`, the usual `HTTP_PROXY`, `HTTPS_PROXY` and `NO_P
 - **A `GRAALVM_HOME` you set is left alone.** The plugin sets `JAVA_HOME` and `PATH` only.
 - **`vfox use java@21` selects `21.3.1-grl11`, which runs Java 11.** GraalVM CE 8 to 19, Gluon GraalVM before 23, and Mandrel and Liberica NIK before 25 carry GraalVM's version numbers, and vfox matches a bare major against those, see [distributions.md](distributions.md#versions-numbered-after-graalvm). Write `java@21-tem`.
 - **`java@21-mandrel` installs a Mandrel that runs Java 17.** Mandrel's and Liberica NIK's majors are GraalVM's: `21.3.6-mandrel` is the newest Mandrel 21.x. Their releases for Java 21 are 23.1.x, so write `java@23-mandrel`, see [distributions.md](distributions.md#behavior-of-mandrel-and-liberica-nik).
+- **`native-image` stops with `Default native-compiler executable 'gcc' not found via environment variable PATH`, or at its last step with `cannot find -lz`.** The plugin installs the JDK and nothing else, and `native-image` needs the system's C toolchain and zlib. On Ubuntu, `sudo apt install --assume-yes build-essential zlib1g-dev` installs them, see [distributions.md](distributions.md#native-image-and-the-c-toolchain).
+- **`native-image: command not found` with a GraalVM CE 8 to 19, such as `22.3.3-grl17`.** These come without `native-image`, and `gu install native-image` adds it. It fails for `21.3.1-grl8`, see [distributions.md](distributions.md#native-image-and-the-c-toolchain).
 
 ## Where the JDK is
 
