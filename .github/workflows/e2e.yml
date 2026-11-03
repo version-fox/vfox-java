@@ -23,8 +23,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: e2e-${{ github.ref }}
-  cancel-in-progress: true
+  # A new push to a pull request replaces the run of the push before it. Every
+  # commit on main gets a group of its own instead: in one shared group a newer
+  # commit cancels the run of the older, and re-running the older cancels the
+  # newer in turn, so one of the two never ends with a result.
+  group: e2e-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # The Linux job runs the suite natively, the way the dev container runs it
 # locally: Go at the dev container's version (.devcontainer/Dockerfile) plus
