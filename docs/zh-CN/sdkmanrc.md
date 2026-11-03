@@ -67,6 +67,8 @@ vfox 挂载到 Shell 之后，进入目录时会读取这个文件，并选中�
 
 SDKMAN 在一些 Mandrel 和 Liberica NIK 的版本号里也写了 JDK 版本，而插件只按 GraalVM 版本号给它们命名，见 [distributions.md](distributions.md#mandrel-与-liberica-nik-的行为)。一个版本同时为两个 JDK 发布时，插件只装较新 JDK 的构建，所以写了较旧 JDK 的标识符什么都不会选中：`22.1.r11-mandrel`、`23.0.1.r17-nik`。较旧的 JDK，在 21.3 到 22.3.5 是 JDK 11，在 23 到 23.0.1.2 是 JDK 17。`25.r25-mandrel` 只写了大版本号，会选中已安装的最新 Mandrel 25，和 `java=25-mandrel` 一样，而 SDKMAN 按这个标识符装的是 25.0.1.0。
 
+SDKMAN 还列出了 Liberica 和 Zulu 的 CRaC 构建（`21.0.13.0-crac+12-librca`、`25.0.4.1-crac+1-zulu`），并直接从厂商下载。Foojay 没有列出任何 CRaC 构建，所以插件没有 CRaC 构建可装，带 `crac` 的标识符什么也选不中。
+
 SDKMAN 新写法里 `+` 后面的数字是构建号，可能是厂商的（`25.0.5.0+8-tem` 是 Temurin 的第 8 个构建，安装后叫 `25.0.5+8-tem`），也可能是 SDKMAN 自己重新构建的次数（`21.0.8+1.1-tem`）。插件先找已安装的、带这个构建号的版本，找不到再按版本匹配。Foojay 和安装后的版本名都不补零，所以 `27.0.0` 指的就是 `27`。`sdk list java` 里补一个 `.0` 很常见（`25.0.1.0+8-open`、`21.0.9.0+116386-jbr`），插件同样能读。
 
 Oracle GraalVM 和 GraalVM 社区版是例外。它们的版本号有五位（`25.0.5.0.3`），而 SDKMAN 的标识符在 `+` 前只有四位，所以 SDKMAN 把第五位写在 `+` 后面：`25.0.5.0+3-graal` 是 GraalVM 25.0.5.0.3，`25.4.4.1+1-graalce` 是特性版本 25.4.4.1.1。这个数字是版本号的一部分，Oracle 把 `25.0.5`、`25.0.5.0.2` 和 `25.0.5.0.3` 发布成了三个不同的文件。插件先找用点号写的已安装版本名，找不到再像对待任何没装的版本一样走第 2、3 步。`vfox install` 只认用点号写的版本名（`java@25.0.5.0.3-graal`），不认这个标识符。

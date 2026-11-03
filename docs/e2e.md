@@ -360,7 +360,7 @@ JDK, so `java` can only come from what vfox installs:
 
    The install itself must also have verified the download. Foojay lists a
    checksum for the pinned release of every default distribution on every
-   runner (2026-11-02), and `vfox install` must print `Verifying checksum
+   runner (2026-11-03), and `vfox install` must print `Verifying checksum
    <digest>...` with a digest of a length vfox supports, not `WARNING:
    Checksum is not provided, skip verify...`, which every install ended with
    until the plugin passed Foojay's checksums on. The digests come in four
