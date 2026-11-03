@@ -39,7 +39,7 @@ $env:VFOX_JAVA_GITHUB_MIRROR = "https://gh-proxy.org/"
 
 只有以 `https://github.com/` 开头的请求：下载，以及插件为这些下载去读的 GitHub 上的校验和文件（见[补充说明](#补充说明)）。其他主机上的 JDK 照旧从那里下载，向 Foojay 发的请求也不变。
 
-Foojay 给各发行版的链接（2026-10-21）：
+Foojay 给各发行版的链接（2026-11-03）：
 
 | 简称 | 下载来源 |
 | --- | --- |

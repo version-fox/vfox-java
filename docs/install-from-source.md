@@ -40,7 +40,7 @@ vfox use --global java@21-tem
 java -version
 ```
 
-`vfox install java@21-tem` installs the newest Temurin 21, `21.0.12.1+1-tem` on 2026-10-18.
+`vfox install java@21-tem` installs the newest Temurin 21, `21.0.13+9-tem` on 2026-11-03.
 
 ## When java is already added
 

@@ -2,9 +2,9 @@
 
 [中文](changes.md) | [English](../changes.md)
 
-按发布版本列出用户能感受到的变化。GitHub 的 Release 页面列出了对应的 PR。写这篇文档时最新的发布版是 0.6.3，`main` 比它多出“未发布”下面的所有内容。想现在就用上这些变化，见 [install-from-source.md](install-from-source.md)。
+按发布版本列出用户能感受到的变化。GitHub 的 Release 页面列出了对应的 PR。
 
-## 未发布
+## 0.6.4（2026-11-03）
 
 - vfox 会按 Foojay 给出的校验和校验下载的文件。0.6.3 不给 vfox 任何校验和，所以每次安装最后都有 `WARNING: Checksum is not provided, skip verify...`，下载的内容照单全收，尽管 Foojay 给大多数发行版都列了校验和。现在 `vfox install java@25.0.2-graalce` 会打印 `Verifying checksum e0be791c...`，下载的文件对不上校验和时以 `Checksum error` 终止，什么也不会装上。Dragonwell、Bisheng、Trava、AdoptOpenJDK、OpenLogic、Gluon GraalVM、8 以后的 Corretto，以及其余发行版里较旧的版本，Foojay 没有校验和，vfox 对这些仍然会警告。GitHub 上的校验和文件和下载一样经过 `VFOX_JAVA_GITHUB_MIRROR`。Foojay 给了校验和而插件用不上时，插件会打印原因（`Cannot verify the download: ...`），安装照旧。见 [foojay.md](foojay.md#校验和)。
 

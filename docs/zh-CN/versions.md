@@ -23,7 +23,7 @@ vfox install java@21                # 不写发行版：jdk.java.net 上的 Open
 
 `vfox install` 先问插件该装哪个包，再由 vfox 下载并解压。
 
-- 只写大版本号（`21`、`21-tem`）时，安装这个发行版列出的、这个大版本下最新的版本，例如截至 2026-10-18 是 `21.0.12.1+1-tem`。
+- 只写大版本号（`21`、`21-tem`）时，安装这个发行版列出的、这个大版本下最新的版本，例如截至 2026-11-03 是 `21.0.13+9-tem`。
 - 写得更具体时，必须是这个发行版列出的版本。`21.0.8-tem` 装的是 21.0.8 的最新构建 `21.0.8+9-tem`。根本不存在的版本会失败，报 `No JDK found for 21.0.99-tem on linux/amd64`。
 - 写了构建号就装那个构建：`21.0.5+63130-jb`。
 - SDKMAN 写法里补了零的版本也能识别：`27.0.0-librca` 装的是 `27+36-librca`。
@@ -33,7 +33,7 @@ vfox install java@21                # 不写发行版：jdk.java.net 上的 Open
 - 在 Windows 上，同一版本既有 zip 又有 tar.gz 时，装 zip。
 - 只写发行版不写版本（`java@tem`、`java@-tem`、`java@zulu-fx`）会被拒绝，并提示补上版本。
 
-如果这个版本名已经装过，会提示 `java@21.0.12.1+1-tem is already installed`，不会重新下载。
+如果这个版本名已经装过，会提示 `java@21.0.13+9-tem is already installed`，不会重新下载。
 
 ## 安装后的版本名
 
@@ -87,7 +87,7 @@ vfox 自己匹配 `21` 时只看版本号，所以 GraalVM CE 8 到 19、Gluon G
 写成 `<大版本>.ea[.<构建号>]`：
 
 ```bash
-vfox install java@28.ea-open       # 最新的 EA 构建，截至 2026-10-18 是 28-ea+19
+vfox install java@28.ea-open       # 最新的 EA 构建，截至 2026-11-03 是 28-ea+21
 vfox install java@28.ea.15-open    # 28-ea+15
 ```
 
@@ -98,7 +98,7 @@ vfox install java@28.ea.15-open    # 28-ea+15
 ```bash
 vfox search java            # 默认的 OpenJDK
 vfox search java tem        # 指定一个发行版，简称或长名都行
-vfox search java all        # 所有发行版，在 Linux x64 上约 2500 行
+vfox search java all        # 所有发行版，在 Linux x64 上约 2600 行
 ```
 
 每一行都是可以接在 `java@` 后面的名字，新的在前，带 LTS、JavaFX（见 [javafx.md](javafx.md)）备注，已安装的会有标记：
@@ -109,9 +109,9 @@ Available versions:
  - 27+35-tem
  - 26.0.2.1+1-tem
  ...
- - 25.0.4+7-tem (LTS)
+ - 25.0.5+8-tem (LTS)
  ...
- - 21.0.12.1+1-tem (LTS) (installed)
+ - 21.0.13+9-tem (LTS) (installed)
 ```
 
 列表是按你运行命令的这台机器来的，只含它能装的版本，见 [platforms.md](platforms.md)。在交互式终端里，`vfox search java tem` 可以直接选一个版本安装；在其他环境下只打印列表。vfox 会缓存搜索结果 12 小时（`vfox config cache.availableHookDuration`），所以刚发布的版本可能暂时看不到。

@@ -40,7 +40,7 @@ vfox use --global java@21-tem
 java -version
 ```
 
-`vfox install java@21-tem` 装的是最新的 Temurin 21，截至 2026-10-18 是 `21.0.12.1+1-tem`。
+`vfox install java@21-tem` 装的是最新的 Temurin 21，截至 2026-11-03 是 `21.0.13+9-tem`。
 
 ## 已经添加过 java 时
 

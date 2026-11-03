@@ -36,11 +36,11 @@ Foojay 在这个平台上没有对应的包：版本、发行版、带不带 Jav
 
 ### `Checksum error`
 
-vfox 打印了 `Checksum error, file: <路径>`，接着是 `failed to install java` 和 `checksum error`，并在解压任何东西之前就停了下来，所以什么也没有装上。下载的文件和 Foojay 给它的校验和对不上，见 [foojay.md](foojay.md#校验和)。最常见的原因是下载中途被截断或损坏：再试一次。如果经过镜像（[mirror.md](mirror.md)）总是出现，可能是镜像给了别的文件，取消设置 `VFOX_JAVA_GITHUB_MIRROR`。没有镜像也出现，则可能是 Foojay 记下校验和之后，厂商换掉了文件：带上发行版和版本，向 [Foojay](https://github.com/foojayio/discoapi) 报告。未发布：0.6.3 不给 vfox 任何校验和，所以不会停在这里。
+vfox 打印了 `Checksum error, file: <路径>`，接着是 `failed to install java` 和 `checksum error`，并在解压任何东西之前就停了下来，所以什么也没有装上。下载的文件和 Foojay 给它的校验和对不上，见 [foojay.md](foojay.md#校验和)。最常见的原因是下载中途被截断或损坏：再试一次。如果经过镜像（[mirror.md](mirror.md)）总是出现，可能是镜像给了别的文件，取消设置 `VFOX_JAVA_GITHUB_MIRROR`。没有镜像也出现，则可能是 Foojay 记下校验和之后，厂商换掉了文件：带上发行版和版本，向 [Foojay](https://github.com/foojayio/discoapi) 报告。
 
 ### `Cannot verify the download: ...`
 
-Foojay 给这个包列出了校验和，但插件用不上，所以安装照常进行、下载的文件没有校验，下载完成后 vfox 会打印 `WARNING: Checksum is not provided, skip verify...`。冒号后面是原因：存放校验和的文件打不开时是 `failed to fetch <地址>: ...`（见[网络](#网络)），文件里根本没有摘要时是 `<地址> has no digest`（比如防火墙或认证页面返回了一个网页），文件里只列了别的包时是 `<地址> has no digest for <文件>`，算法是 vfox 不认识的则是 `vfox cannot verify a sha3_256 checksum`。第一种再试一次就行。其余两种请带上发行版和版本报告，因为需要修插件，或者 Foojay 的记录有误。未发布：0.6.3 从不读校验和。
+Foojay 给这个包列出了校验和，但插件用不上，所以安装照常进行、下载的文件没有校验，下载完成后 vfox 会打印 `WARNING: Checksum is not provided, skip verify...`。冒号后面是原因：存放校验和的文件打不开时是 `failed to fetch <地址>: ...`（见[网络](#网络)），文件里根本没有摘要时是 `<地址> has no digest`（比如防火墙或认证页面返回了一个网页），文件里只列了别的包时是 `<地址> has no digest for <文件>`，算法是 vfox 不认识的则是 `vfox cannot verify a sha3_256 checksum`。第一种再试一次就行。其余两种请带上发行版和版本报告，因为需要修插件，或者 Foojay 的记录有误。
 
 ### `VFOX_JAVA_GITHUB_MIRROR must start with http:// or https://, such as https://gh-proxy.org/, but is gh-proxy.org`
 
@@ -74,14 +74,14 @@ vfox config proxy.url http://127.0.0.1:7890
 ## 看起来不对，其实没问题
 
 - **`vfox search` 里没有你预期的版本。** vfox 会缓存搜索结果 12 小时。`vfox config cache.availableHookDuration 0` 可以关闭缓存。也可能是 Foojay 那边还没有这个版本。
-- **装某个 JDK 时出现 `WARNING: Checksum is not provided, skip verify...`。** Foojay 没有给这个包列出校验和（Dragonwell、Bisheng、Trava、AdoptOpenJDK、OpenLogic、Gluon GraalVM、8 以后的 Corretto，以及其余发行版里较旧的版本），vfox 没有可以拿来比对的东西，只能信任下载的内容。Foojay 给了校验和的包，vfox 会打印 `Verifying checksum <摘要>...`，见 [foojay.md](foojay.md#校验和)。未发布：0.6.3 根本不给 vfox 校验和，所以每次安装最后都有这条警告。
+- **装某个 JDK 时出现 `WARNING: Checksum is not provided, skip verify...`。** Foojay 没有给这个包列出校验和（Dragonwell、Bisheng、Trava、AdoptOpenJDK、OpenLogic、Gluon GraalVM、8 以后的 Corretto，以及其余发行版里较旧的版本），vfox 没有可以拿来比对的东西，只能信任下载的内容。Foojay 给了校验和的包，vfox 会打印 `Verifying checksum <摘要>...`，见 [foojay.md](foojay.md#校验和)。
 - **安装后的版本名里多了一个你没写的构建号。** `java@21.0.8-tem` 装出来是 `21.0.8+9-tem`。构建号是版本名的一部分，见 [versions.md](versions.md#安装后的版本名)。
 - **`vfox install java@21-tem` 和 `vfox install java tem` 做的是不同的事。** 后者是两个 SDK，`java` 和 `tem`。
 - **你设置的 `GRAALVM_HOME` 不会被改动。** 插件只设置 `JAVA_HOME` 和 `PATH`。
 - **`vfox use java@21` 选中了 `21.3.1-grl11`，而它运行的是 Java 11。** GraalVM CE 8 到 19、23 以前的 Gluon GraalVM，以及 25 以前的 Mandrel 和 Liberica NIK，用的都是 GraalVM 的版本号；对只写大版本号的写法，vfox 只按版本号匹配，不分发行版，见 [distributions.md](distributions.md#按-graalvm-编号的版本)。请写成 `java@21-tem`。
 - **`java@21-mandrel` 装上的 Mandrel 运行的是 Java 17。** Mandrel 和 Liberica NIK 的大版本号是 GraalVM 的：`21.3.6-mandrel` 是最新的 Mandrel 21.x。它们为 Java 21 发布的是 23.1.x，所以要写 `java@23-mandrel`，见 [distributions.md](distributions.md#mandrel-与-liberica-nik-的行为)。
-- **`native-image` 停在 `Default native-compiler executable 'gcc' not found via environment variable PATH`，或者在最后一步报 `cannot find -lz`。** 插件只安装 JDK，而 `native-image` 需要系统里的 C 工具链和 zlib。Ubuntu 上执行 `sudo apt install --assume-yes build-essential zlib1g-dev` 即可装上，见 [distributions.md](distributions.md#native-image-与-c-工具链)。
-- **GraalVM CE 8 到 19（比如 `22.3.3-grl17`）里 `native-image: command not found`。** 这些版本不带 `native-image`，用 `gu install native-image` 添加。`21.3.1-grl8` 上这条命令会失败，见 [distributions.md](distributions.md#native-image-与-c-工具链)。
+- **`native-image` 停在 `Default native-compiler executable 'gcc' not found via environment variable PATH`，或者在最后一步报 `cannot find -lz`。** 插件只安装 JDK，而 `native-image` 需要系统里的 C 工具链和 zlib。Ubuntu 上执行 `sudo apt install --assume-yes build-essential zlib1g-dev` 即可装上，见 [native-image.md](native-image.md#ubuntu)。
+- **GraalVM CE 8 到 19（比如 `22.3.3-grl17`）里 `native-image: command not found`。** 这些版本不带 `native-image`，用 `gu install native-image` 添加。`21.3.1-grl8` 上这条命令会失败，见 [native-image.md](native-image.md#graalvm-ce-8-到-19)。
 
 ## JDK 在哪里
 
