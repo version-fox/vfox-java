@@ -23,7 +23,7 @@ The distribution is a short name (`tem`) or a long name (`temurin`). Both lists 
 
 `vfox install` asks the plugin which package matches, then vfox downloads and unpacks it.
 
-- A bare major (`21`, `21-tem`) installs the newest release of that major the distribution lists, for example `21.0.12.1+1-tem` on 2026-10-18.
+- A bare major (`21`, `21-tem`) installs the newest release of that major the distribution lists, for example `21.0.13+9-tem` on 2026-11-03.
 - A longer version must match a release the distribution lists. `21.0.8-tem` installs `21.0.8+9-tem`, the newest build of 21.0.8. A release nobody published fails with `No JDK found for 21.0.99-tem on linux/amd64`.
 - A build number selects that build: `21.0.5+63130-jb`.
 - A release padded with zeros, as SDKMAN writes it, is accepted: `27.0.0-librca` installs `27+36-librca`.
@@ -33,7 +33,7 @@ The distribution is a short name (`tem`) or a long name (`temurin`). Both lists 
 - On Windows a release shipped as zip and as tar.gz installs from the zip.
 - A distribution without a version (`java@tem`, `java@-tem`, `java@zulu-fx`) is rejected with a message that asks for one.
 
-An install that finds the name already present prints `java@21.0.12.1+1-tem is already installed` and downloads nothing.
+An install that finds the name already present prints `java@21.0.13+9-tem is already installed` and downloads nothing.
 
 ## Installed names
 
@@ -87,7 +87,7 @@ Pick the scope with `vfox use`'s flags: `--global`, `--project` or `--session`, 
 Spell the build as `<major>.ea[.<build>]`:
 
 ```bash
-vfox install java@28.ea-open       # newest early-access build, 28-ea+19 on 2026-10-18
+vfox install java@28.ea-open       # newest early-access build, 28-ea+21 on 2026-11-03
 vfox install java@28.ea.15-open    # 28-ea+15
 ```
 
@@ -98,7 +98,7 @@ The installed name uses Foojay's spelling, `28-ea+19`, and `vfox use java@28-ea+
 ```bash
 vfox search java            # OpenJDK, the default
 vfox search java tem        # one distribution, short or long name
-vfox search java all        # every distribution, about 2,500 lines on Linux x64
+vfox search java all        # every distribution, about 2,600 lines on Linux x64
 ```
 
 Each line is a name that can follow `java@`, newest first, with notes for LTS and JavaFX (see [javafx.md](javafx.md)) and a mark for versions that are installed:
@@ -109,9 +109,9 @@ Available versions:
  - 27+35-tem
  - 26.0.2.1+1-tem
  ...
- - 25.0.4+7-tem (LTS)
+ - 25.0.5+8-tem (LTS)
  ...
- - 21.0.12.1+1-tem (LTS) (installed)
+ - 21.0.13+9-tem (LTS) (installed)
 ```
 
 The list holds what exists for the machine you run it on, see [platforms.md](platforms.md). In an interactive terminal `vfox search java tem` lets you pick a version and installs it, elsewhere it only prints. vfox caches the result for 12 hours (`vfox config cache.availableHookDuration`), so a release published a minute ago may be missing.

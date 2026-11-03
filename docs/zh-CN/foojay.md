@@ -6,6 +6,102 @@
 
 你可以自己在浏览器里查。这套 API 的 [Swagger UI](https://api.foojay.io/swagger-ui) 列出了所有接口，规范文件是 [foojay-discoapi-3.0.yml](https://api.foojay.io/swagger/foojay-discoapi-3.0.yml)。打开 `GET /disco/v3.0/packages/jdks`，点“Try it out”，填好参数再点“Execute”，页面会给出实际执行的 `curl` 命令和返回的 JSON。
 
+下面的示例用了 `curl` 和 `jq`，你可能需要自己安装，任何 JSON 工具都可以。有些 HTTP 客户端用默认 User-Agent 访问 Foojay 会得到 `403`，比如 Python 的 `urllib`。`curl` 不会，vfox 也不会。插件自己向 Foojay 问了什么，见[插件发出的请求](#插件发出的请求)，怎样校验下载的文件，见[校验和](#校验和)。
+
+## 我的平台上有哪些发行版
+
+`latest=per_distro` 为每个有包的发行版返回最新的一个包。不要和 `version` 一起用，`version` 会被忽略。
+
+```bash
+# Windows ARM64
+curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?architecture=aarch64&operating_system=windows&archive_type=zip&archive_type=tar.gz&directly_downloadable=true&latest=per_distro' \
+  | jq -r '.result[].distribution' | sort -u
+```
+
+```
+jetbrains
+liberica
+microsoft
+temurin
+zulu
+```
+
+换成别的平台，改动指明平台的那三个参数即可。Linux 还要加上 `lib_c_type=glibc` 或 `musl`：
+
+| 平台 | 参数 |
+| --- | --- |
+| Linux arm64 | `architecture=aarch64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz` |
+| Alpine x64 | `architecture=amd64&operating_system=linux&lib_c_type=musl&archive_type=tar.gz` |
+| macOS Apple Silicon | `architecture=aarch64&operating_system=macos&archive_type=tar.gz` |
+| macOS Intel | `architecture=amd64&operating_system=macos&archive_type=tar.gz` |
+| Windows x64 | `architecture=x64&operating_system=windows&archive_type=zip&archive_type=tar.gz` |
+
+返回结果里的名字就是 [distributions.md](distributions.md) 里的长名，只有 `oracle_open_jdk` 例外，插件里叫它 `openjdk`（`open`）。只写 `archive_type=tar.gz` 时，结果里会缺 Linux 上的 Red Hat 和 OJDKBuild、macOS 上的 OpenLogic，因为它们在那里提供的是 tar.xz 或 zip 包。插件会为它们额外请求这些格式，见[插件发出的请求](#插件发出的请求)。
+
+## 我的平台上哪些发行版有某个版本
+
+```bash
+# Intel Mac 上的 Java 27
+curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?version=27&latest=available&architecture=amd64&operating_system=macos&archive_type=tar.gz&directly_downloadable=true' \
+  | jq -r '.result[].distribution' | sort -u
+```
+
+2026-11-03 运行这条命令，打印的是 `corretto liberica oracle semeru zulu`。Temurin 和 OpenJDK 不在其中：它们在 Intel Mac 上停在了 26。只写大版本号时像插件一样加上 `latest=available`，写更具体的版本时就不要加。
+
+## 某个发行版的所有版本
+
+这就是 `vfox search java tem` 在你这台机器上显示的内容：
+
+```bash
+curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=temurin&architecture=aarch64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
+  | jq -r '.result[].java_version'
+```
+
+```
+27+35
+26.0.2.1+1
+26.0.2+10
+...
+```
+
+加上 `version=21.0.8` 只看某个版本，加上 `javafx_bundled=true` 只看带 JavaFX 的构建。一条记录长这样：
+
+```bash
+curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=temurin&version=21.0.8&architecture=amd64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
+  | jq -c '.result[] | {java_version, distribution_version, term_of_support, javafx_bundled, archive_type, filename}'
+```
+
+```
+{"java_version":"21.0.8+9","distribution_version":"21.0.8","term_of_support":"lts","javafx_bundled":false,"archive_type":"tar.gz","filename":"OpenJDK21U-jdk_x64_linux_hotspot_21.0.8_9.tar.gz"}
+```
+
+`java_version` 是 Java 的版本号，插件用的就是它。`distribution_version` 是厂商自己的版本号（Java `27+35` 对应 Zulu 的 `27.28.101`），插件对 Mandrel 和 Liberica NIK 用它（见[下文](#mandrel-与-liberica-nik)），对 Oracle GraalVM 和 GraalVM 社区版也用它。
+
+从 2026 年 10 月起，Oracle GraalVM 和 GraalVM 社区版的 `distribution_version` 是 GraalVM 自己的版本号，`java_version` 则是 JDK 的版本号，而每月的特性版本和 25.0 系列的某个构建会共用同一个 JDK 版本号：
+
+```bash
+curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=graalvm&version=25.0.4.1&architecture=amd64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
+  | jq -r '.result[] | [.java_version, .distribution_version, .filename] | join(" ")'
+```
+
+```
+25.0.4.1 25.4.4.1.1 graalvm-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz
+25.0.4.1 25.3.4.1 graalvm-jdk-25i3-25.0.4.1_linux-x64_bin.tar.gz
+25.0.4.1 25.0.4.1.1 graalvm-jdk-25.0.4.1.1_linux-x64_bin.tar.gz
+25.0.4.1 25.0.4.1 graalvm-jdk-25.0.4.1_linux-x64_bin.tar.gz
+```
+
+用 `version` 分不开这几个包，而 `distribution_version` 按开头的完整几段来匹配（`25.0.4.1` 也会列出 `25.0.4.1.1`）。所以插件像 `vfox search` 那样查出全部的包，具体是哪个版本由它自己挑，并按 GraalVM 的版本号命名，也就是每个包的 `java_version` 和 `distribution_version` 中较新的那个：GraalVM 社区版的特性版本还有一份按老办法列的记录，GraalVM 的版本号放在 `java_version` 里。`vfox search` 按这个版本号从新到旧列出，Foojay 在两个版本号下各列一次的同一个文件，只列一次。
+
+## 版本与支持期限
+
+```bash
+curl -s 'https://api.foojay.io/disco/v3.0/major_versions?ea=false&ga=true&maintained=true' \
+  | jq -r '.result[] | [.major_version, .term_of_support] | @tsv'
+```
+
+列出仍在维护的各个大版本，以及每个是 LTS 还是 STS。EA 构建要用 `release_status=ea`，或者像 `version=28-ea` 这样明确写出版本。
+
 ## 插件发出的请求
 
 在 Linux x64 上执行 `vfox install java@21.0.8-tem`，发出的请求是：
@@ -92,103 +188,7 @@ Temurin 的记录里直接带着摘要（Linux x64 上的 21.0.8 是 `f2dc5418..
 
 Foojay 给出的校验和插件用不上时，安装照常进行，只是不校验，和插件还不读校验和的时候一样，并且会说明原因：`Cannot verify the download: https://example.org/x.tar.gz.sha256 has no digest for x.tar.gz`。可能是文件打不开，可能是里面没有这个包的摘要，也可能是 vfox 不校验的算法。拿不到校验和，不会拦下安装；下载的文件和校验和对不上，则会。链接和校验和都是 Foojay 给的，所以这个检查能发现损坏或被替换的文件，发现不了记录本身有误。
 
-## 我的平台上有哪些发行版
-
-`latest=per_distro` 为每个有包的发行版返回最新的一个包。不要和 `version` 一起用，`version` 会被忽略。
-
-```bash
-# Windows ARM64
-curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?architecture=aarch64&operating_system=windows&archive_type=zip&archive_type=tar.gz&directly_downloadable=true&latest=per_distro' \
-  | jq -r '.result[].distribution' | sort -u
-```
-
-```
-jetbrains
-liberica
-microsoft
-temurin
-zulu
-```
-
-换成别的平台，改动指明平台的那三个参数即可。Linux 还要加上 `lib_c_type=glibc` 或 `musl`：
-
-| 平台 | 参数 |
-| --- | --- |
-| Linux arm64 | `architecture=aarch64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz` |
-| Alpine x64 | `architecture=amd64&operating_system=linux&lib_c_type=musl&archive_type=tar.gz` |
-| macOS Apple Silicon | `architecture=aarch64&operating_system=macos&archive_type=tar.gz` |
-| macOS Intel | `architecture=amd64&operating_system=macos&archive_type=tar.gz` |
-| Windows x64 | `architecture=x64&operating_system=windows&archive_type=zip&archive_type=tar.gz` |
-
-返回结果里的名字就是 [distributions.md](distributions.md) 里的长名，只有 `oracle_open_jdk` 例外，插件里叫它 `openjdk`（`open`）。只写 `archive_type=tar.gz` 时，结果里会缺 Linux 上的 Red Hat 和 OJDKBuild、macOS 上的 OpenLogic，因为它们在那里提供的是 tar.xz 或 zip 包。插件会为它们额外请求这些格式，见上面的表。
-
-## 我的平台上哪些发行版有某个版本
-
-```bash
-# Intel Mac 上的 Java 27
-curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?version=27&latest=available&architecture=amd64&operating_system=macos&archive_type=tar.gz&directly_downloadable=true' \
-  | jq -r '.result[].distribution' | sort -u
-```
-
-2026-10-18 运行这条命令，打印的是 `corretto liberica oracle semeru zulu`。Temurin 和 OpenJDK 不在其中：它们在 Intel Mac 上停在了 26。只写大版本号时像插件一样加上 `latest=available`，写更具体的版本时就不要加。
-
-## 某个发行版的所有版本
-
-这就是 `vfox search java tem` 在你这台机器上显示的内容：
-
-```bash
-curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=temurin&architecture=aarch64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
-  | jq -r '.result[].java_version'
-```
-
-```
-27+35
-26.0.2.1+1
-26.0.2+10
-...
-```
-
-加上 `version=21.0.8` 只看某个版本，加上 `javafx_bundled=true` 只看带 JavaFX 的构建。一条记录长这样：
-
-```bash
-curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=temurin&version=21.0.8&architecture=amd64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
-  | jq -c '.result[] | {java_version, distribution_version, term_of_support, javafx_bundled, archive_type, filename}'
-```
-
-```
-{"java_version":"21.0.8+9","distribution_version":"21.0.8","term_of_support":"lts","javafx_bundled":false,"archive_type":"tar.gz","filename":"OpenJDK21U-jdk_x64_linux_hotspot_21.0.8_9.tar.gz"}
-```
-
-`java_version` 是 Java 的版本号，插件用的就是它。`distribution_version` 是厂商自己的版本号（Java `27+35` 对应 Zulu 的 `27.28.101`），插件对 Mandrel 和 Liberica NIK 用它（见[上文](#mandrel-与-liberica-nik)），对 Oracle GraalVM 和 GraalVM 社区版也用它。
-
-从 2026 年 10 月起，Oracle GraalVM 和 GraalVM 社区版的 `distribution_version` 是 GraalVM 自己的版本号，`java_version` 则是 JDK 的版本号，而每月的特性版本和 25.0 系列的某个构建会共用同一个 JDK 版本号：
-
-```bash
-curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=graalvm&version=25.0.4.1&architecture=amd64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
-  | jq -r '.result[] | [.java_version, .distribution_version, .filename] | join(" ")'
-```
-
-```
-25.0.4.1 25.4.4.1.1 graalvm-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz
-25.0.4.1 25.3.4.1 graalvm-jdk-25i3-25.0.4.1_linux-x64_bin.tar.gz
-25.0.4.1 25.0.4.1.1 graalvm-jdk-25.0.4.1.1_linux-x64_bin.tar.gz
-25.0.4.1 25.0.4.1 graalvm-jdk-25.0.4.1_linux-x64_bin.tar.gz
-```
-
-用 `version` 分不开这几个包，而 `distribution_version` 按开头的完整几段来匹配（`25.0.4.1` 也会列出 `25.0.4.1.1`）。所以插件像 `vfox search` 那样查出全部的包，具体是哪个版本由它自己挑，并按 GraalVM 的版本号命名，也就是每个包的 `java_version` 和 `distribution_version` 中较新的那个：GraalVM 社区版的特性版本还有一份按老办法列的记录，GraalVM 的版本号放在 `java_version` 里。`vfox search` 按这个版本号从新到旧列出，Foojay 在两个版本号下各列一次的同一个文件，只列一次。
-
-## 版本与支持期限
-
-```bash
-curl -s 'https://api.foojay.io/disco/v3.0/major_versions?ea=false&ga=true&maintained=true' \
-  | jq -r '.result[] | [.major_version, .term_of_support] | @tsv'
-```
-
-列出仍在维护的各个大版本，以及每个是 LTS 还是 STS。EA 构建要用 `release_status=ea`，或者像 `version=28-ea` 这样明确写出版本。
-
 ## 补充说明
 
-- 有些 HTTP 客户端用默认 User-Agent 访问 Foojay 会得到 `403`，比如 Python 的 `urllib`。`curl` 不会，vfox 也不会。
-- 示例里用了 `jq`，你可能需要自己安装。任何 JSON 工具都可以。
 - vfox 会缓存 `vfox search` 的结果 12 小时，所以 Foojay 上的变化最多要隔这么久才会出现。
 - 数据本身的问题，比如缺少某个构建或标记有误，请向 [Foojay](https://github.com/foojayio/discoapi) 反馈。插件读取数据的方式有问题，请在本仓库提 issue。

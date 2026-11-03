@@ -23,6 +23,8 @@ tests/post_install_layouts.lua  PostInstall 处理的 macOS 目录结构，会�
 tests/fixtures/loongnix/        Loongnix 归档目录页的一份快照
 tests/e2e/                      容器测试，见 e2e.md
 Injection.lua                   vfox 注入对象的类型提示，不会被加载
+README.md, docs/                文档；README_CN.md 和 docs/zh-CN/ 是中文版
+opencode.jsonc                  让本仓库里的 OpenCode 智能体会话不必确认就能执行 git push、gh pr create 和 gh pr comment
 ```
 
 vfox 加载 `metadata.lua`，命令需要时调用相应的钩子，并向钩子提供全局变量 `PLUGIN` 和 `RUNTIME`（`osType`、`archType`、`version`）。`osType` 和 `archType` 就是 vfox 二进制的 Go `GOOS` 和 `GOARCH`。
@@ -107,7 +109,7 @@ vfox plugin run . ParseLegacyFile --input '{"filename":".sdkmanrc","filepath":"/
 2. 在 `lib/distribution_version.lua` 的 `short_name` 里加一行 `["<简称>"] = "<foojay id>"`。SDKMAN 现在或以前有这个发行版的话，用 SDKMAN 的标识符；没有的话，照 SDKMAN 的习惯起一个：短的厂商名保持原样，长的要缩短，多半是去掉元音（`opnlgc`）。SDKMAN 写法不同的话，在 `hooks/parse_legacy_file.lua` 的 `plugin_spelling` 里做映射，并把这个差别补进 [distributions.md](distributions.md#简称与-sdkman-的不同)。
 3. 如果它的版本号需要特殊处理，像 GraalVM 和 Mandrel 那样，就在 `lib/foojay.lua` 读 Foojay 返回结果的地方处理（`graalvm_packages`、`own_numbers`）；LTS 标记或只写大版本号时选哪个，在 `hooks/available.lua` 和 `hooks/pre_install.lua` 里处理。如果它在 Windows 以外的系统上没有 tar.gz，就把它的格式加进 `lib/foojay.lua` 的 `other_archive_type`；如果 Foojay 给它列的包有的不能照原样安装，就在同一文件的 `fixes` 里加一条修正。
 4. 在 `tests/pre_install_test.lua` 里加一个用例。
-5. 更新 `README.md`、[distributions.md](distributions.md) 和 [platforms.md](platforms.md) 里的表，以及对应的中文版（`README_CN.md` 和 `docs/zh-CN/` 下的同名页面）。
+5. 更新 `README.md`、[distributions.md](distributions.md) 和 [platforms.md](platforms.md) 里的表，以及 `README.md` 和 distributions.md 里写的发行版数量，再同步对应的中文版（`README_CN.md` 和 `docs/zh-CN/` 下的同名页面）。
 6. 如果引入了新的代码路径，也要加进 e2e 矩阵（[e2e.md](e2e.md)）。矩阵之外的发行版仍会运行所有检查，只是跳过 `java.vendor` 断言和 asdf 风格的 `PreUse` 写法。只新增名字、没有新代码路径的发行版，则改加进 `tests/e2e/common/common.go` 的 `nameOnly`，并写上 Foojay 有它的那些 runner 平台。
 
 ## 更新平台表
@@ -148,10 +150,18 @@ id 是 Foojay 的（`oracle_open_jdk` 对应 `open`）。这段命令在 Linux a
 
 ## 发布
 
-维护者在默认分支上执行 **Actions → Plugin → Run workflow**，填入不带 `v` 的版本号。共享工作流具体做什么，README 里有说明。发布之后，[vfox-plugins](https://github.com/version-fox/vfox-plugins) 里的 `plugins/java.json` 会显示 `vfox add java` 提供的是哪个版本。
+维护者在默认分支上执行 **Actions → Plugin → Run workflow**，填入不带 `v` 前缀的稳定版插件版本号即可发布。共享工作流 [plugin-manifest-action](https://github.com/version-fox/plugin-manifest-action) 会更新 `metadata.lua`，创建版本提交和标签，并把 ZIP 包和 manifest 发布到本仓库；不需要在本地打标签，也不需要额外的发布令牌。PR 只运行检查。
 
-文档里用“未发布”（英文是“Unreleased”）标记比最新发布版更新的内容。发布之后，把 [changes.md](changes.md) 里的这些条目移到新版本下面，并去掉这些标注，两种语言都要处理：`grep -rn -i -e unreleased -e 未发布 docs README*`。上一个发布版的版本号也要搜一遍：有几句话是拿它做对比的，没有写“未发布”。
+直接推送版本标签也可以发布，前提是 `PLUGIN.version` 已经与标签一致。发布失败时，重新运行失败的那个作业即可接着发布。工作流引用的是共享的 `@v1` 发布工具，升级这个工具不会发布本插件。包的约定和首次接入的要求，见共享工作流的文档。发布之后，[vfox-plugins](https://github.com/version-fox/vfox-plugins) 里的 `plugins/java.json` 会显示 `vfox add java` 提供的是哪个版本。
+
+### 发布之后
+
+文档里用“未发布”（英文是“Unreleased”）标记比最新发布版更新的内容。发布完成后：
+
+1. 把 [changes.md](changes.md) 里的这些条目移到新版本下面，写上发布日期，并去掉这些标注，两种语言都要处理：`grep -rn -i -e unreleased -e 未发布 docs README*`。
+2. 上一个发布版的版本号也要搜一遍：有几句话是拿它做对比的，没有写“未发布”。
+3. 引用 Foojay 数据的页面会写明数据取自哪一天。把那些写着“某个东西的最新版本”的引用（2026-11-03 的 `21.0.13+9-tem`）更新一遍，并重新对照 Foojay 检查各张表，见[更新平台表](#更新平台表)。
 
 ## 编写文档
 
-英文页面在 `docs/`，中文页面在 `docs/zh-CN/`，文件名相同；README 的中文版是根目录的 `README_CN.md`。每页开头有指向另一种语言的链接。引用 Foojay 数据的页面会写明数据取自哪一天。CI 不检查这些文档，所以你加的命令请自己跑一遍。
+英文页面在 `docs/`，中文页面在 `docs/zh-CN/`，文件名相同；README 的中文版是根目录的 `README_CN.md`。每页开头有指向另一种语言的链接。新增的页面要加进两份 README 的“文档”列表。`vfox add java` 打印的 Notes 链接到 `README.md`（`metadata.lua` 里的 `PLUGIN.notes`，e2e 套件会检查），所以 README 要一直保留简称列表和搜索某个发行版的写法。引用 Foojay 数据的页面会写明数据取自哪一天。CI 不检查这些文档，所以你加的命令请自己跑一遍。

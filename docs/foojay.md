@@ -6,6 +6,102 @@
 
 You can ask it yourself in the browser. The [Swagger UI](https://api.foojay.io/swagger-ui) of the API has the endpoints, and its spec is [foojay-discoapi-3.0.yml](https://api.foojay.io/swagger/foojay-discoapi-3.0.yml). Open `GET /disco/v3.0/packages/jdks`, press "Try it out", fill in the parameters and press "Execute". The page shows the `curl` command it ran and the JSON that came back.
 
+The examples below use `curl` and `jq`, which you may have to install. Any JSON tool will do. Some HTTP clients get `403` from Foojay with their default User-Agent. Python's `urllib` does. `curl` does not, and neither does vfox. What the plugin itself asks is under [What the plugin asks](#what-the-plugin-asks), and how it verifies a download under [Checksums](#checksums).
+
+## Which distributions have a build for my platform
+
+`latest=per_distro` returns the newest package of every distribution that has one. Do not combine it with `version`, which it ignores.
+
+```bash
+# Windows on ARM64
+curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?architecture=aarch64&operating_system=windows&archive_type=zip&archive_type=tar.gz&directly_downloadable=true&latest=per_distro' \
+  | jq -r '.result[].distribution' | sort -u
+```
+
+```
+jetbrains
+liberica
+microsoft
+temurin
+zulu
+```
+
+For another platform change the three parameters that name it. Linux needs `lib_c_type=glibc` or `musl` as well:
+
+| Platform | Parameters |
+| --- | --- |
+| Linux arm64 | `architecture=aarch64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz` |
+| Alpine x64 | `architecture=amd64&operating_system=linux&lib_c_type=musl&archive_type=tar.gz` |
+| macOS Apple silicon | `architecture=aarch64&operating_system=macos&archive_type=tar.gz` |
+| macOS Intel | `architecture=amd64&operating_system=macos&archive_type=tar.gz` |
+| Windows x64 | `architecture=x64&operating_system=windows&archive_type=zip&archive_type=tar.gz` |
+
+The names in the answer are the long names in [distributions.md](distributions.md), except `oracle_open_jdk`, which the plugin calls `openjdk` (`open`). With `archive_type=tar.gz` alone the answer misses Red Hat and OJDKBuild on Linux, and OpenLogic on macOS, which ship tar.xz or zip there. The plugin asks for those types for them, see [What the plugin asks](#what-the-plugin-asks).
+
+## Which distributions have a release for my platform
+
+```bash
+# Java 27 on Intel Macs
+curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?version=27&latest=available&architecture=amd64&operating_system=macos&archive_type=tar.gz&directly_downloadable=true' \
+  | jq -r '.result[].distribution' | sort -u
+```
+
+On 2026-11-03 this printed `corretto liberica oracle semeru zulu`. Temurin and OpenJDK were not among them: they stopped at 26 there. Use `latest=available` for a bare major, as the plugin does, and leave it out for a longer version.
+
+## The versions of one distribution
+
+This is what `vfox search java tem` shows, for the machine you run it on:
+
+```bash
+curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=temurin&architecture=aarch64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
+  | jq -r '.result[].java_version'
+```
+
+```
+27+35
+26.0.2.1+1
+26.0.2+10
+...
+```
+
+Add `version=21.0.8` for one release, and `javafx_bundled=true` for the JavaFX builds only. A record looks like this:
+
+```bash
+curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=temurin&version=21.0.8&architecture=amd64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
+  | jq -c '.result[] | {java_version, distribution_version, term_of_support, javafx_bundled, archive_type, filename}'
+```
+
+```
+{"java_version":"21.0.8+9","distribution_version":"21.0.8","term_of_support":"lts","javafx_bundled":false,"archive_type":"tar.gz","filename":"OpenJDK21U-jdk_x64_linux_hotspot_21.0.8_9.tar.gz"}
+```
+
+`java_version` is Java's version and the one the plugin uses. `distribution_version` is the vendor's own (Zulu's `27.28.101` for Java `27+35`), which the plugin uses for Mandrel and Liberica NIK, see [below](#mandrel-and-liberica-nik), and for Oracle GraalVM and GraalVM Community.
+
+For Oracle GraalVM and GraalVM Community, since October 2026, `distribution_version` is GraalVM's own version and `java_version` the JDK's, which a monthly feature release shares with a build of the 25.0 line:
+
+```bash
+curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=graalvm&version=25.0.4.1&architecture=amd64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
+  | jq -r '.result[] | [.java_version, .distribution_version, .filename] | join(" ")'
+```
+
+```
+25.0.4.1 25.4.4.1.1 graalvm-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz
+25.0.4.1 25.3.4.1 graalvm-jdk-25i3-25.0.4.1_linux-x64_bin.tar.gz
+25.0.4.1 25.0.4.1.1 graalvm-jdk-25.0.4.1.1_linux-x64_bin.tar.gz
+25.0.4.1 25.0.4.1 graalvm-jdk-25.0.4.1_linux-x64_bin.tar.gz
+```
+
+`version` cannot tell those apart, and `distribution_version` matches whole leading components (`25.0.4.1` also lists `25.0.4.1.1`). So the plugin asks for every package, as `vfox search` does, picks the release itself, and names it after GraalVM's version: the newer of a package's `java_version` and `distribution_version`, as GraalVM Community's feature releases are also listed the old way round, with GraalVM's version as `java_version`. `vfox search` lists them newest first by that version, and a file that Foojay lists under two versions once.
+
+## Releases and support terms
+
+```bash
+curl -s 'https://api.foojay.io/disco/v3.0/major_versions?ea=false&ga=true&maintained=true' \
+  | jq -r '.result[] | [.major_version, .term_of_support] | @tsv'
+```
+
+lists the feature releases that are still maintained and whether each is LTS or STS. Early-access builds need `release_status=ea` or an explicit version such as `version=28-ea`.
+
 ## What the plugin asks
 
 `vfox install java@21.0.8-tem` on Linux x64 sends:
@@ -92,103 +188,7 @@ For a package with none, vfox prints `WARNING: Checksum is not provided, skip ve
 
 Where Foojay lists a checksum that the plugin cannot use, the install goes on without it, as it did before the plugin read checksums, and the plugin says why: `Cannot verify the download: https://example.org/x.tar.gz.sha256 has no digest for x.tar.gz`. The file may not answer, it may hold no digest for the package, or the algorithm may be one vfox does not verify. A checksum that cannot be had stops nothing. A download that does not match one does. Foojay gives the link and the checksum alike, so the check catches a damaged or substituted file, not a wrong record.
 
-## Which distributions have a build for my platform
-
-`latest=per_distro` returns the newest package of every distribution that has one. Do not combine it with `version`, which it ignores.
-
-```bash
-# Windows on ARM64
-curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?architecture=aarch64&operating_system=windows&archive_type=zip&archive_type=tar.gz&directly_downloadable=true&latest=per_distro' \
-  | jq -r '.result[].distribution' | sort -u
-```
-
-```
-jetbrains
-liberica
-microsoft
-temurin
-zulu
-```
-
-For another platform change the three parameters that name it. Linux needs `lib_c_type=glibc` or `musl` as well:
-
-| Platform | Parameters |
-| --- | --- |
-| Linux arm64 | `architecture=aarch64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz` |
-| Alpine x64 | `architecture=amd64&operating_system=linux&lib_c_type=musl&archive_type=tar.gz` |
-| macOS Apple silicon | `architecture=aarch64&operating_system=macos&archive_type=tar.gz` |
-| macOS Intel | `architecture=amd64&operating_system=macos&archive_type=tar.gz` |
-| Windows x64 | `architecture=x64&operating_system=windows&archive_type=zip&archive_type=tar.gz` |
-
-The names in the answer are the long names in [distributions.md](distributions.md), except `oracle_open_jdk`, which the plugin calls `openjdk` (`open`). With `archive_type=tar.gz` alone the answer misses Red Hat and OJDKBuild on Linux, and OpenLogic on macOS, which ship tar.xz or zip there. The plugin asks for those types for them, see the table above.
-
-## Which distributions have a release for my platform
-
-```bash
-# Java 27 on Intel Macs
-curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?version=27&latest=available&architecture=amd64&operating_system=macos&archive_type=tar.gz&directly_downloadable=true' \
-  | jq -r '.result[].distribution' | sort -u
-```
-
-On 2026-10-18 this printed `corretto liberica oracle semeru zulu`. Temurin and OpenJDK were not among them: they stopped at 26 there. Use `latest=available` for a bare major, as the plugin does, and leave it out for a longer version.
-
-## The versions of one distribution
-
-This is what `vfox search java tem` shows, for the machine you run it on:
-
-```bash
-curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=temurin&architecture=aarch64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
-  | jq -r '.result[].java_version'
-```
-
-```
-27+35
-26.0.2.1+1
-26.0.2+10
-...
-```
-
-Add `version=21.0.8` for one release, and `javafx_bundled=true` for the JavaFX builds only. A record looks like this:
-
-```bash
-curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=temurin&version=21.0.8&architecture=amd64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
-  | jq -c '.result[] | {java_version, distribution_version, term_of_support, javafx_bundled, archive_type, filename}'
-```
-
-```
-{"java_version":"21.0.8+9","distribution_version":"21.0.8","term_of_support":"lts","javafx_bundled":false,"archive_type":"tar.gz","filename":"OpenJDK21U-jdk_x64_linux_hotspot_21.0.8_9.tar.gz"}
-```
-
-`java_version` is Java's version and the one the plugin uses. `distribution_version` is the vendor's own (Zulu's `27.28.101` for Java `27+35`), which the plugin uses for Mandrel and Liberica NIK, see [above](#mandrel-and-liberica-nik), and for Oracle GraalVM and GraalVM Community.
-
-For Oracle GraalVM and GraalVM Community, since October 2026, `distribution_version` is GraalVM's own version and `java_version` the JDK's, which a monthly feature release shares with a build of the 25.0 line:
-
-```bash
-curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=graalvm&version=25.0.4.1&architecture=amd64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
-  | jq -r '.result[] | [.java_version, .distribution_version, .filename] | join(" ")'
-```
-
-```
-25.0.4.1 25.4.4.1.1 graalvm-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz
-25.0.4.1 25.3.4.1 graalvm-jdk-25i3-25.0.4.1_linux-x64_bin.tar.gz
-25.0.4.1 25.0.4.1.1 graalvm-jdk-25.0.4.1.1_linux-x64_bin.tar.gz
-25.0.4.1 25.0.4.1 graalvm-jdk-25.0.4.1_linux-x64_bin.tar.gz
-```
-
-`version` cannot tell those apart, and `distribution_version` matches whole leading components (`25.0.4.1` also lists `25.0.4.1.1`). So the plugin asks for every package, as `vfox search` does, picks the release itself, and names it after GraalVM's version: the newer of a package's `java_version` and `distribution_version`, as GraalVM Community's feature releases are also listed the old way round, with GraalVM's version as `java_version`. `vfox search` lists them newest first by that version, and a file that Foojay lists under two versions once.
-
-## Releases and support terms
-
-```bash
-curl -s 'https://api.foojay.io/disco/v3.0/major_versions?ea=false&ga=true&maintained=true' \
-  | jq -r '.result[] | [.major_version, .term_of_support] | @tsv'
-```
-
-lists the feature releases that are still maintained and whether each is LTS or STS. Early-access builds need `release_status=ea` or an explicit version such as `version=28-ea`.
-
 ## Notes
 
-- Some HTTP clients get `403` from Foojay with their default User-Agent. Python's `urllib` does. `curl` does not, and neither does vfox.
-- The examples use `jq`, which you may have to install. Any JSON tool will do.
 - vfox keeps the result of `vfox search` for 12 hours, so a change in Foojay may take that long to show up.
 - Data problems, such as a missing or wrongly marked build, belong to Foojay: [foojayio/discoapi](https://github.com/foojayio/discoapi). Problems with how this plugin reads the data belong in this repository.

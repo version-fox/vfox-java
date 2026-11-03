@@ -2,7 +2,7 @@
 
 [中文](zh-CN/distributions.md) | [English](distributions.md)
 
-The plugin gets the releases and download links of these 31 distributions from [Foojay](foojay.md), all that Foojay listed on 2026-10-20. The short name or the long name goes wherever a distribution does: `21-tem`, `21-temurin`, `temurin-21`, `vfox search java tem`.
+The plugin gets the releases and download links of these 31 distributions from [Foojay](foojay.md), all that Foojay lists on 2026-11-03. The short name or the long name goes wherever a distribution does: `21-tem`, `21-temurin`, `temurin-21`, `vfox search java tem`.
 
 | Short name | Long name | Distribution | Maintained by |
 | --- | --- | --- | --- |
@@ -44,7 +44,7 @@ Which operating systems and CPUs each distribution covers is in [platforms.md](p
 
 ## Short names and SDKMAN
 
-The short names follow the identifiers of [SDKMAN](https://sdkman.io/), where Temurin 21.0.8 is `21.0.8-tem` too. These are the differences, against SDKMAN's list of 2026-10-20:
+The short names follow the identifiers of [SDKMAN](https://sdkman.io/), where Temurin 21.0.8 is `21.0.8-tem` too. These are the differences, against SDKMAN's list of 2026-11-03:
 
 - JetBrains Runtime is `jb`, which SDKMAN calls `jbr`, and BiSheng is `bsg`, which SDKMAN calls `bisheng`, the plugin's long name for it. A `.sdkmanrc` takes SDKMAN's spellings, see [sdkmanrc.md](sdkmanrc.md).
 - SDKMAN no longer lists Dragonwell, TravaOpenJDK, AdoptOpenJDK, Gluon GraalVM or the GraalVM CE builds numbered after GraalVM. It called the last three `adpt`, `gln` and `grl`, and wrote the virtual machine or the JDK into the version: `11.0.10.hs-adpt` with HotSpot, `11.0.10.j9-adpt` with OpenJ9, `22.3.3.r17-grl` on JDK 17. Here each Foojay distribution has a name of its own, so that part moved into the name: `11.0.10-adpt`, `11.0.10-adptj9`, `22.3.3-grl17`. A `.sdkmanrc` with SDKMAN's spelling selects them.
@@ -126,6 +126,8 @@ IBM Semeru Runtime Certified Edition: Semeru's OpenJ9 runtimes, certified agains
 
 ## GraalVM family
 
+Many of these carry GraalVM's own version numbers and not Java's. How they are named and what a bare major installs is explained after the list, for [Oracle GraalVM and GraalVM Community](#behavior-of-oracle-graalvm-and-graalvm-community), for [Mandrel and Liberica NIK](#behavior-of-mandrel-and-liberica-nik) and for [the older ones](#versions-numbered-after-graalvm). To build native executables with them, see [native-image.md](native-image.md).
+
 ### Oracle GraalVM (`graal`)
 
 Oracle's distribution of GraalVM, built on Oracle JDK. Releases carry GraalVM's numbers: `17.0.12-graal`, `25.0.4.1.1-graal`, `25.4.4.1.1-graal`.
@@ -142,13 +144,6 @@ The open-source edition of GraalVM, built on OpenJDK.
 
 [Red Hat's](https://github.com/graalvm/mandrel) distribution for building Quarkus native executables, which concentrates on `native-image`. Releases 20.3 to 25, which run Java 11, 17 and 20 to 25.
 
-### Behavior of Mandrel and Liberica NIK
-
-- Both carry the version of the GraalVM they are built from, and their installs are named after it: `23.1.12.1-mandrel`, `23.1.8-nik`. Up to 24 that is not the Java version. 23.1 runs Java 21, 24.0 Java 22, 24.1 Java 23 and 24.2 Java 24, and older releases run Java 11, 17 or 20. From 25 on the two agree (`25.0.4.1`).
-- A bare major is GraalVM's as well: `java@23-mandrel` installs the newest 23.x, `23.1.12.1-mandrel`, which runs Java 21, and `java@21-mandrel` installs `21.3.6-mandrel`, which runs Java 17. A longer version installs the release it names: `java@23.1.12-mandrel` is 23.1.12, not 23.1.12.1, and `java@23.1-mandrel` is the first 23.1 release, 23.1.0. A build number finds nothing (`java@23.1.8+1-nik`).
-- The releases ending in `.0.0` are listed under the bare major (`24-mandrel` is Mandrel 24.0.0) and install with a longer version, `java@24.0.0-mandrel`. Once one is installed, vfox finds `java@24-mandrel` by that name, for `vfox install` and `vfox use` alike.
-- Some releases come for several Java versions under one number, such as Mandrel 21.3.6 for Java 11 and 17. The plugin installs the build for the newest Java, which for Mandrel 23.0.1.2 and Liberica NIK 23.0.1 is Java 20, not 17. Liberica NIK built a few releases twice for the same Java (`25.0.3`), and the later build installs. The name shows neither the Java version nor BellSoft's build, so the other builds cannot be installed.
-
 ### GraalVM CE 8 to 19 (`grl8`, `grl11`, `grl16`, `grl17`, `grl19`)
 
 GraalVM Community Edition up to 22.3, from before it numbered its releases after the JDK. Foojay has one distribution per JDK: `grl8` (GraalVM 19.3 to 21.3.1), `grl11` (19.3 to 22.3.3), `grl16` (21.1 and 21.2), `grl17` (21.3 to 22.3.3) and `grl19` (22.3 and 22.3.1). GraalVM Community (`graalce`) followed them.
@@ -157,39 +152,26 @@ GraalVM Community Edition up to 22.3, from before it numbered its releases after
 
 [Gluon's](https://docs.gluonhq.com/#_graalvm) build of GraalVM, for compiling JavaFX applications into native images. 21.1 and 21.2 run on JDK 11. The 22.x releases, 22 to 22.1.0.1, come for JDK 11 and for JDK 17 under one version, and the plugin installs the JDK 17 build. 23+25 is a development build on JDK 23. Linux x64, macOS and Windows x64, with Apple silicon from 22.1.0.1.
 
-### Versions numbered after GraalVM
-
-GraalVM CE 8 to 19, Gluon GraalVM before 23, and Mandrel and Liberica NIK before 25 carry GraalVM's version numbers, not Java's: `22.3.3-grl17` is GraalVM 22.3.3 and runs Java 17.0.8, `21.3.1-grl11` runs Java 11, and `23.1.12.1-mandrel` runs Java 21. For a bare major vfox takes the highest installed version that starts with it, from any distribution, so with `21.3.1-grl11` and `21.0.12.1+1-tem` installed, `vfox use java@21` selects `21.3.1-grl11`. Name the distribution, as in `java@21-tem`.
-
 ### Behavior of Oracle GraalVM and GraalVM Community
 
 - Since 25.1 (June 2026) GraalVM puts out a feature release every month next to its 25.0 line: `25.1.3`, `25.2.4`, `25.3.4.1`, `25.4.4.1.1`. Each is replaced within about a month. Foojay marks Oracle GraalVM's STS, but GraalVM Community's LTS where it lists them the old way round (see below), as the JDK they build on is LTS. `vfox search` leaves the LTS note off them all.
 - Releases are named after GraalVM's own version, which Foojay gives as `distribution_version`. Foojay's `java_version` is the JDK's version, which a feature release shares with the 25.0 line: `25.4.4.1.1-graal`, `25.3.4.1-graal`, `25.0.4.1.1-graal` and `25.0.4.1-graal` all have the `java_version` 25.0.4.1.
 - Foojay lists GraalVM Community's feature releases under GraalVM's version too, as it did before October 2026, with downloads from GitHub. So `java@25.4.4.1-graalce`, the name release 0.6.2 gives the 25.4.4.1.1 build, still installs it from GitHub, while `java@25.4.4.1.1-graalce` gets the same file from Oracle's GraalVM Download Service.
-- `java@25-graal` installs the newest build of the 25.0 line (`25.0.5-graal` on 2026-10-20), the line Oracle's own `25/latest` download follows. A feature release needs its full version: `java@25.4.4.1.1-graal`. `vfox use java@25-graal` and `java=25-graal` in a `.sdkmanrc` select the newest installed build of that line too, and a feature release only where nothing else of 25 is installed.
-- GraalVM Community's 25.0 line ended with `25.0.2`, and the feature releases are all it still ships. `java@25-graalce` installs the newest of them, `25.4.4.1.1-graalce` on 2026-10-20.
+- `java@25-graal` installs the newest build of the 25.0 line (`25.0.5.0.3-graal` on 2026-11-03), the line Oracle's own `25/latest` download follows. A feature release needs its full version: `java@25.4.4.1.1-graal`. `vfox use java@25-graal` and `java=25-graal` in a `.sdkmanrc` select the newest installed build of that line too, and a feature release only where nothing else of 25 is installed.
+- GraalVM Community's 25.0 line ended with `25.0.2`, and the feature releases are all it still ships. `java@25-graalce` installs the newest of them, `25.4.4.1.1-graalce` on 2026-11-03.
 - The plugin sets `JAVA_HOME` and `PATH`, and no `GRAALVM_HOME`. A `GRAALVM_HOME` that points at a GraalVM of your own stays as it is, and the native-image build plugins fall back to `JAVA_HOME` when it is unset.
 - There is no Windows ARM64 and no Alpine build, and Intel Macs get nothing after 25.0.1. See [platforms.md](platforms.md#graalvm).
 
-### Native Image and the C toolchain
+### Behavior of Mandrel and Liberica NIK
 
-A GraalVM installs and runs like any other JDK. After `vfox install java@25.0.2-graalce` and `vfox use`, `java` and `javac` work on a system with no compiler and no zlib headers. `sudo apt install --assume-yes build-essential zlib1g-dev` is for `native-image` alone, the tool that compiles a program into a native executable. It links the executable with the system's `gcc` against the C library and zlib, so it needs them, and so does whatever calls it, such as the Maven and Gradle plugins for Native Image. The plugin installs the JDK and nothing else.
+- Both carry the version of the GraalVM they are built from, and their installs are named after it: `23.1.12.1-mandrel`, `23.1.8-nik`. Up to 24 that is not the Java version. 23.1 runs Java 21, 24.0 Java 22, 24.1 Java 23 and 24.2 Java 24, and older releases run Java 11, 17 or 20. From 25 on the two agree (`25.0.4.1`).
+- A bare major is GraalVM's as well: `java@23-mandrel` installs the newest 23.x, `23.1.12.1-mandrel`, which runs Java 21, and `java@21-mandrel` installs `21.3.6-mandrel`, which runs Java 17. A longer version installs the release it names: `java@23.1.12-mandrel` is 23.1.12, not 23.1.12.1, and `java@23.1-mandrel` is the first 23.1 release, 23.1.0. A build number finds nothing (`java@23.1.8+1-nik`).
+- The releases ending in `.0.0` are listed under the bare major (`24-mandrel` is Mandrel 24.0.0) and install with a longer version, `java@24.0.0-mandrel`. Once one is installed, vfox finds `java@24-mandrel` by that name, for `vfox install` and `vfox use` alike.
+- Some releases come for several Java versions under one number, such as Mandrel 21.3.6 for Java 11 and 17. The plugin installs the build for the newest Java, which for Mandrel 23.0.1.2 and Liberica NIK 23.0.1 is Java 20, not 17. Liberica NIK built a few releases twice for the same Java (`25.0.3`), and the later build installs. The name shows neither the Java version nor BellSoft's build, so the other builds cannot be installed.
 
-On Ubuntu 26.04, execute in Bash,
+### Versions numbered after GraalVM
 
-```bash
-sudo apt install --assume-yes build-essential zlib1g-dev
-```
-
-- `native-image` is in the `bin` directory of Oracle GraalVM, GraalVM Community, Liberica NIK, Mandrel and Gluon GraalVM. GraalVM CE 8 to 19 are the exception, see below.
-- Without `gcc` the build stops within seconds with `Error: Default native-compiler executable 'gcc' not found via environment variable PATH`, and `zlib1g-dev` alone does not change that.
-- With `gcc` but without `zlib1g-dev`, which is what `build-essential` alone gives, the build goes through the analysis and the compilation first, which took between 20 seconds and two minutes for a hello world, and fails when it links: `There was an error linking the native image: Linker command exited with 1`, GraalVM's hint `It appears as though libz:.a is missing. Please install it.`, and `cannot find -lz: No such file or directory`.
-- `gcc`, `libc6-dev` and `zlib1g-dev` were enough to build a hello world, without `g++` and `make`. `build-essential` brings both, and is what GraalVM's documentation lists.
-- Other systems need other packages. GraalVM's [prerequisites](https://www.graalvm.org/latest/reference-manual/native-image/#prerequisites) list `sudo dnf install gcc glibc-devel zlib-devel libstdc++-static` for Fedora and the other systems that use dnf, `xcode-select --install` for macOS, and the Visual Studio Build Tools with the Windows SDK for Windows. On Fedora 44, `gcc`, `glibc-devel` and `zlib-devel` built a hello world without `libstdc++-static`.
-
-GraalVM CE 8 to 19 (`grl8`, `grl11`, `grl16`, `grl17`, `grl19`) come without `native-image`. Their `bin` directory holds `gu`, the GraalVM Updater, and `native-image` is `command not found` until `gu install native-image` has added it from GitHub. That worked for `22.3.3-grl11`, `21.2-grl16`, `22.3.3-grl17` and `22.3.1-grl19` on 2026-11-02, and the packages above are needed after it as before. It failed for `21.3.1-grl8` with `Internal error occurred: A JSONObject text must begin with '{'`, because the release index that this `gu` downloads, `https://oca.opensource.oracle.com/gds/meta-data.json`, is a web page now. For that release, download `native-image-installable-svm-java8-linux-amd64-21.3.1.jar` from the [`vm-21.3.1` release](https://github.com/graalvm/graalvm-ce-builds/releases/tag/vm-21.3.1) and run `gu -L install` on the file.
-
-Checked on 2026-11-02 with vfox 1.0.13 in Ubuntu 26.04 container images (x64) that had no compiler. GraalVM Community 25.0.2 and 25.4.4.1.1, Oracle GraalVM 25.0.5, Mandrel 25.0.5, Liberica NIK 25.0.4.1 and Gluon GraalVM 22.1.0.1 stopped as described without the packages, and with them built a hello world that ran. So did `22.3.3-grl17` after `gu install native-image`, and GraalVM Community 25.0.2 in a Fedora 44 image.
+GraalVM CE 8 to 19, Gluon GraalVM before 23, and Mandrel and Liberica NIK before 25 carry GraalVM's version numbers, not Java's: `22.3.3-grl17` is GraalVM 22.3.3 and runs Java 17.0.8, `21.3.1-grl11` runs Java 11, and `23.1.12.1-mandrel` runs Java 21. For a bare major vfox takes the highest installed version that starts with it, from any distribution, so with `21.3.1-grl11` and `21.0.12.1+1-tem` installed, `vfox use java@21` selects `21.3.1-grl11`. Name the distribution, as in `java@21-tem`.
 
 ## Others
 

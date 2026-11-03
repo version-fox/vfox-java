@@ -2,7 +2,7 @@
 
 [中文](distributions.md) | [English](../distributions.md)
 
-插件从 [Foojay](foojay.md) 获取下面 31 个发行版的版本列表和下载链接，2026-10-20 时 Foojay 列出的发行版全在这里。凡是要写发行版的地方，简称和长名都可以：`21-tem`、`21-temurin`、`temurin-21`、`vfox search java tem`。
+插件从 [Foojay](foojay.md) 获取下面 31 个发行版的版本列表和下载链接，2026-11-03 时 Foojay 列出的发行版全在这里。凡是要写发行版的地方，简称和长名都可以：`21-tem`、`21-temurin`、`temurin-21`、`vfox search java tem`。
 
 | 简称 | 长名 | 发行版 | 维护方 |
 | --- | --- | --- | --- |
@@ -44,7 +44,7 @@
 
 ## 简称与 SDKMAN 的不同
 
-简称沿用 [SDKMAN](https://sdkman.io/) 的标识符，Temurin 21.0.8 在两边都写作 `21.0.8-tem`。下面是与 SDKMAN 不同的地方，对照的是 2026-10-20 的 SDKMAN 列表：
+简称沿用 [SDKMAN](https://sdkman.io/) 的标识符，Temurin 21.0.8 在两边都写作 `21.0.8-tem`。下面是与 SDKMAN 不同的地方，对照的是 2026-11-03 的 SDKMAN 列表：
 
 - JetBrains Runtime 叫 `jb`，SDKMAN 里叫 `jbr`；毕昇 JDK 叫 `bsg`，SDKMAN 里叫 `bisheng`，也就是插件给它的长名。`.sdkmanrc` 里写 SDKMAN 的叫法也认，见 [sdkmanrc.md](sdkmanrc.md)。
 - Dragonwell、TravaOpenJDK、AdoptOpenJDK、Gluon GraalVM 和按 GraalVM 自身编号的 GraalVM CE，SDKMAN 都已经不再提供。后三个在 SDKMAN 里曾叫 `adpt`、`gln` 和 `grl`，当时把虚拟机或 JDK 版本写进版本号：HotSpot 版是 `11.0.10.hs-adpt`，OpenJ9 版是 `11.0.10.j9-adpt`，基于 JDK 17 的是 `22.3.3.r17-grl`。插件给 Foojay 的每个发行版各起一个名字，所以这部分挪进了简称：`11.0.10-adpt`、`11.0.10-adptj9`、`22.3.3-grl17`。`.sdkmanrc` 里用 SDKMAN 的旧写法也能选中它们。
@@ -126,6 +126,8 @@ IBM Semeru Runtime Certified Edition：Semeru 的 OpenJ9 运行时，通过了 J
 
 ## GraalVM 系列
 
+这些发行版里，不少沿用 GraalVM 自己的版本号，而不是 Java 的。版本怎样命名、只写大版本号时装什么，在列表之后说明：[Oracle GraalVM 与 GraalVM 社区版](#oracle-graalvm-与-graalvm-社区版的行为)、[Mandrel 与 Liberica NIK](#mandrel-与-liberica-nik-的行为)，以及[更早的那些](#按-graalvm-编号的版本)。想用它们构建原生可执行文件，见 [native-image.md](native-image.md)。
+
 ### Oracle GraalVM（`graal`）
 
 Oracle 发行的 GraalVM，基于 Oracle JDK。版本号沿用 GraalVM 自己的编号：`17.0.12-graal`、`25.0.4.1.1-graal`、`25.4.4.1.1-graal`。
@@ -142,13 +144,6 @@ GraalVM 的开源版本，基于 OpenJDK。
 
 [Red Hat](https://github.com/graalvm/mandrel) 为构建 Quarkus 原生可执行文件提供的发行版，专注于 `native-image`。版本号从 20.3 到 25，运行的是 Java 11、17 和 20 到 25。
 
-### Mandrel 与 Liberica NIK 的行为
-
-- 两者都沿用所基于的 GraalVM 的版本号，安装后的版本名用的也是它：`23.1.12.1-mandrel`、`23.1.8-nik`。到 24 为止，这个版本号和 Java 的版本号对不上：23.1 运行的是 Java 21，24.0 是 Java 22，24.1 是 Java 23，24.2 是 Java 24，更早的版本运行 Java 11、17 或 20。从 25 起两者一致（`25.0.4.1`）。
-- 只写大版本号时，这个大版本号同样是 GraalVM 的：`java@23-mandrel` 装最新的 23.x，即 `23.1.12.1-mandrel`，运行的是 Java 21；`java@21-mandrel` 装的是 `21.3.6-mandrel`，运行的是 Java 17。写得更具体的版本只装它指定的那一个：`java@23.1.12-mandrel` 装的是 23.1.12，不是 23.1.12.1；`java@23.1-mandrel` 装的是 23.1 系列的第一个版本 23.1.0。写了构建号则什么也找不到（`java@23.1.8+1-nik`）。
-- 以 `.0.0` 结尾的版本在列表里显示为只有大版本号的名字（`24-mandrel` 是 Mandrel 24.0.0），要写全版本号才能装：`java@24.0.0-mandrel`。装上之后，vfox 会按这个名字找到 `java@24-mandrel`，`vfox install` 和 `vfox use` 都一样。
-- 有些版本号下有几个构建，分别对应不同的 Java，比如 Mandrel 21.3.6 有 Java 11 和 Java 17 两个构建，插件装 Java 最新的那个；对 Mandrel 23.0.1.2 和 Liberica NIK 23.0.1 来说，那是 Java 20，不是 17。Liberica NIK 有几个版本为同一个 Java 构建了两次（`25.0.3`），装的是后一次的构建。版本名里既看不出 Java 版本，也看不出 BellSoft 的构建号，所以其他构建装不了。
-
 ### GraalVM CE 8 到 19（`grl8`、`grl11`、`grl16`、`grl17`、`grl19`）
 
 22.3 及以前的 GraalVM 社区版，那时它还没有改用 JDK 的版本号。Foojay 按 JDK 分成了几个发行版：`grl8`（GraalVM 19.3 到 21.3.1）、`grl11`（19.3 到 22.3.3）、`grl16`（21.1 和 21.2）、`grl17`（21.3 到 22.3.3）和 `grl19`（22.3 和 22.3.1）。之后接替它们的是 GraalVM 社区版（`graalce`）。
@@ -157,39 +152,26 @@ GraalVM 的开源版本，基于 OpenJDK。
 
 [Gluon](https://docs.gluonhq.com/#_graalvm) 的 GraalVM 构建，用来把 JavaFX 应用编译成原生镜像。21.1 和 21.2 基于 JDK 11。22.x（22 到 22.1.0.1）同一个版本号下有 JDK 11 和 JDK 17 两个构建，插件装的是 JDK 17 的。23+25 是基于 JDK 23 的开发构建。有 Linux x64、macOS 和 Windows x64 的版本，Apple Silicon 从 22.1.0.1 起才有。
 
-### 按 GraalVM 编号的版本
-
-GraalVM CE 8 到 19、23 以前的 Gluon GraalVM，以及 25 以前的 Mandrel 和 Liberica NIK，版本号是 GraalVM 自己的，不是 Java 的：`22.3.3-grl17` 是 GraalVM 22.3.3，运行的是 Java 17.0.8；`21.3.1-grl11` 运行的是 Java 11；`23.1.12.1-mandrel` 运行的是 Java 21。对只写大版本号的写法，vfox 只按版本号匹配，不分发行版，取以它开头的最高已安装版本，所以同时装了 `21.3.1-grl11` 和 `21.0.12.1+1-tem` 时，`vfox use java@21` 选中的是 `21.3.1-grl11`。请写上发行版，比如 `java@21-tem`。
-
 ### Oracle GraalVM 与 GraalVM 社区版的行为
 
 - 从 25.1（2026 年 6 月）起，GraalVM 在 25.0 系列之外每月发布一个特性版本（feature release）：`25.1.3`、`25.2.4`、`25.3.4.1`、`25.4.4.1.1`，每个大约一个月后就被下一个取代。Foojay 把 Oracle GraalVM 的特性版本标成 STS；GraalVM 社区版按老办法列的那些（见下文），则因为基于的 JDK 是 LTS，也被标成了 LTS。`vfox search` 一律不给它们加 LTS 备注。
 - 版本名用的是 GraalVM 自己的版本号，也就是 Foojay 的 `distribution_version`。Foojay 的 `java_version` 是 JDK 的版本号，特性版本会和 25.0 系列的某个构建共用同一个值：`25.4.4.1.1-graal`、`25.3.4.1-graal`、`25.0.4.1.1-graal` 和 `25.0.4.1-graal` 的 `java_version` 都是 25.0.4.1。
 - GraalVM 社区版的特性版本，Foojay 还像 2026 年 10 月以前那样，按 GraalVM 的版本号另列了一份，下载地址在 GitHub。所以 0.6.2 给 25.4.4.1.1 构建起的名字 `java@25.4.4.1-graalce` 仍然能从 GitHub 装上这个构建，而 `java@25.4.4.1.1-graalce` 是从 Oracle 的 GraalVM Download Service 下载同一个文件。
-- `java@25-graal` 装的是 25.0 系列的最新构建（2026-10-20 是 `25.0.5-graal`），Oracle 官方的 `25/latest` 下载链接跟的也是这个系列。特性版本要写全版本号：`java@25.4.4.1.1-graal`。`vfox use java@25-graal` 和 `.sdkmanrc` 里的 `java=25-graal` 选中的也是这个系列里已安装的最新构建，只有 25 里没有装别的版本时才会选特性版本。
-- GraalVM 社区版的 25.0 系列到 `25.0.2` 为止，现在只发布特性版本。`java@25-graalce` 装其中最新的一个，截至 2026-10-20 是 `25.4.4.1.1-graalce`。
+- `java@25-graal` 装的是 25.0 系列的最新构建（2026-11-03 是 `25.0.5.0.3-graal`），Oracle 官方的 `25/latest` 下载链接跟的也是这个系列。特性版本要写全版本号：`java@25.4.4.1.1-graal`。`vfox use java@25-graal` 和 `.sdkmanrc` 里的 `java=25-graal` 选中的也是这个系列里已安装的最新构建，只有 25 里没有装别的版本时才会选特性版本。
+- GraalVM 社区版的 25.0 系列到 `25.0.2` 为止，现在只发布特性版本。`java@25-graalce` 装其中最新的一个，截至 2026-11-03 是 `25.4.4.1.1-graalce`。
 - 插件只设置 `JAVA_HOME` 和 `PATH`，不设置 `GRAALVM_HOME`。你设置的、指向自己的 GraalVM 的 `GRAALVM_HOME` 保持原样；没有设置时，native-image 的构建插件会回退到 `JAVA_HOME`。
 - 没有 Windows ARM64 和 Alpine 的构建，Intel Mac 上 25.0.1 之后的版本也没有。见 [platforms.md](platforms.md#graalvm)。
 
-### Native Image 与 C 工具链
+### Mandrel 与 Liberica NIK 的行为
 
-GraalVM 的安装和使用与别的 JDK 没有两样：`vfox install java@25.0.2-graalce` 和 `vfox use` 之后，`java` 和 `javac` 在没有编译器、也没有 zlib 头文件的系统上照常工作。`sudo apt install --assume-yes build-essential zlib1g-dev` 只为 `native-image` 而装，它是把程序编译成原生可执行文件的工具。它用系统的 `gcc` 把可执行文件与 C 库和 zlib 链接起来，所以需要它们；调用它的程序同样需要，比如 Native Image 的 Maven 和 Gradle 插件。插件只安装 JDK，不装别的。
+- 两者都沿用所基于的 GraalVM 的版本号，安装后的版本名用的也是它：`23.1.12.1-mandrel`、`23.1.8-nik`。到 24 为止，这个版本号和 Java 的版本号对不上：23.1 运行的是 Java 21，24.0 是 Java 22，24.1 是 Java 23，24.2 是 Java 24，更早的版本运行 Java 11、17 或 20。从 25 起两者一致（`25.0.4.1`）。
+- 只写大版本号时，这个大版本号同样是 GraalVM 的：`java@23-mandrel` 装最新的 23.x，即 `23.1.12.1-mandrel`，运行的是 Java 21；`java@21-mandrel` 装的是 `21.3.6-mandrel`，运行的是 Java 17。写得更具体的版本只装它指定的那一个：`java@23.1.12-mandrel` 装的是 23.1.12，不是 23.1.12.1；`java@23.1-mandrel` 装的是 23.1 系列的第一个版本 23.1.0。写了构建号则什么也找不到（`java@23.1.8+1-nik`）。
+- 以 `.0.0` 结尾的版本在列表里显示为只有大版本号的名字（`24-mandrel` 是 Mandrel 24.0.0），要写全版本号才能装：`java@24.0.0-mandrel`。装上之后，vfox 会按这个名字找到 `java@24-mandrel`，`vfox install` 和 `vfox use` 都一样。
+- 有些版本号下有几个构建，分别对应不同的 Java，比如 Mandrel 21.3.6 有 Java 11 和 Java 17 两个构建，插件装 Java 最新的那个；对 Mandrel 23.0.1.2 和 Liberica NIK 23.0.1 来说，那是 Java 20，不是 17。Liberica NIK 有几个版本为同一个 Java 构建了两次（`25.0.3`），装的是后一次的构建。版本名里既看不出 Java 版本，也看不出 BellSoft 的构建号，所以其他构建装不了。
 
-在 Ubuntu 26.04 的 Bash 中执行：
+### 按 GraalVM 编号的版本
 
-```bash
-sudo apt install --assume-yes build-essential zlib1g-dev
-```
-
-- `native-image` 在 Oracle GraalVM、GraalVM 社区版、Liberica NIK、Mandrel 和 Gluon GraalVM 的 `bin` 目录里。GraalVM CE 8 到 19 是例外，见下文。
-- 没有 `gcc` 时，构建几秒内就停下，报 `Error: Default native-compiler executable 'gcc' not found via environment variable PATH`，只装 `zlib1g-dev` 也没用。
-- 有 `gcc` 却没有 `zlib1g-dev` 时（只装了 `build-essential` 也是这种情况），构建会先走完分析和编译（hello world 用了 20 秒到两分钟），到链接时才失败：`There was an error linking the native image: Linker command exited with 1`，GraalVM 自己的提示 `It appears as though libz:.a is missing. Please install it.`，以及 `cannot find -lz: No such file or directory`。
-- 构建一个 hello world，`gcc`、`libc6-dev` 和 `zlib1g-dev` 就够了，用不着 `g++` 和 `make`。`build-essential` 把这两个也装上，GraalVM 的文档列出的正是它。
-- 其他系统需要的包不一样。GraalVM 的[前置条件](https://www.graalvm.org/latest/reference-manual/native-image/#prerequisites)里，Fedora 和其他使用 dnf 的系统是 `sudo dnf install gcc glibc-devel zlib-devel libstdc++-static`，macOS 是 `xcode-select --install`，Windows 是带 Windows SDK 的 Visual Studio Build Tools。在 Fedora 44 上，只装 `gcc`、`glibc-devel` 和 `zlib-devel`、不装 `libstdc++-static`，也构建出了 hello world。
-
-GraalVM CE 8 到 19（`grl8`、`grl11`、`grl16`、`grl17`、`grl19`）不带 `native-image`。它们的 `bin` 目录里只有 GraalVM 更新器 `gu`，`native-image` 会报 `command not found`，要先用 `gu install native-image` 从 GitHub 添加。2026-11-02 这在 `22.3.3-grl11`、`21.2-grl16`、`22.3.3-grl17` 和 `22.3.1-grl19` 上成功了，添加之后仍然需要上面的包。`21.3.1-grl8` 上失败了，报 `Internal error occurred: A JSONObject text must begin with '{'`：这个 `gu` 下载的版本索引 `https://oca.opensource.oracle.com/gds/meta-data.json` 现在返回的是一个网页。对这个版本，请从 [`vm-21.3.1` 发布页](https://github.com/graalvm/graalvm-ce-builds/releases/tag/vm-21.3.1)下载 `native-image-installable-svm-java8-linux-amd64-21.3.1.jar`，再对这个文件执行 `gu -L install`。
-
-2026-11-02 用 vfox 1.0.13 在没有编译器的 Ubuntu 26.04 容器镜像（x64）里检查过：GraalVM 社区版 25.0.2 和 25.4.4.1.1、Oracle GraalVM 25.0.5、Mandrel 25.0.5、Liberica NIK 25.0.4.1 和 Gluon GraalVM 22.1.0.1，没有这些包时都如上所述停下，装上之后都构建出了能运行的 hello world。`22.3.3-grl17` 在执行 `gu install native-image` 之后也是如此，GraalVM 社区版 25.0.2 在 Fedora 44 的镜像里也一样。
+GraalVM CE 8 到 19、23 以前的 Gluon GraalVM，以及 25 以前的 Mandrel 和 Liberica NIK，版本号是 GraalVM 自己的，不是 Java 的：`22.3.3-grl17` 是 GraalVM 22.3.3，运行的是 Java 17.0.8；`21.3.1-grl11` 运行的是 Java 11；`23.1.12.1-mandrel` 运行的是 Java 21。对只写大版本号的写法，vfox 只按版本号匹配，不分发行版，取以它开头的最高已安装版本，所以同时装了 `21.3.1-grl11` 和 `21.0.12.1+1-tem` 时，`vfox use java@21` 选中的是 `21.3.1-grl11`。请写上发行版，比如 `java@21-tem`。
 
 ## 其他
 

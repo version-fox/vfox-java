@@ -11,6 +11,9 @@ from `actions/setup-go`). Locally, the repository dev container reproduces
 that on Linux; on Windows a Docker Compose runner image does, since dev
 containers cannot host Windows container images (see below).
 
+The sections below say how to run the suite. The list of every check is at
+the end, under [What the suite verifies](#what-the-suite-verifies).
+
 ## Dev container
 
 `.devcontainer/` opens a Linux development environment that works on all four
@@ -22,12 +25,13 @@ host platforms:
 | Windows amd64 / arm64 | Docker Desktop in Linux-container mode (WSL 2) |
 
 It carries Go 1.27.1 (the version CI installs), the Docker CLI, stylua,
-lua-language-server, and the license tools — all pinned to the versions in
-`.github/workflows/lint.yml` and `license.yml` — and mounts the host Docker
-daemon socket. The suites then run testcontainers against that daemon
-(Docker-out-of-Docker), spawning the same target containers a native CI
-runner spawns; this is deliberately not Docker-in-Docker, so image cache and
-networking stay the host's. The image needs no workspace files, so the build
+lua-language-server, the license tools and vfox, which runs the offline hook
+tests — all pinned to the versions in `.github/workflows/lint.yml`,
+`license.yml` and `test.yml` — and mounts the host Docker daemon socket. The
+suites then run testcontainers against that daemon (Docker-out-of-Docker),
+spawning the same target containers a native CI runner spawns; this is
+deliberately not Docker-in-Docker, so image cache and networking stay the
+host's. The image needs no workspace files, so the build
 context stays at `.devcontainer/`; `postCreateCommand` warms the Go module
 cache for `tests/e2e` so the first test run does not stop to download.
 
@@ -55,196 +59,12 @@ container: the Dev Containers spec does not support Windows container images
 and Windows containers only run on a Windows daemon. That suite keeps its
 Docker Compose runner on a Windows host; see [Windows 11](#windows-11) below.
 
-## What the suite verifies
-
-Every combination runs the same flow (one long-lived container per combo,
-driven from Go through `docker exec`-style calls); the target images carry no
-JDK, so `java` can only come from what vfox installs:
-
-1. vfox is installed from the requested channel — the latest release
-   (`latest`) or built from source (`main`) — and the local `java` plugin is
-   registered from this checkout. On Windows, the runner builds `main` once,
-   while the `latest` combinations run, and the `main` containers start from
-   the e2e image plus that `vfox.exe`. Then the notes printed by
-   `vfox info java` must link to the README, which lists the short names
-   and shows how to search a distribution. They used to give five short
-   names but not how to list their versions
-   ([vfox#390](https://github.com/version-fox/vfox/issues/390)).
-2. A distribution without a version, alone or after an empty one
-   (`java@tem`, `java@-tem`), fails both `vfox install` and `vfox use` with
-   an error asking for one. The hooks stopped with a Lua error on the first,
-   while `PreInstall` sent the empty version to Foojay, which lists every
-   release, and installed the newest one.
-   A release no distribution has published (`<major>.0.99`) fails to install,
-   with `PreInstall` naming the platform it searched (`linux/amd64`,
-   `windows/arm64`, ...), so the Foojay lookup is checked to target the
-   runner. So does a build of the pinned release that was never published
-   (`<version>+99`, e.g. `21.0.8+99-tem`), proving the lookup keeps the
-   build number: Foojay reads an unencoded `+` as a space and drops the
-   build, and the release's newest build would install instead.
-
-   On the Temurin rows an install through a mirror that does not exist must
-   fail too. With `VFOX_JAVA_GITHUB_MIRROR=https://invalid.example.invalid`
-   the mirror goes in front of Temurin's GitHub URL, so `vfox install` fails on
-   the download, and its error must name the URL it asked for: the mirror, a
-   slash and the GitHub URL. Before the plugin read the variable, it downloaded
-   the JDK from github.com and the install succeeded. Nothing is downloaded,
-   and no mirror that works is run.
-3. On the GraalVM Community rows, Oracle GraalVM's bare major `25-graal`
-   installs the newest build of its 25.0 line (`25.0.5-graal` on
-   2026-10-20), the line Oracle's own `25/latest` download follows, not one
-   of the monthly feature releases listed before it (`25.4.4.1.1-graal`).
-   `vfox search java graal` must list those under GraalVM's own version,
-   and mark the other releases of 25 alike, as in item 5. The plugin used to
-   name them after the JDK version Foojay has given them since October 2026,
-   which they share with the 25.0 line: the search then listed no feature
-   release, and `25.0.4.1-graal` had no LTS note and installed 25.4.4.1.1.
-   The builds of 25 that the search lists are faked as installed first, so
-   `vfox install` names the one `PreInstall` picked and nothing downloads.
-   GA 25 is left out, as vfox would find `25-graal` itself installed without
-   asking `PreInstall`. On Linux the install must also ask Foojay what the
-   search asked, as at the end of item 4.
-
-   With those builds installed, `vfox use java@25-graal` and a `.sdkmanrc`
-   holding `java=25-graal` must select the build `vfox install` names.
-   `PreUse` and `ParseLegacyFile` took the newest installed release of 25,
-   which is a feature release as soon as one is installed
-   ([#110](https://github.com/version-fox/vfox-java/issues/110)). Each faked
-   build holds a stand-in `java` that only prints its name, as in item 6.
-   Once the 25.0 line is removed, `vfox use` and the `.sdkmanrc` must both
-   select the newest feature release.
-4. On the Temurin rows, which run on every runner, the distributions the
-   suite checks by name only (`adpt` to `semcrt`, `nameOnly` in
-   `tests/e2e/common`) go by their short names where Foojay has packages of
-   them for the runner: `vfox search java <short>` lists each, and once the
-   newest version it lists is faked as installed,
-   `vfox install java@<major>-<short>` (`22-grl17`) reports that version as
-   already installed, so nothing downloads. Before they had short names, the
-   two failed with `Unsupported distribution` and `Could not extract a valid
-   distribution`.
-
-   On the same rows Mandrel and Liberica NIK go by the GraalVM version they
-   carry (`ownNumbers` in `tests/e2e/common`; Windows arm64 has neither):
-   `vfox search java mandrel` lists `23.1.12-mandrel` (`23.1.8-nik` for
-   Liberica NIK), and with it and the newest 23.x the search lists faked as
-   installed, `vfox install java@mandrel-23.1.12` and
-   `vfox install java@23-mandrel` report those two as already installed.
-   Before the plugin read `distribution_version`, where Foojay moved that
-   version in October 2026, the search listed one name per Java major,
-   `23.1.12-mandrel` was not found, and `java@23-mandrel` installed Mandrel
-   24.1.2, built for Java 23.
-
-   On Linux these rows, and the GraalVM Community rows of item 3, reach
-   Foojay through a stand-in for api.foojay.io, built from
-   `tests/e2e/linux/front`, which logs what the plugin asks. Each install
-   above must ask what the search before it asked (`AsksAsSearch` in
-   `tests/e2e/common`). Foojay's answers are cached per question, so for half
-   an hour after a release another question can take a build that the search
-   does not list yet, which would download and fail the check
-   ([foojay.md](foojay.md#what-the-plugin-asks)). Before
-   [#113](https://github.com/version-fox/vfox-java/issues/113) a bare major
-   asked for `latest=available`, and Mandrel and Liberica NIK by
-   `distribution_version`.
-5. The pinned release installs under the name `PreInstall` gives it: the
-   requested version plus the build number (`21.0.8-tem` installs as
-   `21.0.8+9-tem`). `vfox search java <distribution>` (the `Available` hook)
-   lists that same name as installed, noting JavaFX on `-fx` builds. For
-   GraalVM it must also list the feature releases GraalVM ships every month
-   since 25.1 (`25.4.4.1.1-graalce`), none of them noted LTS, though Foojay
-   marks some of them LTS, as the JDK they build on is; each lasts about a
-   month. Every other release of a major must carry the same note. The
-   plugin used to list the feature release 25.4.4.1.1 as `25.0.4.1-graalce`,
-   without the LTS note `25.0.2-graalce` has.
-   On Windows the list includes JetBrains Runtime 21.0.5, which ships only as
-   tar.gz there.
-
-   The install itself must also have verified the download. Foojay lists a
-   checksum for the pinned release of every default distribution on every
-   runner (2026-11-02), and `vfox install` must print `Verifying checksum
-   <digest>...` with a digest of a length vfox supports, not `WARNING:
-   Checksum is not provided, skip verify...`, which every install ended with
-   until the plugin passed Foojay's checksums on. The digests come in four
-   forms, so each way the plugin reads them runs: SHA-256 and SHA-1 in
-   Foojay's record (Temurin, Liberica), SHA-256 in a file that holds the
-   digest alone (OpenJDK, GraalVM Community) and SHA-512 in a file that adds
-   the name (JetBrains). vfox compares the digest with the hash of the file it
-   downloaded and fails the install if they differ, so the install succeeding
-   proves the digest is the file's. A release chosen with `JAVA_VERSION` is
-   not checked, as Foojay may list no checksum for it.
-6. Before any `vfox use`, a `.sdkmanrc` holding the SDKMAN identifier
-   without the build number selects the JDK through `ParseLegacyFile`:
-   `java=21.0.8-tem`, `java=21.0.5-jbr` (SDKMAN's name for JetBrains) or
-   `java=25.0.4.fx-librca` (its spelling of JavaFX builds). So does one
-   padding the release with a zero, as `sdk list java` shows many:
-   `java=21.0.8.0+9-tem`, `java=25.0.4.0-fx+9-librca` (Foojay, and so the
-   installed name, has no such zero). So does one holding the installed
-   version (`java=21.0.8+9-tem`). All run next to an empty install of
-   another release whose version starts with the pinned one
-   (`21.0.80+1-tem`): vfox sorts installed versions as strings, descending,
-   so `vfox list java` must show it first. `ParseLegacyFile` used to take it
-   as the first one starting with the release, and, for the padded release,
-   as the newest release of the major. Then SDKMAN's identifier of an
-   early-access build of the pinned major, spelled as `sdk list java` shows
-   OpenJDK's (`28.0.0.0+ea.20-open`), must select that build:
-   `java=21.0.0.0+ea.1-tem` selects `21-ea+1-tem`, not the release, which
-   `ParseLegacyFile` took while it understood only SDKMAN's older
-   `21.ea.1-tem`. So must the installed name itself (`java=21-ea+1-tem`),
-   for which `ParseLegacyFile`, unable to parse it, selected nothing, while
-   `vfox use` selects it. jdk.java.net removes each early-access build within
-   weeks, so that install is faked: its `bin` holds a stand-in `java` that
-   only prints the name. On Windows the file is written with CRLF line
-   endings.
-
-   On the Temurin rows, a `.sdkmanrc` holding one of SDKMAN's identifiers of
-   Mandrel and Liberica NIK with the JDK after `.r` must then select the
-   release it names: `java=25.0.4.r25-nik` selects `25.0.4-nik`, not
-   `25.0.4.1-nik`, which `ParseLegacyFile` took while it read `25.0.4.r25` as
-   the release. `java=22.1.r11-mandrel` must select nothing, as the plugin
-   installs only the JDK 17 build of Mandrel 22.1 (`OwnNumberIdentifiers` in
-   `tests/e2e/common`). The releases they name and a newer one of each major
-   are faked the same way.
-7. After `vfox use --global`, the JDK on `PATH` reports the requested
-   `java.version`, the runner's `os.arch` (`amd64` / `aarch64`, which also
-   catches an x64 JDK emulated on Windows ARM64) and the distribution's
-   `java.vendor`. `JAVA_HOME` holds that same JDK, `javac` compiles a
-   program that `java` then runs, the module list carries JavaFX exactly for
-   `-fx` builds, and `vfox current java` reports the installed version. A
-   `GRAALVM_HOME` set beforehand keeps its value, as users point it at a
-   GraalVM of their own; for GraalVM, the plugin used to replace it with
-   the JDK in use.
-8. `PreUse` maps the spellings users type to the installed version without
-   another download: the bare major (`java@21`, left to vfox core's fuzzy
-   matching), the spec the JDK was installed with (`java@21.0.8-tem`, whose
-   build number `PreUse` finds among the installed versions) and the
-   asdf-style `<long-name>-<version>[-fx]` (`java@temurin-21.0.8+9`,
-   rewritten to `21.0.8+9-tem`; `java@openjdk-25.0.2+10` to `25.0.2+10`).
-   So does the release padded with a zero, as SDKMAN writes releases
-   (`java@21.0.8.0-tem`, `java@21.0.8.0+9-tem`), which `vfox install` must
-   first find already installed: `PreInstall` passes the zero on to Foojay,
-   which leaves it out, while `PreUse` looked for an installed version
-   starting with the padded release and reported it not installed.
-
-The default matrix runs every distribution against both vfox channels
-(`latest`, `main`):
-
-| Distribution | Release | Covers                                                                                                    | amd64 | arm64 |
-| ------------ | ------- | --------------------------------------------------------------------------------------------------------- | ----- | ----- |
-| `open`       | 25.0.2  | the default distribution, versions without a suffix                                                       | ✓     |       |
-| `tem`        | 21.0.8  | the common path (tar.gz on Linux, zip on Windows); the mirror, name and number checks of items 2, 4 and 6 | ✓     | ✓     |
-| `librca-fx`  | 25.0.4  | JavaFX bundled builds (`-fx`)                                                                             | ✓     | ✓     |
-| `jb`         | 21.0.5  | the tar.gz path on Windows, which has no zip for it                                                       | ✓     | ✓     |
-| `graalce`    | 25.0.2  | a `GRAALVM_HOME` set beforehand keeps its value; Oracle GraalVM's `25-graal`                              | ✓     |       |
-
-Every pinned release is published through Foojay for each platform its row
-runs on. OpenJDK and GraalVM Community ship no `windows-aarch64` build, so
-arm64 runs the other three on both Linux and Windows.
-
 ## Environment knobs
 
 | Variable             | Default                    | Meaning                                                                 |
 | -------------------- | -------------------------- | ----------------------------------------------------------------------- |
 | `VFOX_VERSION`       | `latest main`              | Space-separated vfox channels (`latest`, `main`)                        |
-| `DISTRIBUTION`       | see matrix above           | Space-separated plugin distributions, `-fx` for JavaFX (`tem zulu-fx`)  |
+| `DISTRIBUTION`       | see matrix below           | Space-separated plugin distributions, `-fx` for JavaFX (`tem zulu-fx`)  |
 | `JAVA_VERSION`       | per distribution           | Release installed for every selected distribution (Java 9+ numbering)   |
 | `E2E_MAX_JOBS`       | `3` (Linux), `2` (Windows) | Parallel containers per host                                            |
 | `E2E_RETRY_ATTEMPTS` | `3`                        | Attempts per network-touching exec (linear 10s backoff)                 |
@@ -428,3 +248,187 @@ docker run --rm -v "$PWD:/work" -w /work apache/skywalking-eyes:0.9.0 header fix
 docker run --rm -v "$PWD:/src" ghcr.io/google/addlicense:v1.2.0 -check -f .license.tpl tests/e2e/windows/*.ps1
 docker run --rm -v "$PWD:/src" ghcr.io/google/addlicense:v1.2.0 -f .license.tpl tests/e2e/windows/*.ps1
 ```
+
+## What the suite verifies
+
+Every combination runs the same flow (one long-lived container per combo,
+driven from Go through `docker exec`-style calls); the target images carry no
+JDK, so `java` can only come from what vfox installs:
+
+1. vfox is installed from the requested channel — the latest release
+   (`latest`) or built from source (`main`) — and the local `java` plugin is
+   registered from this checkout. On Windows, the runner builds `main` once,
+   while the `latest` combinations run, and the `main` containers start from
+   the e2e image plus that `vfox.exe`. Then the notes printed by
+   `vfox info java` must link to the README, which lists the short names
+   and shows how to search a distribution. They used to give five short
+   names but not how to list their versions
+   ([vfox#390](https://github.com/version-fox/vfox/issues/390)).
+2. A distribution without a version, alone or after an empty one
+   (`java@tem`, `java@-tem`), fails both `vfox install` and `vfox use` with
+   an error asking for one. The hooks stopped with a Lua error on the first,
+   while `PreInstall` sent the empty version to Foojay, which lists every
+   release, and installed the newest one.
+   A release no distribution has published (`<major>.0.99`) fails to install,
+   with `PreInstall` naming the platform it searched (`linux/amd64`,
+   `windows/arm64`, ...), so the Foojay lookup is checked to target the
+   runner. So does a build of the pinned release that was never published
+   (`<version>+99`, e.g. `21.0.8+99-tem`), proving the lookup keeps the
+   build number: Foojay reads an unencoded `+` as a space and drops the
+   build, and the release's newest build would install instead.
+
+   On the Temurin rows an install through a mirror that does not exist must
+   fail too. With `VFOX_JAVA_GITHUB_MIRROR=https://invalid.example.invalid`
+   the mirror goes in front of Temurin's GitHub URL, so `vfox install` fails on
+   the download, and its error must name the URL it asked for: the mirror, a
+   slash and the GitHub URL. Before the plugin read the variable, it downloaded
+   the JDK from github.com and the install succeeded. Nothing is downloaded,
+   and no mirror that works is run.
+3. On the GraalVM Community rows, Oracle GraalVM's bare major `25-graal`
+   installs the newest build of its 25.0 line (`25.0.5.0.3-graal` on
+   2026-11-03), the line Oracle's own `25/latest` download follows, not one
+   of the monthly feature releases listed before it (`25.4.4.1.1-graal`).
+   `vfox search java graal` must list those under GraalVM's own version,
+   and mark the other releases of 25 alike, as in item 5. The plugin used to
+   name them after the JDK version Foojay has given them since October 2026,
+   which they share with the 25.0 line: the search then listed no feature
+   release, and `25.0.4.1-graal` had no LTS note and installed 25.4.4.1.1.
+   The builds of 25 that the search lists are faked as installed first, so
+   `vfox install` names the one `PreInstall` picked and nothing downloads.
+   GA 25 is left out, as vfox would find `25-graal` itself installed without
+   asking `PreInstall`. On Linux the install must also ask Foojay what the
+   search asked, as at the end of item 4.
+
+   With those builds installed, `vfox use java@25-graal` and a `.sdkmanrc`
+   holding `java=25-graal` must select the build `vfox install` names.
+   `PreUse` and `ParseLegacyFile` took the newest installed release of 25,
+   which is a feature release as soon as one is installed
+   ([#110](https://github.com/version-fox/vfox-java/issues/110)). Each faked
+   build holds a stand-in `java` that only prints its name, as in item 6.
+   Once the 25.0 line is removed, `vfox use` and the `.sdkmanrc` must both
+   select the newest feature release.
+4. On the Temurin rows, which run on every runner, the distributions the
+   suite checks by name only (`adpt` to `semcrt`, `nameOnly` in
+   `tests/e2e/common`) go by their short names where Foojay has packages of
+   them for the runner: `vfox search java <short>` lists each, and once the
+   newest version it lists is faked as installed,
+   `vfox install java@<major>-<short>` (`22-grl17`) reports that version as
+   already installed, so nothing downloads. Before they had short names, the
+   two failed with `Unsupported distribution` and `Could not extract a valid
+   distribution`.
+
+   On the same rows Mandrel and Liberica NIK go by the GraalVM version they
+   carry (`ownNumbers` in `tests/e2e/common`; Windows arm64 has neither):
+   `vfox search java mandrel` lists `23.1.12-mandrel` (`23.1.8-nik` for
+   Liberica NIK), and with it and the newest 23.x the search lists faked as
+   installed, `vfox install java@mandrel-23.1.12` and
+   `vfox install java@23-mandrel` report those two as already installed.
+   Before the plugin read `distribution_version`, where Foojay moved that
+   version in October 2026, the search listed one name per Java major,
+   `23.1.12-mandrel` was not found, and `java@23-mandrel` installed Mandrel
+   24.1.2, built for Java 23.
+
+   On Linux these rows, and the GraalVM Community rows of item 3, reach
+   Foojay through a stand-in for api.foojay.io, built from
+   `tests/e2e/linux/front`, which logs what the plugin asks. Each install
+   above must ask what the search before it asked (`AsksAsSearch` in
+   `tests/e2e/common`). Foojay's answers are cached per question, so for half
+   an hour after a release another question can take a build that the search
+   does not list yet, which would download and fail the check
+   ([foojay.md](foojay.md#what-the-plugin-asks)). Before
+   [#113](https://github.com/version-fox/vfox-java/issues/113) a bare major
+   asked for `latest=available`, and Mandrel and Liberica NIK by
+   `distribution_version`.
+5. The pinned release installs under the name `PreInstall` gives it: the
+   requested version plus the build number (`21.0.8-tem` installs as
+   `21.0.8+9-tem`). `vfox search java <distribution>` (the `Available` hook)
+   lists that same name as installed, noting JavaFX on `-fx` builds. For
+   GraalVM it must also list the feature releases GraalVM ships every month
+   since 25.1 (`25.4.4.1.1-graalce`), none of them noted LTS, though Foojay
+   marks some of them LTS, as the JDK they build on is; each lasts about a
+   month. Every other release of a major must carry the same note. The
+   plugin used to list the feature release 25.4.4.1.1 as `25.0.4.1-graalce`,
+   without the LTS note `25.0.2-graalce` has.
+   On Windows the list includes JetBrains Runtime 21.0.5, which ships only as
+   tar.gz there.
+
+   The install itself must also have verified the download. Foojay lists a
+   checksum for the pinned release of every default distribution on every
+   runner (2026-11-02), and `vfox install` must print `Verifying checksum
+   <digest>...` with a digest of a length vfox supports, not `WARNING:
+   Checksum is not provided, skip verify...`, which every install ended with
+   until the plugin passed Foojay's checksums on. The digests come in four
+   forms, so each way the plugin reads them runs: SHA-256 and SHA-1 in
+   Foojay's record (Temurin, Liberica), SHA-256 in a file that holds the
+   digest alone (OpenJDK, GraalVM Community) and SHA-512 in a file that adds
+   the name (JetBrains). vfox compares the digest with the hash of the file it
+   downloaded and fails the install if they differ, so the install succeeding
+   proves the digest is the file's. A release chosen with `JAVA_VERSION` is
+   not checked, as Foojay may list no checksum for it.
+6. Before any `vfox use`, a `.sdkmanrc` holding the SDKMAN identifier
+   without the build number selects the JDK through `ParseLegacyFile`:
+   `java=21.0.8-tem`, `java=21.0.5-jbr` (SDKMAN's name for JetBrains) or
+   `java=25.0.4.fx-librca` (its spelling of JavaFX builds). So does one
+   padding the release with a zero, as `sdk list java` shows many:
+   `java=21.0.8.0+9-tem`, `java=25.0.4.0-fx+9-librca` (Foojay, and so the
+   installed name, has no such zero). So does one holding the installed
+   version (`java=21.0.8+9-tem`). All run next to an empty install of
+   another release whose version starts with the pinned one
+   (`21.0.80+1-tem`): vfox sorts installed versions as strings, descending,
+   so `vfox list java` must show it first. `ParseLegacyFile` used to take it
+   as the first one starting with the release, and, for the padded release,
+   as the newest release of the major. Then SDKMAN's identifier of an
+   early-access build of the pinned major, spelled as `sdk list java` shows
+   OpenJDK's (`28.0.0.0+ea.20-open`), must select that build:
+   `java=21.0.0.0+ea.1-tem` selects `21-ea+1-tem`, not the release, which
+   `ParseLegacyFile` took while it understood only SDKMAN's older
+   `21.ea.1-tem`. So must the installed name itself (`java=21-ea+1-tem`),
+   for which `ParseLegacyFile`, unable to parse it, selected nothing, while
+   `vfox use` selects it. jdk.java.net removes each early-access build within
+   weeks, so that install is faked: its `bin` holds a stand-in `java` that
+   only prints the name. On Windows the file is written with CRLF line
+   endings.
+
+   On the Temurin rows, a `.sdkmanrc` holding one of SDKMAN's identifiers of
+   Mandrel and Liberica NIK with the JDK after `.r` must then select the
+   release it names: `java=25.0.4.r25-nik` selects `25.0.4-nik`, not
+   `25.0.4.1-nik`, which `ParseLegacyFile` took while it read `25.0.4.r25` as
+   the release. `java=22.1.r11-mandrel` must select nothing, as the plugin
+   installs only the JDK 17 build of Mandrel 22.1 (`OwnNumberIdentifiers` in
+   `tests/e2e/common`). The releases they name and a newer one of each major
+   are faked the same way.
+7. After `vfox use --global`, the JDK on `PATH` reports the requested
+   `java.version`, the runner's `os.arch` (`amd64` / `aarch64`, which also
+   catches an x64 JDK emulated on Windows ARM64) and the distribution's
+   `java.vendor`. `JAVA_HOME` holds that same JDK, `javac` compiles a
+   program that `java` then runs, the module list carries JavaFX exactly for
+   `-fx` builds, and `vfox current java` reports the installed version. A
+   `GRAALVM_HOME` set beforehand keeps its value, as users point it at a
+   GraalVM of their own; for GraalVM, the plugin used to replace it with
+   the JDK in use.
+8. `PreUse` maps the spellings users type to the installed version without
+   another download: the bare major (`java@21`, left to vfox core's fuzzy
+   matching), the spec the JDK was installed with (`java@21.0.8-tem`, whose
+   build number `PreUse` finds among the installed versions) and the
+   asdf-style `<long-name>-<version>[-fx]` (`java@temurin-21.0.8+9`,
+   rewritten to `21.0.8+9-tem`; `java@openjdk-25.0.2+10` to `25.0.2+10`).
+   So does the release padded with a zero, as SDKMAN writes releases
+   (`java@21.0.8.0-tem`, `java@21.0.8.0+9-tem`), which `vfox install` must
+   first find already installed: `PreInstall` passes the zero on to Foojay,
+   which leaves it out, while `PreUse` looked for an installed version
+   starting with the padded release and reported it not installed.
+
+The default matrix runs every distribution against both vfox channels
+(`latest`, `main`):
+
+| Distribution | Release | Covers                                                                                                    | amd64 | arm64 |
+| ------------ | ------- | --------------------------------------------------------------------------------------------------------- | ----- | ----- |
+| `open`       | 25.0.2  | the default distribution, versions without a suffix                                                       | ✓     |       |
+| `tem`        | 21.0.8  | the common path (tar.gz on Linux, zip on Windows); the mirror, name and number checks of items 2, 4 and 6 | ✓     | ✓     |
+| `librca-fx`  | 25.0.4  | JavaFX bundled builds (`-fx`)                                                                             | ✓     | ✓     |
+| `jb`         | 21.0.5  | the tar.gz path on Windows, which has no zip for it                                                       | ✓     | ✓     |
+| `graalce`    | 25.0.2  | a `GRAALVM_HOME` set beforehand keeps its value; Oracle GraalVM's `25-graal`                              | ✓     |       |
+
+Every pinned release is published through Foojay for each platform its row
+runs on. OpenJDK and GraalVM Community ship no `windows-aarch64` build, so
+arm64 runs the other three on both Linux and Windows.

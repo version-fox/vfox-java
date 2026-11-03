@@ -23,6 +23,8 @@ tests/post_install_layouts.lua  the macOS layouts PostInstall handles, with its 
 tests/fixtures/loongnix/        a saved copy of the Loongnix archive listing
 tests/e2e/                      container tests, see e2e.md
 Injection.lua                   type hints for what vfox injects, never loaded
+README.md, docs/                the documentation; README_CN.md and docs/zh-CN/ are the Chinese version
+opencode.jsonc                  lets OpenCode agent sessions in this repository run git push, gh pr create and gh pr comment without asking
 ```
 
 vfox loads `metadata.lua`, calls a hook when a command needs it, and puts `PLUGIN` and `RUNTIME` (`osType`, `archType`, `version`) in scope. `osType` and `archType` are Go's `GOOS` and `GOARCH` of the vfox binary.
@@ -107,7 +109,7 @@ vfox plugin run . ParseLegacyFile --input '{"filename":".sdkmanrc","filepath":"/
 2. Add `["<short name>"] = "<foojay id>"` to `short_name` in `lib/distribution_version.lua`. Use SDKMAN's identifier when SDKMAN has or had the distribution. Otherwise make one the way SDKMAN does: keep a short vendor name whole, and cut a longer one down, mostly by dropping vowels (`opnlgc`). If SDKMAN spells it differently, map it in `plugin_spelling` in `hooks/parse_legacy_file.lua`, and add the difference to [distributions.md](distributions.md#short-names-and-sdkman).
 3. If its version numbers need special care, as those of GraalVM and Mandrel do, handle them where `lib/foojay.lua` reads Foojay's answer (`graalvm_packages`, `own_numbers`), and its LTS marks or the pick for a bare major in `hooks/available.lua` and `hooks/pre_install.lua`. If it ships no tar.gz outside Windows, add its archive type to `other_archive_type` in `lib/foojay.lua`, and if Foojay lists packages of it that do not install as they are, add a fix to `fixes` there.
 4. Add a case to `tests/pre_install_test.lua`.
-5. Update the tables in `README.md`, [distributions.md](distributions.md) and [platforms.md](platforms.md), and their translations in `README_CN.md` and `docs/zh-CN`.
+5. Update the tables in `README.md`, [distributions.md](distributions.md) and [platforms.md](platforms.md), the number of distributions that `README.md` and distributions.md give, and the translations of all of them in `README_CN.md` and `docs/zh-CN`.
 6. For a new code path, also add it to the e2e matrix ([e2e.md](e2e.md)). Distributions outside the matrix still run every check except the `java.vendor` assertion and the asdf-style `PreUse` spelling. One that only brings a name goes into `nameOnly` in `tests/e2e/common/common.go` instead, with the runner platforms Foojay has it for.
 
 ## Refreshing the platform table
@@ -148,10 +150,18 @@ The ids are Foojay's (`oracle_open_jdk` is `open`). It prints `redhat` for Linux
 
 ## Releasing
 
-A maintainer runs **Actions → Plugin → Run workflow** on the default branch with the version, without `v`. The README describes what the shared workflow does. Afterwards `plugins/java.json` in [vfox-plugins](https://github.com/version-fox/vfox-plugins) shows the version that `vfox add java` serves.
+A maintainer publishes from **Actions → Plugin → Run workflow** on the default branch, entering a stable plugin version without the `v` prefix. The shared workflow, [plugin-manifest-action](https://github.com/version-fox/plugin-manifest-action), updates `metadata.lua`, creates the version commit and the tag, and publishes the ZIP and the manifest in this repository. No local tag or extra release token is needed. Pull requests run the checks only.
 
-The documentation marks what is newer than the last release with "Unreleased" ("未发布" in Chinese). After a release, move those entries in [changes.md](changes.md) under the new version and take the remarks out, in both languages: `grep -rn -i -e unreleased -e 未发布 docs README*`. Also search for the number of the previous release: a few sentences compare against it without saying "Unreleased".
+Pushing a version tag publishes too, when `PLUGIN.version` already matches the tag. If publication fails, re-run the failed job to resume it. The workflow follows the shared `@v1` release tool, and updating the tool does not release this plugin. The shared workflow's documentation has the package contract and the requirements of a first rollout. Afterwards `plugins/java.json` in [vfox-plugins](https://github.com/version-fox/vfox-plugins) shows the version that `vfox add java` serves.
+
+### After a release
+
+The documentation marks what is newer than the last release with "Unreleased" ("未发布" in Chinese). Once the release is out:
+
+1. Move those entries in [changes.md](changes.md) under the new version, with the date of the release, and take the remarks out, in both languages: `grep -rn -i -e unreleased -e 未发布 docs README*`.
+2. Search for the number of the previous release: a few sentences compare against it without saying "Unreleased".
+3. Pages that quote Foojay give the day the data was taken. Bring up to date the quotes that name the newest release of something (`21.0.13+9-tem` on 2026-11-03), and check the tables against Foojay again, see [Refreshing the platform table](#refreshing-the-platform-table).
 
 ## Writing the docs
 
-English pages are in `docs/`, the Chinese ones in `docs/zh-CN/` under the same names (the Chinese README is `README_CN.md`), and each page starts with a link to the other language. Pages that quote Foojay give the day the data was taken. Nothing in CI checks them, so run the commands you add.
+English pages are in `docs/`, the Chinese ones in `docs/zh-CN/` under the same names (the Chinese README is `README_CN.md`), and each page starts with a link to the other language. A new page goes into the Documentation list of both READMEs. The notes that `vfox add java` prints link to `README.md` (`PLUGIN.notes` in `metadata.lua`, checked by the e2e suite), so the README keeps the list of short names and the way to search a distribution. Pages that quote Foojay give the day the data was taken. Nothing in CI checks them, so run the commands you add.

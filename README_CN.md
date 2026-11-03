@@ -6,47 +6,32 @@
 
 它通过 [Foojay](https://foojay.io/) 查找并安装 31 个发行版的 JDK，包括 Temurin、Zulu、Liberica、Corretto、Microsoft、GraalVM 等。在 Linux loong64 上，则改从 Loongnix 归档安装。
 
-## 适用场景
-
-这个插件可以同时装好几个 JDK，并按单个 Shell、按项目，或为之后新开的所有 Shell 切换，[SDKMAN](https://sdkman.io/) 做的就是这件事。它还能用在 SDKMAN 用不了的地方：SDKMAN 是一组 bash 脚本，在 Windows 上要借助 WSL 或 Git Bash，不能在 PowerShell 里使用，Windows 自带的 Windows PowerShell 5.1 也不行；vfox 是原生的 Windows 程序，能挂载到 PowerShell，在那里这个插件就取代了 SDKMAN。插件沿用 SDKMAN 的简称，也读取 `.sdkmanrc`，所以 SDKMAN 用户和 vfox 用户可以共用同一个项目。两边的命令对照如下：
-
-| | SDKMAN | vfox |
-| --- | --- | --- |
-| 安装 | `sdk install java 21.0.8-tem` | `vfox install java@21.0.8-tem` |
-| 只在当前 Shell 里使用 | `sdk use java 21.0.8-tem` | `vfox use java@21.0.8-tem` |
-| 在之后新开的所有 Shell 里使用 | `sdk default java 21.0.8-tem` | `vfox use --global java@21.0.8-tem` |
-
-什么时候该用这个插件、其余的命令以及它们的差别，见 [docs/zh-CN/sdkman.md](docs/zh-CN/sdkman.md)。
-
 ## 安装
 
-先安装 [vfox](https://github.com/version-fox/vfox)，然后执行下面的命令安装插件：
-
-```bash
-vfox add java
-```
-
-要让 `java` 出现在 `PATH` 里，需要先把 vfox 挂载到 Shell，见 vfox 的[快速入门](https://vfox.dev/zh-hans/guides/quick-start.html)。
-
-### 示例
+先安装 [vfox](https://github.com/version-fox/vfox)，然后安装插件和 JDK，并选中这个 JDK：
 
 ```bash
 vfox add java
 vfox install java@21-tem
 vfox use --global java@21-tem
-```
-
-可以用下面的命令验证：
-
-```bash
 java -version
 ```
+
+`java -version` 会显示当前选中的 JDK。要让 `java` 出现在 `PATH` 里，需要先把 vfox 挂载到 Shell，见 vfox 的[快速入门](https://vfox.dev/zh-hans/guides/quick-start.html)。
 
 `vfox search java tem` 会列出 Temurin 的各个版本，在交互式终端里还可以直接选一个并安装。
 
 ## 版本与命名
 
-版本写成 `<版本>-<发行版>`，例如 `21.0.8-tem`，后面加 `-fx` 表示带 JavaFX。不写发行版时得到的是 jdk.java.net 上的 OpenJDK，它的 17 只到 17.0.2，21 只到 21.0.2。详见 [docs/zh-CN/versions.md](docs/zh-CN/versions.md)。
+版本写成 `<版本>-<发行版>`，例如 `21.0.8-tem`，后面加 `-fx` 表示带 JavaFX：
+
+```bash
+vfox install java@21-tem          # Temurin 21 的最新版
+vfox install java@21.0.8-tem      # Temurin 21.0.8
+vfox install java@21-zulu-fx      # 带 JavaFX 的 Zulu 21
+```
+
+不写发行版时得到的是 jdk.java.net 上的 OpenJDK，它的 17 只到 17.0.2，21 只到 21.0.2，所以请指定发行版。安装、使用、搜索和 EA 构建的细节见 [docs/zh-CN/versions.md](docs/zh-CN/versions.md)。
 
 ## 发行版
 
@@ -80,7 +65,13 @@ java -version
 | `grl8`、`grl11`、`grl16`、`grl17`、`grl19` | 基于 JDK 8 到 19 的 GraalVM CE |
 | `lnxabi1`、`lnxabi2` | Loongnix，仅限 Linux loong64 |
 
-简称沿用 SDKMAN 的标识符，有几处不同：JetBrains Runtime 在 SDKMAN 里叫 `jbr`；AdoptOpenJDK 和 GraalVM CE 的虚拟机或 JDK 版本，SDKMAN 当时写在版本号里（`11.0.10.j9-adpt`、`22.3.3.r17-grl`），插件则给每种各起一个简称（`adptj9`、`grl17`）。Eliya、OJDKBuild、OpenLogic、Red Hat 和 Semeru 认证版在 SDKMAN 里没有标识符，简称是插件自己起的。全部差别以及每个发行版是什么，见 [docs/zh-CN/distributions.md](docs/zh-CN/distributions.md)；最后一行见 [docs/zh-CN/loongnix.md](docs/zh-CN/loongnix.md)。
+简称沿用 [SDKMAN](https://sdkman.io/) 的标识符，有这几处不同：
+
+- JetBrains Runtime 是 `jb`，毕昇是 `bsg`，它们在 SDKMAN 里叫 `jbr` 和 `bisheng`。
+- AdoptOpenJDK 和 GraalVM CE 的虚拟机或 JDK 版本，SDKMAN 当时写在版本号里（`11.0.10.j9-adpt`、`22.3.3.r17-grl`），插件则给每种各起一个简称（`adptj9`、`grl17`）。
+- Eliya、OJDKBuild、OpenLogic、Red Hat 和 Semeru 认证版在 SDKMAN 里没有标识符，简称是插件自己起的。
+
+全部差别以及每个发行版是什么，见 [docs/zh-CN/distributions.md](docs/zh-CN/distributions.md)；最后一行见 [docs/zh-CN/loongnix.md](docs/zh-CN/loongnix.md)。
 
 ## 平台
 
@@ -98,7 +89,7 @@ GraalVM 的安装和使用与别的 JDK 没有两样。只有用来构建原生�
 sudo apt install --assume-yes build-essential zlib1g-dev
 ```
 
-GraalVM CE 8 到 19 不带 `native-image`，要先添加。没有这些包时 `native-image` 的报错、其他系统的做法以及怎样添加，见 [docs/zh-CN/distributions.md](docs/zh-CN/distributions.md#native-image-与-c-工具链)。
+GraalVM CE 8 到 19 不带 `native-image`，要先添加。没有这些包时 `native-image` 的报错、其他系统的做法以及怎样添加，见 [docs/zh-CN/native-image.md](docs/zh-CN/native-image.md)。
 
 ## `.sdkmanrc`
 
@@ -108,29 +99,42 @@ vfox 通过这个插件读取 SDKMAN 的 `.sdkmanrc` 里的 `java=` 一行，并
 
 大多数发行版从 GitHub 下载。如果你那里下载很慢，执行 `export VFOX_JAVA_GITHUB_MIRROR=https://gh-proxy.org/`，这些下载就会经过镜像。详见 [docs/zh-CN/mirror.md](docs/zh-CN/mirror.md)。
 
-## 查询 Foojay
+## SDKMAN 用户
 
-想知道你的平台上有哪些 JDK，可以自己去问 Foojay。[docs/zh-CN/foojay.md](docs/zh-CN/foojay.md) 里有 Swagger UI 和查询命令。
+[SDKMAN](https://sdkman.io/) 可以同时装好几个 JDK，并按单个 Shell、按项目，或为之后新开的所有 Shell 切换。这个插件也一样，沿用 SDKMAN 的简称，也读取 `.sdkmanrc`，所以 SDKMAN 用户和 vfox 用户可以共用同一个项目。
 
-## 问题排查
+它还能用在 SDKMAN 用不了的地方。SDKMAN 是一组 bash 脚本，在 Windows 上要借助 WSL 或 Git Bash，不能在 PowerShell 里使用，Windows 自带的 Windows PowerShell 5.1 也不行。vfox 是原生的 Windows 程序，能挂载到 PowerShell，在那里这个插件就取代了 SDKMAN。两边的命令对照如下：
 
-插件和 `native-image` 的各种提示、代理设置和 JDK 的位置，见 [docs/zh-CN/troubleshooting.md](docs/zh-CN/troubleshooting.md)。
+| | SDKMAN | vfox |
+| --- | --- | --- |
+| 安装 | `sdk install java 21.0.8-tem` | `vfox install java@21.0.8-tem` |
+| 只在当前 Shell 里使用 | `sdk use java 21.0.8-tem` | `vfox use java@21.0.8-tem` |
+| 在之后新开的所有 Shell 里使用 | `sdk default java 21.0.8-tem` | `vfox use --global java@21.0.8-tem` |
 
-## 从源码安装
+什么时候该用这个插件、其余的命令以及它们的差别，见 [docs/zh-CN/sdkman.md](docs/zh-CN/sdkman.md)。
 
-详见 [docs/zh-CN/install-from-source.md](docs/zh-CN/install-from-source.md)。
+## 文档
 
-## 开发
+**使用插件**
 
-插件的工作方式和修改方法见 [docs/zh-CN/development.md](docs/zh-CN/development.md)，容器测试见 [docs/zh-CN/e2e.md](docs/zh-CN/e2e.md)。
+- [版本与命名](docs/zh-CN/versions.md)：怎样写版本，以及安装、使用、搜索和 EA 构建
+- [发行版](docs/zh-CN/distributions.md)：每个发行版是什么、它的长名，以及 GraalVM、Mandrel 和 Liberica NIK 怎样编号
+- [平台](docs/zh-CN/platforms.md)：各发行版在哪些操作系统和 CPU 上有构建
+- [查询 Foojay](docs/zh-CN/foojay.md)：自己去问 Foojay 你的平台上有哪些 JDK、插件向它问了什么，以及怎样校验下载的文件
+- [JavaFX](docs/zh-CN/javafx.md)：`-fx` 构建以及哪些平台有
+- [Native Image](docs/zh-CN/native-image.md)：`native-image` 需要的 C 编译器和 zlib
+- [`.sdkmanrc`](docs/zh-CN/sdkmanrc.md)：SDKMAN 的项目文件会选中哪个 JDK
+- [SDKMAN 与 vfox](docs/zh-CN/sdkman.md)：什么时候该用这个插件、命令对照以及差别
+- [GitHub 镜像](docs/zh-CN/mirror.md)：github.com 很慢时让下载经过镜像
+- [Loongnix](docs/zh-CN/loongnix.md)：Linux loong64 上的 JDK
+- [问题排查](docs/zh-CN/troubleshooting.md)：插件和 `native-image` 的各种提示、代理设置和 JDK 的位置
+- [变更记录](docs/zh-CN/changes.md)：每个版本改了什么
 
-## 发布这个插件
+**参与开发**
 
-维护者在默认分支上执行 **Actions → Plugin → Run workflow**，填入不带 `v` 前缀的稳定版插件版本号即可发布。共享工作流会更新 `metadata.lua`，创建版本提交和标签，并把 ZIP 包和 manifest 发布到本仓库；不需要在本地打标签，也不需要额外的发布令牌。PR 只运行检查，PR 标题不再触发发布。
-
-直接推送版本标签也可以发布，前提是 `PLUGIN.version` 已经与标签一致。发布失败时，重新运行失败的那个作业即可接着发布。
-
-工作流引用的是共享的 `@v1` 发布工具，升级这个工具不会发布本插件。包的约定和首次接入的要求，见[共享工作流的文档](https://github.com/version-fox/plugin-manifest-action)。
+- [从源码安装](docs/zh-CN/install-from-source.md)：在下一个版本发布之前用上 `main`
+- [开发](docs/zh-CN/development.md)：插件的工作方式、修改方法和发布流程
+- [E2E 测试](docs/zh-CN/e2e.md)：容器测试
 
 ## 致谢
 
