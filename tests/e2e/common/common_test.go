@@ -636,6 +636,33 @@ func TestBareMajorBuilds(t *testing.T) {
 	}
 }
 
+func TestGraalVMIdentifiers(t *testing.T) {
+	// The builds `vfox search java graal` lists for 25 on 2026-11-03,
+	// less the GA 25.
+	builds := []string{
+		"25.4.4.1.1-graal", "25.3.4.1-graal", "25.2.4-graal", "25.1.3-graal",
+		"25.0.5.0.3-graal", "25.0.5.0.2-graal", "25.0.5-graal", "25.0.4.1.1-graal", "25.0.4.1-graal",
+	}
+	// SDKMAN writes the fifth number after the +; the builds with four or
+	// fewer numbers have nothing to move.
+	want := []LegacyCase{
+		{"25.4.4.1+1-graal", "25.4.4.1.1-graal"},
+		{"25.0.5.0+3-graal", "25.0.5.0.3-graal"},
+		{"25.0.5.0+2-graal", "25.0.5.0.2-graal"},
+		{"25.0.4.1+1-graal", "25.0.4.1.1-graal"},
+	}
+	if got := GraalVMIdentifiers(builds); !slices.Equal(got, want) {
+		t.Errorf("GraalVMIdentifiers = %q, want %q", got, want)
+	}
+	if got := GraalVMIdentifiers([]string{"25.4.4.1.1-graalce"}); !slices.Equal(got, []LegacyCase{{"25.4.4.1+1-graalce", "25.4.4.1.1-graalce"}}) {
+		t.Errorf("GraalVMIdentifiers(graalce) = %q", got)
+	}
+	// Another distribution's version, an early-access build and a build number are no fifth number.
+	if got := GraalVMIdentifiers([]string{"21.0.12.1+1-tem", "26-ea+13-graal", "25.0.5.0.3-mandrel", "25.0.5.0.3"}); len(got) != 0 {
+		t.Errorf("GraalVMIdentifiers(others) = %q, want none", got)
+	}
+}
+
 func TestNameOnlyDistributions(t *testing.T) {
 	for platform, want := range map[string][]string{
 		"linux/amd64":   {"adpt", "adptj9", "eliya", "gln", "grl11", "grl16", "grl17", "grl19", "grl8", "ojdkbld", "opnlgc", "rdht", "semcrt"},

@@ -305,6 +305,12 @@ JDK, so `java` can only come from what vfox installs:
    which is a feature release as soon as one is installed
    ([#110](https://github.com/version-fox/vfox-java/issues/110)). Each faked
    build holds a stand-in `java` that only prints its name, as in item 6.
+   A `.sdkmanrc` holding SDKMAN's identifier of each faked build that has
+   five numbers (`25.0.5.0.3-graal` is `25.0.5.0+3-graal`, `25.4.4.1.1-graal`
+   is `25.4.4.1+1-graal`; `GraalVMIdentifiers` in `tests/e2e/common`) must
+   select that build, not the `25.0.5-graal` next to it or a newer release.
+   `ParseLegacyFile` took the number after the `+` for a build of the release
+   ([#124](https://github.com/version-fox/vfox-java/pull/124)).
    Once the 25.0 line is removed, `vfox use` and the `.sdkmanrc` must both
    select the newest feature release.
 4. On the Temurin rows, which run on every runner, the distributions the

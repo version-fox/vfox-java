@@ -34,13 +34,13 @@ vfox's shell hook reads the file when you enter the directory and selects the JD
 
 The plugin matches the identifier against the JDKs that are installed, in this order:
 
-1. An installed name written as it is: `java=21.0.8+9-tem`, `java=28-ea+19`.
+1. An installed name written as it is: `java=21.0.8+9-tem`, `java=28-ea+19`. For Oracle GraalVM and GraalVM Community the number after the `+` is the fifth number of the version, so `java=25.0.5.0+3-graal` names `25.0.5.0.3-graal`, see [SDKMAN's spellings](#sdkmans-spellings).
 2. The release you named, with its newest installed build: `21.0.8-tem` selects `21.0.8+9-tem`.
 3. Failing that, the newest installed release of the same major. `21-tem` goes straight to this step.
 
 Step 3 does not check that the release is at least the one named. With only `21.0.8+9-tem` installed, `java=21.0.12-tem` selects it, and so does `java=21.0.3-tem`. A build number that is not installed falls back to the newest installed build of the release (`21.0.8+7-tem` selects `21.0.8+9-tem`). If the major is not installed at all, nothing is selected.
 
-For Oracle GraalVM, step 3 leaves out the monthly feature releases (`25.4.4.1.1-graal`), as `vfox use java@25-graal` does, so `java=25-graal` and `java=25.0.3-graal` select the newest installed build of the 25.0 line. If nothing else of 25 is installed, a feature release is taken. If the file names a feature release (SDKMAN spells one `25.4.4+1-graal`), the newest installed release of 25 is taken.
+For Oracle GraalVM, step 3 leaves out the monthly feature releases (`25.4.4.1.1-graal`), as `vfox use java@25-graal` does, so `java=25-graal` and `java=25.0.3-graal` select the newest installed build of the 25.0 line. If nothing else of 25 is installed, a feature release is taken. If the file names a feature release that is not installed (SDKMAN has spelled one `25.4.4.1+1-graal` and `25.4.4+1-graal`), the newest installed release of 25 is taken.
 
 It never crosses to another distribution, between a JavaFX build and a plain one, or between an early-access build and a release.
 
@@ -56,6 +56,7 @@ It never crosses to another distribution, between a JavaFX build and a plain one
 | `21.0.12-fx+1.1-librca` | Liberica with JavaFX (newer spelling) |
 | `21.0.8+1.1-tem` | Temurin 21.0.8, see below |
 | `27.0.0+36-librca`, `25.0.1.0+8-open` | `27+36-librca`, `25.0.1+8`: the zeros are dropped |
+| `25.0.5.0+3-graal`, `25.4.4.1+1-graalce` | `25.0.5.0.3-graal`, `25.4.4.1.1-graalce`: the number after the `+` is the fifth number of GraalVM's version |
 | `28.ea.19-open`, `28.0.0+ea.19-open` | the early-access build `28-ea+19` |
 | `25.0.4.r25-nik`, `25.0.2.r25-mandrel` | `25.0.4-nik`, `25.0.2-mandrel`: `.r` and the JDK after it are dropped |
 | `11.0.10.hs-adpt`, `11.0.10.j9-adpt` | AdoptOpenJDK with HotSpot, `11.0.10-adpt`, and with OpenJ9, `11.0.10-adptj9` |
@@ -66,7 +67,9 @@ The last three rows are SDKMAN's identifiers for distributions it no longer list
 
 SDKMAN writes the JDK into some versions of Mandrel and Liberica NIK as well, which the plugin names after the GraalVM version alone, see [distributions.md](distributions.md#behavior-of-mandrel-and-liberica-nik). Of a release that comes for two JDKs, the plugin installs only the build for the newer one, so an identifier with the older one selects nothing: `22.1.r11-mandrel`, `23.0.1.r17-nik`. The older JDK is 11 from 21.3 to 22.3.5 and 17 from 23 to 23.0.1.2. `25.r25-mandrel` has only the major and selects the newest installed Mandrel 25, as `java=25-mandrel` does, while SDKMAN installs 25.0.1.0 for it.
 
-The number after `+` in SDKMAN's newer identifiers (`21.0.8+1.1-tem`) counts SDKMAN's own rebuilds. It is not a build number of the vendor, so the plugin does not look for one and takes the release. Foojay, and so the installed name, has no zero padding, which is why `27.0.0` means the release `27`. A `.0` padding in `sdk list java` is common (`25.0.1.0+8-open`, `21.0.9.0+116386-jbr`), and the plugin reads it as well.
+The number after `+` in SDKMAN's newer identifiers is a build number, the vendor's (`25.0.5.0+8-tem` is Temurin's build 8, installed as `25.0.5+8-tem`) or SDKMAN's own count of its rebuilds (`21.0.8+1.1-tem`). The plugin looks for an installed build of that number first and otherwise takes the release. Foojay, and so the installed name, has no zero padding, which is why `27.0.0` means the release `27`. A `.0` padding in `sdk list java` is common (`25.0.1.0+8-open`, `21.0.9.0+116386-jbr`), and the plugin reads it as well.
+
+Oracle GraalVM and GraalVM Community are the exception. Their versions have five numbers (`25.0.5.0.3`) where SDKMAN's identifiers have four before the `+`, so SDKMAN writes the fifth after it: `25.0.5.0+3-graal` is GraalVM 25.0.5.0.3, and `25.4.4.1+1-graalce` is the feature release 25.4.4.1.1. That number belongs to the release. Oracle ships `25.0.5`, `25.0.5.0.2` and `25.0.5.0.3` as three different files. The plugin looks for the installed name with the dot first, and failing that goes on with steps 2 and 3 as for any release that is not installed. `vfox install` takes the dotted name only (`java@25.0.5.0.3-graal`), not the identifier. Unreleased: release 0.6.4 takes the number for a build of the release `25.0.5`. So it selects `25.0.5-graal` when that is installed next to `25.0.5.0.3-graal`, and a newer release of 25 when that is installed instead.
 
 ## Not finding it
 

@@ -2,7 +2,11 @@
 
 [中文](changes.md) | [English](../changes.md)
 
-按发布版本列出用户能感受到的变化。GitHub 的 Release 页面列出了对应的 PR。
+按发布版本列出用户能感受到的变化。GitHub 的 Release 页面列出了对应的 PR。写这篇文档时最新的发布版是 0.6.4，`main` 比它多出“未发布”下面的所有内容。想现在就用上这些变化，见 [install-from-source.md](install-from-source.md)。
+
+## 未发布
+
+- `.sdkmanrc` 里写 SDKMAN 给 Oracle GraalVM 和 GraalVM 社区版的标识符时，会选中它指明的版本。SDKMAN 把这两个发行版版本号的第五位写在 `+` 后面：`java=25.0.5.0+3-graal` 选中 `25.0.5.0.3-graal`，`java=25.4.4.1+1-graalce` 选中 `25.4.4.1.1-graalce`。0.6.4 把这个数字当作 25.0.5 的构建号，找不到这样的名字，于是 `25.0.5-graal` 和 `25.0.5.0.3-graal` 都装着时选中前者，而它们是不同的下载（Oracle 把 `25.0.5`、`25.0.5.0.2` 和 `25.0.5.0.3` 发布成了三个文件）；没装 `25.0.5-graal` 时则选 25 里已安装的最新版本：钉在 `25.0.5.0+3-graal` 上的项目，一装了更新的 GraalVM 就会换过去。见 [sdkmanrc.md](sdkmanrc.md#sdkman-的写法)（[#124](https://github.com/version-fox/vfox-java/pull/124)）。
 
 ## 0.6.4（2026-11-03）
 

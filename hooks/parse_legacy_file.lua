@@ -36,6 +36,17 @@ local sdkman_jdks = {
     nik = true,
 }
 
+--- Oracle GraalVM and GraalVM Community, which the plugin names after
+--- GraalVM's own version. It has five numbers where SDKMAN's identifiers have
+--- four before the +, so SDKMAN writes the fifth after it: 25.0.5.0+3-graal is
+--- the plugin's 25.0.5.0.3-graal, and 25.4.4.1+1-graalce its 25.4.4.1.1-graalce.
+--- Oracle's file is graalvm-jdk-25.0.5.0.3, so that number belongs to the
+--- release and is no build of the vendor's.
+local sdkman_graalvm = {
+    graal = true,
+    graalce = true,
+}
+
 --- Returns the JDK whose build of a Mandrel or Liberica NIK release the
 --- plugin does not install, if any. Their releases from 21.3 to 23.0.1.2 come
 --- for two JDKs, and the plugin installs the build for the newer one, so the
@@ -167,14 +178,25 @@ function PLUGIN:ParseLegacyFile(ctx)
     --- a bare major skips releases (Oracle GraalVM's feature releases), so does
     --- this step: java=25-graal and java=25.0.3-graal select 25.0.5-graal,
     --- unless nothing else of the major is installed or the file names a
-    --- feature release itself (java=25.4.4+1-graal).
+    --- feature release itself (java=25.4.4.1+1-graal).
     local skip = distribution_version_parser.bare_major_skips(distributionVersion.distribution)
     if skip and skip(fullVersion) then
         skip = nil
     end
     local name = version .. build .. suffix
+
+    --- GraalVM's own spelling of the version, as the file names it: the number
+    --- after the + is the fifth of the release (25.0.5.0+3 is 25.0.5.0.3), a
+    --- different download than 25.0.5 and 25.0.5.0.2, so it is looked for
+    --- before the release without it and the newest of the major.
+    local graalvm_name
+    local graalvm_release, graalvm_number = fullVersion:match("^(%d[%d.]*)%+(%d+)$")
+    if sdkman_graalvm[vendor] and graalvm_release then
+        graalvm_name = installed_version.unpad(graalvm_release .. "." .. graalvm_number) .. suffix
+    end
     return {
-        version = installed[name] and name
+        version = graalvm_name and installed[graalvm_name] and graalvm_name
+            or installed[name] and name
             or not fullVersion:match("^%d+$") and installed_version.release(installed, version, suffix)
             or installed_version.major(installed, majorVersion, suffix, skip),
     }
