@@ -17,14 +17,15 @@
 # amd64/arm64 through Docker Desktop's Linux-container mode. It carries the
 # pinned Go toolchain the E2E suites and the local checks need, matching the
 # setup-go version CI uses, plus the Lua and license tooling pinned in the
-# lint and license workflows.
+# lint and license workflows, and the vfox release that runs the hook tests
+# (vfox plugin test) in the test workflow.
 #
 # The suites themselves run testcontainers against the host daemon through
 # the socket mounted by devcontainer.json (Docker-out-of-Docker), so the
 # target containers are spawned exactly as a native CI runner spawns them.
 #
-# The image is multi-arch (linux/amd64 and linux/arm64); the Lua downloads
-# below select their asset per target arch.
+# The image is multi-arch (linux/amd64 and linux/arm64); the Lua and vfox
+# downloads below select their asset per target arch.
 
 FROM golang:1.27.1
 
@@ -34,9 +35,10 @@ FROM golang:1.27.1
 COPY --from=docker:29-cli /usr/local/bin/docker /usr/local/bin/docker
 
 # Keep the tool versions below in step with .github/workflows/lint.yml
-# (stylua-action's version and the `mise x aqua:...` line).
+# (stylua-action's version and the `mise x aqua:...` line) and test.yml (vfox).
 ARG STYLUA_VERSION=2.5.2
 ARG LUA_LANGUAGE_SERVER_VERSION=3.19.1
+ARG VFOX_VERSION=1.0.13
 
 # Heredocs need BuildKit, which the dev container tooling uses by default. The
 # E2E target Dockerfiles stay on the chained-`;` form: testcontainers-go's
@@ -53,8 +55,8 @@ apt-get install --assume-yes --no-install-recommends \
     zip
 rm --recursive --force /var/lib/apt/lists/*
 case "$(dpkg --print-architecture)" in
-    amd64) stylua_asset=stylua-linux-x86_64.zip; luals_asset="lua-language-server-${LUA_LANGUAGE_SERVER_VERSION}-linux-x64.tar.gz" ;;
-    arm64) stylua_asset=stylua-linux-aarch64.zip; luals_asset="lua-language-server-${LUA_LANGUAGE_SERVER_VERSION}-linux-arm64.tar.gz" ;;
+    amd64) stylua_asset=stylua-linux-x86_64.zip; luals_asset="lua-language-server-${LUA_LANGUAGE_SERVER_VERSION}-linux-x64.tar.gz"; vfox_dir="vfox_${VFOX_VERSION}_linux_x86_64" ;;
+    arm64) stylua_asset=stylua-linux-aarch64.zip; luals_asset="lua-language-server-${LUA_LANGUAGE_SERVER_VERSION}-linux-arm64.tar.gz"; vfox_dir="vfox_${VFOX_VERSION}_linux_aarch64" ;;
     *) echo "FAIL unsupported architecture $(dpkg --print-architecture)" >&2; exit 1 ;;
 esac
 curl --fail --silent --show-error --location --output /tmp/stylua.zip \
@@ -67,8 +69,13 @@ mkdir --parents /opt/lua-language-server
 tar --extract --gzip --file /tmp/luals.tar.gz --directory /opt/lua-language-server
 rm --force /tmp/luals.tar.gz
 ln --symbolic /opt/lua-language-server/bin/lua-language-server /usr/local/bin/lua-language-server
+curl --fail --silent --show-error --location --output /tmp/vfox.tar.gz \
+    "https://github.com/version-fox/vfox/releases/download/v${VFOX_VERSION}/${vfox_dir}.tar.gz"
+tar --extract --gzip --file /tmp/vfox.tar.gz --directory /usr/local/bin --strip-components=1 "${vfox_dir}/vfox"
+rm --force /tmp/vfox.tar.gz
 stylua --version
 lua-language-server --version
+vfox --version
 EOF
 
 # License-header tooling at the versions pinned by .github/workflows/license.yml

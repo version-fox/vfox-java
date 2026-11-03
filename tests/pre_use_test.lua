@@ -12,9 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-dofile("tests/support.lua")
-PLUGIN = {}
-dofile("hooks/pre_use.lua")
+local test = require("vfox.test")
+local plugin = test.load()
 
 -- Installed versions as PreInstall names them, keyed the way vfox passes them.
 local function sdks(versions)
@@ -143,7 +142,7 @@ local cases = {
     { "semeru_certified-25.0.4", "25.0.4-semcrt" },
 }
 for _, case in ipairs(cases) do
-    local result = PLUGIN:PreUse({ version = case[1], installedSdks = installed })
+    local result = plugin:PreUse({ version = case[1], installedSdks = installed })
     -- vfox decodes the result as a table; releases after 1.0.12 reject a bare string.
     assert(result == nil or type(result) == "table", case[1] .. ": expected a table or nil, got " .. type(result))
     local version = result and result.version
@@ -182,7 +181,7 @@ local graalvm_cases = {
     { { "23.1.8-nik", "23.0.1-nik" }, "23-nik", "23.1.8-nik" },
 }
 for _, case in ipairs(graalvm_cases) do
-    local result = PLUGIN:PreUse({ version = case[2], installedSdks = sdks(case[1]) })
+    local result = plugin:PreUse({ version = case[2], installedSdks = sdks(case[1]) })
     local version = result and result.version
     local message = table.concat(case[1], ", ") .. " with " .. case[2]
     assert(version == case[3], message .. ": expected " .. tostring(case[3]) .. ", got " .. tostring(version))
@@ -193,7 +192,7 @@ end
 -- after an empty version, vfox reported -tem not installed.
 local rejected = { "tem", "temurin", "-tem", "temurin-", "zulu-fx", "open", "lnxabi2-fx" }
 for _, version in ipairs(rejected) do
-    local ok, err = pcall(PLUGIN.PreUse, PLUGIN, { version = version, installedSdks = installed })
+    local ok, err = pcall(plugin.PreUse, plugin, { version = version, installedSdks = installed })
     local message = "No version in " .. version .. "; add one"
     assert(not ok and tostring(err):find(message, 1, true), version .. ": unexpected " .. tostring(err))
 end

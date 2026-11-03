@@ -2,7 +2,8 @@
 
 [中文](zh-CN/e2e.md) | [English](e2e.md)
 
-The offline Lua hook tests (`tests/*_test.lua`) run in the **Test Plugin**
+The offline Lua hook tests (`tests/*_test.lua` under `vfox plugin test`, and
+`tests/post_install_layouts.lua` under `glua`) run in the **Test Plugin**
 workflow. The end-to-end suite runs in containers against real vfox on Linux
 and Windows; each `vfox` x `distribution` combination gets its own throwaway
 container. CI runs the suite natively on the stock runners (Docker plus Go
@@ -406,7 +407,8 @@ lua-language-server --check . --checklevel=Warning
 
 ```bash
 # Offline hook tests (.github/workflows/test.yml).
-printf '%s\0' tests/*_test.lua | xargs -0 -n1 -t go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1
+vfox plugin test .
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_layouts.lua
 ```
 
 ```bash

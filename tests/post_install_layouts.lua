@@ -12,7 +12,11 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-dofile("tests/support.lua")
+-- This file is not named *_test.lua on purpose. It runs the shell script of
+-- PostInstall for real, on directories it makes with mkdir, chmod and ln, and
+-- `vfox plugin test` disables os.execute. It runs under glua instead, in the
+-- Test Plugin workflow on Ubuntu and on macOS, whose BSD tools the script is for:
+--   go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_layouts.lua
 PLUGIN = {}
 RUNTIME = { osType = "darwin" }
 dofile("hooks/post_install.lua")

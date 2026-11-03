@@ -18,7 +18,8 @@ lib/foojay.lua                  向 Foojay 发出的请求，以及对返回结�
 lib/github_mirror.lua           从 GitHub 下载时用的镜像
 lib/installed_version.lua       与已安装的版本名做匹配
 lib/loongnix.lua                Loongnix 归档
-tests/*_test.lua                离线的钩子测试
+tests/*_test.lua                离线的钩子测试，由 vfox plugin test 运行
+tests/post_install_layouts.lua  PostInstall 处理的 macOS 目录结构，会真实执行它的 shell 脚本
 tests/fixtures/loongnix/        Loongnix 归档目录页的一份快照
 tests/e2e/                      容器测试，见 e2e.md
 Injection.lua                   vfox 注入对象的类型提示，不会被加载
@@ -69,21 +70,26 @@ SDKMAN 有些写法不同（`jbr`、`21.0.12.fx-zulu`、`21.0.12-fx+1.1-librca`�
 
 ## 测试
 
-钩子测试在离线状态下用 `gopher-lua` 运行，它就是 vfox 内嵌的 Lua 解释器。每个 `tests/*_test.lua` 都是一个测试，新增一个不需要在别处登记：
+钩子测试在离线状态下用 `vfox plugin test` 运行，vfox 1.0.13 及以后版本才有这个命令。它会找出所有 `tests/**/*_test.lua`，每个文件在自己的虚拟机里运行，所以新增一个测试文件不需要在别处登记：
 
 ```bash
-printf '%s\0' tests/*_test.lua | xargs -0 -n1 -t go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1
+vfox plugin test .
+vfox plugin test . --file tests/pre_use_test.lua
 ```
 
-只跑一个文件：
+请在仓库根目录运行。Test Plugin 工作流安装的是 `.github/workflows/test.yml` 里固定的那个版本，开发容器里装的也是它。
+
+测试文件调用一次 `vfox.test` 的 `test.load()`，再通过它返回的对象调用真实的钩子，比如 `plugin:PreInstall({ version = "21-tem" })`。`test.load` 接受平台（`os`、`arch`）、环境变量（`env`）和一个回答所有 HTTP 请求的函数（`http`）。`lib` 里的模块要在它之后才能 `require`，修改 `RUNTIME.osType` 和 `RUNTIME.archType` 可以换一个平台来试。详见 vfox 的[测试与调试插件](https://vfox.dev/zh-hans/plugins/create/testing.html)。钩子的上下文和返回值会经过 vfox 自己的编解码，所以钩子在 vfox 要表的地方返回一个裸字符串，测试就会失败；返回值里缺的字符串会变成 `""`，而不是 `nil`。
+
+测试用的虚拟机默认禁用 `os.execute` 和 `io.popen`，所以 `tests/pre_install_test.lua` 自己回答判断 glibc 还是 musl 的 `ldd --version`。它把 Foojay 的返回结果放在文件开头的一张表里，键是 `<发行版> [<版本>]`，Windows 和 macOS 的前面再分别加 `windows` 和 `macos`，它的 `http` 函数把这些结果以 JSON 发出去。新增用例需要的返回结果就加在那里，并注明观察到的日期。
+
+`tests/post_install_layouts.lua` 是唯一不叫 `*_test.lua` 的测试：它在自己创建的目录上运行 `PostInstall` 的 shell 脚本，而测试虚拟机不允许这样做。它用 `gopher-lua` 运行，也就是 vfox 内嵌的 Lua 解释器：
 
 ```bash
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_use_test.lua
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_layouts.lua
 ```
 
-请在仓库根目录运行。`glua` 只运行拿到的第一个脚本，其余参数作为 `arg` 传给它，所以 `glua tests/*_test.lua` 只会跑第一个文件，而且会通过。`xargs -n1` 为每个文件启动一个 `glua`，因为各个文件会替换全局的 `os.getenv`、`package.preload`，不能让下一个文件看到；某个文件失败后，其余文件照常运行。每个测试文件都会加载 `tests/support.lua`，它模拟 `vfox.strings`；`tests/pre_install_test.lua` 和 `tests/loongnix_test.lua` 还自己模拟了 `http` 和 `json`。`tests/pre_install_test.lua` 把 Foojay 的返回结果放在文件开头的一张表里，键是 `<发行版> [<版本>]`，Windows 和 macOS 的前面再分别加 `windows` 和 `macos`。新增用例需要的返回结果就加在那里，并注明观察到的日期。Lint、许可证头和容器测试见 [e2e.md](e2e.md#本地检查)。
-
-vfox 1.0.13 及以后版本还有 `vfox plugin test`，它自己发现 `tests/**/*_test.lua`，并让每个文件用全新的全局状态运行。这里的文件它全部判为失败：它要求文件调用 `vfox.test` 的 `test.load()`，这些文件都没有调用；它的测试环境默认还禁用 `os.execute` 和 `io.popen`，而 `tests/post_install_test.lua`（`PostInstall` 的 shell 脚本）和 `tests/pre_install_test.lua`（`lib/foojay.lua` 里的 `ldd --version`）会运行它们。所以这些测试用 `glua` 运行。
+Lint、许可证头和容器测试见 [e2e.md](e2e.md#本地检查)。
 
 想对着真实的 Foojay 调用单个钩子，可以用 vfox 1.0.13 及以后版本的 `vfox plugin run`。它不会注册插件，`--os` 和 `--arch` 可以模拟其他平台：
 

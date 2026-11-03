@@ -12,9 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-dofile("tests/support.lua")
-PLUGIN = {}
-dofile("hooks/parse_legacy_file.lua")
+local test = require("vfox.test")
+local plugin = test.load()
 
 local function parse(content, installed)
     local path = os.tmpname()
@@ -27,20 +26,19 @@ local function parse(content, installed)
         return a > b
     end)
     local ok, result = pcall(function()
-        return PLUGIN:ParseLegacyFile({
+        -- The hook gets getInstalledVersions as vfox binds it, a Go
+        -- func() []string that rejects any argument, including the ctx a
+        -- ctx:getInstalledVersions() call adds.
+        return plugin:ParseLegacyFile({
             filepath = path,
             filename = ".sdkmanrc",
-            -- vfox 1.x binds this as a Go func() []string and rejects any
-            -- argument, including the ctx a ctx:getInstalledVersions() call adds.
-            getInstalledVersions = function(...)
-                assert(select("#", ...) == 0, "getInstalledVersions takes no arguments")
-                return installed
-            end,
+            installedVersions = installed,
         })
     end)
     os.remove(path)
     assert(ok, result)
-    return result.version
+    -- vfox decodes the result into a Go string, so no version comes back empty.
+    return result.version ~= "" and result.version or nil
 end
 
 -- The JDKs installed in vfox-java#71.

@@ -12,7 +12,7 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-dofile("tests/support.lua")
+local test = require("vfox.test")
 local JDKS = "https://api.foojay.io/disco/v3.0/packages/jdks?"
 local IDS = "https://api.foojay.io/disco/v3.0/ids/"
 local GITHUB = "https://github.com/graalvm/graalvm-ce-builds/releases/download/"
@@ -291,7 +291,6 @@ for distribution, packages in pairs(own_numbers) do
 end
 
 local requests = {}
-local responses = {}
 -- What Foojay's record of a package says besides the download, by id: the
 -- fields a case sets override those of the stub, which gives the download only
 -- (see the checksum cases).
@@ -300,89 +299,86 @@ local records = {}
 -- file that is not there, or { error = "..." } for a request that fails. Any
 -- other address is not expected.
 local files = {}
-package.preload.http = function()
+-- Answers as Foojay and the sites of the checksum files do. Foojay's answers
+-- are JSON, which the plugin reads with json.decode.
+local function answer(request)
+    table.insert(requests, request.url)
+    local file = files[request.url]
+    if type(file) == "table" then
+        return nil, file.error
+    elseif file == false then
+        return { status_code = 404, body = "Not Found" }
+    elseif file ~= nil then
+        return { status_code = 200, body = file }
+    end
+    local body
+    if request.url:sub(1, #JDKS) == JDKS then
+        local params = {}
+        local archive_types = {}
+        for key, value in request.url:sub(#JDKS + 1):gmatch("([^&=]+)=([^&]*)") do
+            -- Foojay decodes the query string, reading a bare + as a space.
+            value = value:gsub("%+", " "):gsub("%%(%x%x)", function(hex)
+                return string.char(tonumber(hex, 16))
+            end)
+            params[key] = value
+            if key == "archive_type" then
+                archive_types[value] = true
+            end
+        end
+        -- A version stops at a space: 21.0.5 63130 matches every 21.0.5 build.
+        local version = params.version:match("^[^ ]*")
+        local key = params.distribution
+        if version ~= "" then
+            key = key .. " " .. version
+        end
+        if params.operating_system == "windows" or params.operating_system == "macos" then
+            key = params.operating_system .. " " .. key
+        end
+        local packages = foojay[key] or {}
+        -- Only the packages of the archive types asked for are listed.
+        local result = {}
+        for _, package in ipairs(packages) do
+            if archive_types[package.archive_type] then
+                table.insert(result, package)
+            end
+        end
+        body = { result = result }
+    else
+        assert(request.url:sub(1, #IDS) == IDS, "unexpected request: " .. request.url)
+        local id = request.url:sub(#IDS + 1)
+        -- The downloads of GraalVM Community that graal() gives the
+        -- host github are on GitHub, where the id puts the file after
+        -- it. All others are somewhere else.
+        local site = id:sub(1, 7) == "github/" and GITHUB or "https://download.invalid/"
+        local record = { direct_download_uri = site .. id }
+        for field, value in pairs(records[id] or {}) do
+            record[field] = value
+        end
+        body = { result = { record } }
+    end
+    return { status_code = 200, body = require("json").encode(body) }
+end
+
+-- The libc of the machine is found with ldd (lib/foojay.lua), and the test VM
+-- disables io.popen. Answer as glibc's ldd does, so that the lookups do not
+-- depend on the machine the tests run on.
+io.popen = function(command)
+    assert(command == "ldd --version 2>&1", "unexpected command: " .. command)
     return {
-        get = function(request)
-            table.insert(requests, request.url)
-            local file = files[request.url]
-            if type(file) == "table" then
-                return nil, file.error
-            elseif file == false then
-                return { status_code = 404, body = "Not Found" }, nil
-            elseif file ~= nil then
-                return { status_code = 200, body = file }, nil
-            end
-            local body
-            if request.url:sub(1, #JDKS) == JDKS then
-                local params = {}
-                local archive_types = {}
-                for key, value in request.url:sub(#JDKS + 1):gmatch("([^&=]+)=([^&]*)") do
-                    -- Foojay decodes the query string, reading a bare + as a space.
-                    value = value:gsub("%+", " "):gsub("%%(%x%x)", function(hex)
-                        return string.char(tonumber(hex, 16))
-                    end)
-                    params[key] = value
-                    if key == "archive_type" then
-                        archive_types[value] = true
-                    end
-                end
-                -- A version stops at a space: 21.0.5 63130 matches every 21.0.5 build.
-                local version = params.version:match("^[^ ]*")
-                local key = params.distribution
-                if version ~= "" then
-                    key = key .. " " .. version
-                end
-                if params.operating_system == "windows" or params.operating_system == "macos" then
-                    key = params.operating_system .. " " .. key
-                end
-                local packages = foojay[key] or {}
-                -- Only the packages of the archive types asked for are listed,
-                -- each a copy, as a decoded answer is.
-                local result = {}
-                for _, package in ipairs(packages) do
-                    if archive_types[package.archive_type] then
-                        local copy = {}
-                        for field, value in pairs(package) do
-                            copy[field] = value
-                        end
-                        table.insert(result, copy)
-                    end
-                end
-                body = { result = result }
-            else
-                assert(request.url:sub(1, #IDS) == IDS, "unexpected request: " .. request.url)
-                local id = request.url:sub(#IDS + 1)
-                -- The downloads of GraalVM Community that graal() gives the
-                -- host github are on GitHub, where the id puts the file after
-                -- it. All others are somewhere else.
-                local site = id:sub(1, 7) == "github/" and GITHUB or "https://download.invalid/"
-                local record = { direct_download_uri = site .. id }
-                for field, value in pairs(records[id] or {}) do
-                    record[field] = value
-                end
-                body = { result = { record } }
-            end
-            table.insert(responses, body)
-            return { status_code = 200, body = tostring(#responses) }, nil
+        read = function()
+            return "ldd (Ubuntu GLIBC 2.43-0ubuntu1) 2.43\n"
+        end,
+        close = function()
+            return true
         end,
     }
 end
-package.preload.json = function()
-    return {
-        decode = function(body)
-            return responses[tonumber(body)]
-        end,
-    }
-end
-RUNTIME = { osType = "linux", archType = "amd64" }
-PLUGIN = {}
-dofile("hooks/available.lua")
-dofile("hooks/pre_install.lua")
+local plugin = test.load({ os = "linux", arch = "amd64", http = answer })
 
 -- What searching asks Foojay for the distribution of version.
 local function searched(version)
     requests = {}
-    PLUGIN:Available({ args = { require("distribution_version").parse_version(version).distribution.short_name } })
+    plugin:Available({ args = { require("distribution_version").parse_version(version).distribution.short_name } })
     return requests[1]
 end
 
@@ -394,7 +390,7 @@ local cases = 0
 local function check(version, expected, bare, file_end)
     local search = searched(version)
     requests = {}
-    local result = PLUGIN:PreInstall({ version = version })
+    local result = plugin:PreInstall({ version = version })
     assert(result.version == expected, version .. ": expected " .. expected .. ", got " .. tostring(result.version))
     if file_end then
         assert(
@@ -424,7 +420,7 @@ end
 local function check_graalvm(version, expected, filename)
     local search = searched(version)
     requests = {}
-    local result = PLUGIN:PreInstall({ version = version })
+    local result = plugin:PreInstall({ version = version })
     assert(result.version == expected, version .. ": expected " .. expected .. ", got " .. tostring(result.version))
     assert(
         result.url:sub(-#filename - 1) == "/" .. filename,
@@ -501,7 +497,7 @@ os.getenv = function(name)
     return getenv(name)
 end
 local function download(version)
-    return PLUGIN:PreInstall({ version = version }).url
+    return plugin:PreInstall({ version = version }).url
 end
 local github = GITHUB .. "github/graalvm-community-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz"
 local oracle = "https://download.invalid/gds/graalvm-community-jdk-25i4-25.0.4.1.1_linux-x64_bin.tar.gz"
@@ -611,7 +607,7 @@ local function install(version)
     print = function(...)
         table.insert(printed, table.concat({ ... }, " "))
     end
-    local result = PLUGIN:PreInstall({ version = version })
+    local result = plugin:PreInstall({ version = version })
     print = real_print
     fetched = {}
     for _, url in ipairs(requests) do
@@ -624,6 +620,12 @@ end
 
 local ALGORITHMS = { "sha256", "sha512", "sha1", "md5" }
 
+-- The digest the result carries under the name of an algorithm. vfox decodes the
+-- result into Go strings, so one that is not there comes back empty.
+local function digest_of(result, key)
+    return result[key] ~= "" and result[key] or nil
+end
+
 -- Installs version and checks that the result carries digest under the name of
 -- algorithm and under no other (nil for no checksum), that nothing is printed,
 -- and that the files fetched are the ones given.
@@ -632,8 +634,8 @@ local function check_checksum(version, algorithm, digest, asked)
     for _, key in ipairs(ALGORITHMS) do
         local want = key == algorithm and digest or nil
         assert(
-            result[key] == want,
-            ("%s: %s expected %s, got %s"):format(version, key, tostring(want), tostring(result[key]))
+            digest_of(result, key) == want,
+            ("%s: %s expected %s, got %s"):format(version, key, tostring(want), tostring(digest_of(result, key)))
         )
     end
     assert(#printed == 0, version .. ": printed " .. table.concat(printed, "; "))
@@ -703,13 +705,22 @@ local OPENJDK_SHA = OPENJDK_URL .. ".sha256"
 local function check_unverified(version, reason, asked)
     local result = install(version)
     for _, key in ipairs(ALGORITHMS) do
-        assert(result[key] == nil, ("%s: %s expected none, got %s"):format(version, key, tostring(result[key])))
+        assert(
+            digest_of(result, key) == nil,
+            ("%s: %s expected none, got %s"):format(version, key, tostring(result[key]))
+        )
     end
     assert(result.version == "25.0.2+10" and result.url == OPENJDK_URL, version .. ": the install changed")
-    assert(
-        #printed == 1 and printed[1] == "Cannot verify the download: " .. reason,
-        version .. ": printed " .. table.concat(printed, "; ")
-    )
+    -- The reason is the whole text, or, as { start, ending }, only its two ends:
+    -- the middle is what Go and the test runner add around a failed request.
+    local line, head = printed[1] or "", "Cannot verify the download: "
+    local told
+    if type(reason) == "table" then
+        told = line:sub(1, #head + #reason[1]) == head .. reason[1] and line:sub(-#reason[2]) == reason[2]
+    else
+        told = line == head .. reason
+    end
+    assert(#printed == 1 and told, version .. ": printed " .. table.concat(printed, "; "))
     assert(
         table.concat(fetched, " ") == table.concat(asked, " "),
         version .. ": fetched " .. table.concat(fetched, " ") .. ", expected " .. table.concat(asked, " ")
@@ -718,10 +729,10 @@ local function check_unverified(version, reason, asked)
 end
 files[OPENJDK_SHA] = false
 check_unverified("25.0.2-open", "failed to fetch " .. OPENJDK_SHA .. ": status_code => 404", { OPENJDK_SHA })
-files[OPENJDK_SHA] = { error = 'Get "' .. OPENJDK_SHA .. '": context deadline exceeded' }
+files[OPENJDK_SHA] = { error = "context deadline exceeded" }
 check_unverified(
     "25.0.2-open",
-    "failed to fetch " .. OPENJDK_SHA .. ': Get "' .. OPENJDK_SHA .. '": context deadline exceeded',
+    { "failed to fetch " .. OPENJDK_SHA .. ": ", "context deadline exceeded" },
     { OPENJDK_SHA }
 )
 files[OPENJDK_SHA] = "<html><body>Blocked by the firewall</body></html>"
@@ -752,14 +763,14 @@ check("openjdk-25.0.2", "25.0.2+10", false)
 
 -- Searching lists every release, not only the newest one.
 requests = {}
-PLUGIN:Available({ args = { "tem" } })
+plugin:Available({ args = { "tem" } })
 assert(#requests == 1 and not requests[1]:find("latest=", 1, true), "Available: unexpected lookup " .. requests[1])
 
 -- Searching lists OpenJDK versions without a suffix, the way PreInstall names
 -- them, so vfox marks them installed whether the query is open, openjdk or all.
 local function listed(query)
     local versions = {}
-    for _, item in ipairs(PLUGIN:Available({ args = { query } })) do
+    for _, item in ipairs(plugin:Available({ args = { query } })) do
         versions[item.version] = item.note
     end
     return versions
@@ -811,7 +822,7 @@ for short, want in pairs({
 }) do
     for _, query in ipairs({ short, "all" }) do
         local entries = {}
-        for _, item in ipairs(PLUGIN:Available({ args = { query } })) do
+        for _, item in ipairs(plugin:Available({ args = { query } })) do
             if item.version:sub(-#short - 1) == "-" .. short and item.version:match("^25") then
                 table.insert(entries, item.version .. (item.note == "" and "" or " (" .. item.note .. ")"))
             end
@@ -821,7 +832,7 @@ for short, want in pairs({
     end
 end
 local jb = {}
-for _, item in ipairs(PLUGIN:Available({ args = { "jb" } })) do
+for _, item in ipairs(plugin:Available({ args = { "jb" } })) do
     table.insert(jb, item.version)
 end
 assert(
@@ -845,20 +856,20 @@ for _, other in ipairs(others) do
 end
 -- Only these distributions ask for another archive type besides tar.gz.
 requests = {}
-PLUGIN:PreInstall({ version = "21-rdht" })
+plugin:PreInstall({ version = "21-rdht" })
 assert(requests[1]:find("&archive_type=tar.gz&archive_type=tar.xz&", 1, true), "21-rdht: " .. requests[1])
 requests = {}
-PLUGIN:PreInstall({ version = "21-tem" })
+plugin:PreInstall({ version = "21-tem" })
 assert(requests[1]:find("&archive_type=tar.gz&operating_system=", 1, true), "21-tem: " .. requests[1])
 -- Gluon GraalVM's 22.x releases install their JDK 17 build, which they share a
 -- version with the JDK 11 one, listed once by searching.
 check("22-gln", "22.1.0.1-gln", true, "/graalvm-svm-java17-linux-gluon-22.1.0.1-Final.tar.gz")
 check("21-gln", "21.2-gln", true, "/graalvm-svm-linux-gluon-21.2.0-dev.zip")
 requests = {}
-local gluon = PLUGIN:PreInstall({ version = "22.1.0.1-gln" })
+local gluon = plugin:PreInstall({ version = "22.1.0.1-gln" })
 assert(gluon.url:find("/graalvm-svm-java17-", 1, true) and #requests == 2, "22.1.0.1-gln: " .. gluon.url)
 local gln = {}
-for _, item in ipairs(PLUGIN:Available({ args = { "gln" } })) do
+for _, item in ipairs(plugin:Available({ args = { "gln" } })) do
     table.insert(gln, item.version)
 end
 assert(
@@ -875,7 +886,7 @@ RUNTIME.osType = "linux"
 local function check_own_number(version, expected, file_end)
     local search = searched(version)
     requests = {}
-    local result = PLUGIN:PreInstall({ version = version })
+    local result = plugin:PreInstall({ version = version })
     assert(result.version == expected, version .. ": expected " .. expected .. ", got " .. tostring(result.version))
     assert(result.url:sub(-#file_end) == file_end, version .. ": expected ..." .. file_end .. ", got " .. result.url)
     local lookups = {}
@@ -929,7 +940,7 @@ for short, want in pairs({
 }) do
     for _, query in ipairs({ short, "all" }) do
         local entries = {}
-        for _, item in ipairs(PLUGIN:Available({ args = { query } })) do
+        for _, item in ipairs(plugin:Available({ args = { query } })) do
             local entry = item.version .. (item.note == "" and "" or " (" .. item.note .. ")")
             if item.version:sub(-#short - 1) == "-" .. short then
                 table.insert(entries, entry)
@@ -946,8 +957,7 @@ assert(listed("nik")["23.1.8-nik-fx"] == "LTS, JavaFX", "Available nik: 23.1.8-n
 -- A distribution without a version, alone or after an empty one, asks for a
 -- version before any lookup (vfox-java#98). Alone it failed with a Lua error;
 -- the empty version reached Foojay, which listed every release, and the newest
--- one installed. Once pcall has caught an error, gopher-lua's http stub keeps
--- the requests table it saw, so it is emptied in place.
+-- one installed.
 for _, case in ipairs({
     {
         "tem",
@@ -959,10 +969,8 @@ for _, case in ipairs({
     { "zulu-fx", "such as 21-zulu-fx. Please check available versions with 'vfox search java zulu'" },
     { "openjdk", "such as 21-open. Please check available versions with 'vfox search java open'" },
 }) do
-    for i = #requests, 1, -1 do
-        requests[i] = nil
-    end
-    local ok, err = pcall(PLUGIN.PreInstall, PLUGIN, { version = case[1] })
+    requests = {}
+    local ok, err = pcall(plugin.PreInstall, plugin, { version = case[1] })
     assert(not ok and tostring(err):find(case[2], 1, true), case[1] .. ": unexpected " .. tostring(err))
     assert(#requests == 0, case[1] .. ": unexpected lookup " .. tostring(requests[1]))
 end
@@ -971,10 +979,8 @@ end
 -- names, which has no build in its name: there is a Mandrel 23.1.3.1 but no
 -- 23.1.3, and Liberica NIK 23.1.8 is named 23.1.8-nik.
 for _, version in ipairs({ "23.1.3-mandrel", "23.1.8+1-nik", "26-mandrel" }) do
-    for i = #requests, 1, -1 do
-        requests[i] = nil
-    end
-    local ok, err = pcall(PLUGIN.PreInstall, PLUGIN, { version = version })
+    requests = {}
+    local ok, err = pcall(plugin.PreInstall, plugin, { version = version })
     local want = "No JDK found for " .. version .. " on linux/amd64"
     assert(not ok and tostring(err):find(want, 1, true), version .. ": unexpected " .. tostring(err))
     assert(#requests == 1, version .. ": expected one lookup, got " .. #requests)
@@ -983,7 +989,7 @@ end
 -- A mirror that vfox would not download from stops a download from GitHub, with
 -- a message that names the variable, and leaves the others alone.
 mirror.value = "gh-proxy.org"
-local ok, err = pcall(PLUGIN.PreInstall, PLUGIN, { version = "25.4.4.1-graalce" })
+local ok, err = pcall(plugin.PreInstall, plugin, { version = "25.4.4.1-graalce" })
 assert(
     not ok and tostring(err):find("VFOX_JAVA_GITHUB_MIRROR must start with http:// or https://", 1, true),
     "a mirror without a scheme: unexpected " .. tostring(err)

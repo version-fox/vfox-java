@@ -18,7 +18,8 @@ lib/foojay.lua                  the Foojay request, and fixes to what it answers
 lib/github_mirror.lua           the mirror of the downloads from GitHub
 lib/installed_version.lua       matching against installed names
 lib/loongnix.lua                the Loongnix archive
-tests/*_test.lua                offline hook tests
+tests/*_test.lua                offline hook tests, run by vfox plugin test
+tests/post_install_layouts.lua  the macOS layouts PostInstall handles, with its real shell script
 tests/fixtures/loongnix/        a saved copy of the Loongnix archive listing
 tests/e2e/                      container tests, see e2e.md
 Injection.lua                   type hints for what vfox injects, never loaded
@@ -69,21 +70,26 @@ SDKMAN spells some things differently (`jbr`, `21.0.12.fx-zulu`, `21.0.12-fx+1.1
 
 ## Tests
 
-The hook tests run offline under `gopher-lua`, the Lua interpreter vfox embeds. Every `tests/*_test.lua` is a test, and a new one needs no entry anywhere:
+The hook tests run offline under `vfox plugin test`, which vfox 1.0.13 and later has. It finds every `tests/**/*_test.lua` and runs each file in a VM of its own, so a new test file needs no entry anywhere:
 
 ```bash
-printf '%s\0' tests/*_test.lua | xargs -0 -n1 -t go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1
+vfox plugin test .
+vfox plugin test . --file tests/pre_use_test.lua
 ```
 
-One file alone:
+Run it from the repository root. The Test Plugin workflow installs the release pinned in `.github/workflows/test.yml`, and the dev container carries the same one.
+
+A test file calls `test.load()` from `vfox.test` once, and calls the real hooks through what it returns, as in `plugin:PreInstall({ version = "21-tem" })`. `test.load` takes the platform (`os`, `arch`), the environment variables (`env`) and a function that answers every HTTP request (`http`). The modules in `lib` can be required after it, and `RUNTIME.osType` and `RUNTIME.archType` can be changed to try another platform. See vfox's [Test and debug a plugin](https://vfox.dev/plugins/create/testing.html). The context and the result of a hook go through the decoding vfox does, so a hook that returns a bare string where vfox wants a table fails the test, and a string the result lacks comes back as `""`, not `nil`.
+
+The VM disables `os.execute` and `io.popen`, so `tests/pre_install_test.lua` answers the `ldd --version` that decides between glibc and musl itself. It keeps Foojay's answers in a table at the top, keyed by `<distribution> [<version>]`, with `windows` or `macos` in front for those systems, and its `http` function sends them as JSON. Add the answer a new case needs there, and note the day you observed it.
+
+`tests/post_install_layouts.lua` is the one test that is not a `*_test.lua`: it runs the shell script of `PostInstall` on directories it makes, which the VM does not allow. It runs under `gopher-lua`, the Lua interpreter vfox embeds:
 
 ```bash
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_use_test.lua
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_layouts.lua
 ```
 
-Run them from the repository root. `glua` runs the one script it is given and passes the rest to it as `arg`, so `glua tests/*_test.lua` would run the first file and pass. `xargs -n1` starts one `glua` per file, because the files replace globals (`os.getenv`, `package.preload`) that the next one must not see, and it runs the rest after a failure. Every test file loads `tests/support.lua`, which stubs `vfox.strings`, and `tests/pre_install_test.lua` and `tests/loongnix_test.lua` stub `http` and `json` themselves. `tests/pre_install_test.lua` keeps Foojay's answers in a table at the top, keyed by `<distribution> [<version>]`, with `windows` or `macos` in front for those systems. Add the answer a new case needs there, and note the day you observed it. Lint, license headers and the container tests are in [e2e.md](e2e.md#local-checks).
-
-vfox 1.0.13 and later also has `vfox plugin test`, which finds `tests/**/*_test.lua` by itself and runs each file with fresh globals. It fails all of these files: it requires a call to `test.load()` from `vfox.test`, which none of them makes, and its test VM disables `os.execute` and `io.popen` by default, which `tests/post_install_test.lua` (the shell script of `PostInstall`) and `tests/pre_install_test.lua` (`ldd --version` in `lib/foojay.lua`) run. So the tests run under `glua`.
+Lint, license headers and the container tests are in [e2e.md](e2e.md#local-checks).
 
 To call a single hook against the real Foojay, vfox 1.0.13 and later has `vfox plugin run`. It does not register the plugin, and `--os` and `--arch` answer for another platform:
 

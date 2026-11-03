@@ -12,7 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-dofile("tests/support.lua")
+local test = require("vfox.test")
+test.load()
 local github_mirror = require("github_mirror")
 
 -- The mirror comes from the environment: os.getenv answers for it from this

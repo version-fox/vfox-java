@@ -12,7 +12,8 @@
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-dofile("tests/support.lua")
+local test = require("vfox.test")
+test.load()
 local checksum = require("checksum")
 
 local cases = 0
