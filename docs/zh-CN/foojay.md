@@ -153,7 +153,7 @@ curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=mandrel&dis
 
 ## 校验和
 
-`links.pkg_info_uri` 指向的那条记录还说明了怎么校验下载的文件。`checksum_type` 是算法，摘要要么就在记录里（`checksum`），要么在厂商的一个文件里，由 `checksum_uri` 指向。GraalVM 社区版 25.0.2 只有这个文件（2026-11-02）：
+`links.pkg_info_uri` 指向的那条记录还说明了怎么校验下载的文件。`checksum_type` 是算法，摘要要么就在记录里（`checksum`），要么在厂商的一个文件里，由 `checksum_uri` 指向。GraalVM 社区版 25.0.2 只有这个文件（2026-11-03）：
 
 ```bash
 curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=graalvm_community&version=25.0.2&architecture=amd64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
@@ -176,13 +176,13 @@ Temurin 的记录里直接带着摘要（Linux x64 上的 21.0.8 是 `f2dc5418..
 
 文件里列了好几个包时，取正在安装的那个包的那一行。只列了别的包的文件不给出摘要：Microsoft 为 macOS 上 11.0.14 的 EA 构建发布的文件，里面写的是 GA 构建，那个摘要会让本来没问题的安装失败。
 
-哪些包带校验和因版本而异，有些发行版 Foojay 根本没有。各发行版最新的版本（2026-11-02）：
+哪些包带校验和因版本而异，有些发行版 Foojay 根本没有。各发行版最新的版本（2026-11-03）：
 
 | Foojay 给出的 | 简称 |
 | --- | --- |
 | 记录里的摘要 | `tem`、`zulu`、`librca`、`nik`、`eliya`、`rdht`、25 起的 `mandrel`、最新的 `graal` 和 `graalce` |
-| 厂商的一个文件 | `open`、`oracle`、`ms`、`sapmchn`、`sem`、`semcrt`、`jb`、`kona`、`ojdkbld`、`grl8`、`grl11`、`grl16`、`grl17`、`grl19`、较旧的 `graal` 和 `graalce`，以及 Corretto 8（`amzn`） |
-| 没有校验和 | `albba`、`bsg`、`trava`、`adpt`、`adptj9`、`gln`、`opnlgc`、Corretto 8 以外的 `amzn`，以及其余发行版里较旧的版本 |
+| 厂商的一个文件 | `open`、`oracle`、`ms`、`sapmchn`、`sem`、`semcrt`、`jb`、`kona`、`ojdkbld`、`grl8`、`grl11`、`grl16`、`grl17`、`grl19`，以及较旧的 `graal` 和 `graalce` |
+| 没有校验和 | `albba`、`bsg`、`trava`、`adpt`、`adptj9`、`gln`、`opnlgc`、`amzn`，以及其余发行版里较旧的版本 |
 
 没有校验和的包，vfox 会打印 `WARNING: Checksum is not provided, skip verify...`，下载内容照单全收。
 

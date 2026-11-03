@@ -74,7 +74,7 @@ While `proxy.enable` is `false`, the usual `HTTP_PROXY`, `HTTPS_PROXY` and `NO_P
 ## Things that look wrong and are not
 
 - **A release you expect is missing from `vfox search`.** vfox keeps the result for 12 hours. `vfox config cache.availableHookDuration 0` turns the cache off. Foojay itself may not have the release yet either.
-- **`WARNING: Checksum is not provided, skip verify...` when a JDK installs.** Foojay lists no checksum for that package (Dragonwell, Bisheng, Trava, AdoptOpenJDK, OpenLogic, Gluon GraalVM, Corretto after 8, and older releases of several others), so vfox has nothing to verify the download against and trusts it. Where Foojay lists one, vfox prints `Verifying checksum <digest>...` instead, see [foojay.md](foojay.md#checksums).
+- **`WARNING: Checksum is not provided, skip verify...` when a JDK installs.** Foojay lists no checksum for that package (Dragonwell, Bisheng, Trava, AdoptOpenJDK, OpenLogic, Gluon GraalVM, Corretto, and older releases of several others), so vfox has nothing to verify the download against and trusts it. Where Foojay lists one, vfox prints `Verifying checksum <digest>...` instead, see [foojay.md](foojay.md#checksums).
 - **The installed name has a build number you did not type.** `java@21.0.8-tem` installs `21.0.8+9-tem`. The build is part of the name, see [versions.md](versions.md#installed-names).
 - **`vfox install java@21-tem` and `vfox install java tem` do different things.** The second one is two SDKs, `java` and `tem`.
 - **A `GRAALVM_HOME` you set is left alone.** The plugin sets `JAVA_HOME` and `PATH` only.

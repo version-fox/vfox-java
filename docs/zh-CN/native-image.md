@@ -27,8 +27,8 @@ sudo apt install --assume-yes build-essential zlib1g-dev
 
 ## GraalVM CE 8 到 19
 
-GraalVM CE 8 到 19（`grl8`、`grl11`、`grl16`、`grl17`、`grl19`）不带 `native-image`。它们的 `bin` 目录里只有 GraalVM 更新器 `gu`，`native-image` 会报 `command not found`，要先用 `gu install native-image` 从 GitHub 添加。2026-11-02 这在 `22.3.3-grl11`、`21.2-grl16`、`22.3.3-grl17` 和 `22.3.1-grl19` 上成功了，添加之后仍然需要上面的包。`21.3.1-grl8` 上失败了，报 `Internal error occurred: A JSONObject text must begin with '{'`：这个 `gu` 下载的版本索引 `https://oca.opensource.oracle.com/gds/meta-data.json` 现在返回的是一个网页。对这个版本，请从 [`vm-21.3.1` 发布页](https://github.com/graalvm/graalvm-ce-builds/releases/tag/vm-21.3.1)下载 `native-image-installable-svm-java8-linux-amd64-21.3.1.jar`，再对这个文件执行 `gu -L install`。
+GraalVM CE 8 到 19（`grl8`、`grl11`、`grl16`、`grl17`、`grl19`）不带 `native-image`。它们的 `bin` 目录里只有 GraalVM 更新器 `gu`，`native-image` 会报 `command not found`，要先用 `gu install native-image` 从 GitHub 添加。2026-11-03 这在 `22.3.3-grl11`、`21.2-grl16`、`22.3.3-grl17` 和 `22.3.1-grl19` 上成功了，添加之后仍然需要上面的包。`21.3.1-grl8` 上失败了，报 `Internal error occurred: A JSONObject text must begin with '{'`：这个 `gu` 下载的版本索引 `https://oca.opensource.oracle.com/gds/meta-data.json` 现在返回的是一个网页。对这个版本，请从 [`vm-21.3.1` 发布页](https://github.com/graalvm/graalvm-ce-builds/releases/tag/vm-21.3.1)下载 `native-image-installable-svm-java8-linux-amd64-21.3.1.jar`，再对这个文件执行 `gu -L install`。
 
 ## 检查过的环境
 
-2026-11-02 用 vfox 1.0.13 在没有编译器的 Ubuntu 26.04 容器镜像（x64）里检查过：GraalVM 社区版 25.0.2 和 25.4.4.1.1、Oracle GraalVM 25.0.5、Mandrel 25.0.5、Liberica NIK 25.0.4.1 和 Gluon GraalVM 22.1.0.1，没有这些包时都如上所述停下，装上之后都构建出了能运行的 hello world。`22.3.3-grl17` 在执行 `gu install native-image` 之后也是如此，GraalVM 社区版 25.0.2 在 Fedora 44 的镜像里也一样。
+2026-11-03 用 vfox 1.0.13 在没有编译器的 Ubuntu 26.04 容器镜像（x64）里检查过：GraalVM 社区版 25.0.2 和 25.4.4.1.1、Oracle GraalVM 25.0.5、Mandrel 25.0.5、Liberica NIK 25.0.4.1 和 Gluon GraalVM 22.1.0.1，没有这些包时都如上所述停下，装上之后都构建出了能运行的 hello world。`22.3.3-grl11`、`21.2-grl16`、`22.3.3-grl17` 和 `22.3.1-grl19` 在执行 `gu install native-image` 之后、`21.3.1-grl8` 在对下载的文件执行 `gu -L install` 之后也是如此，GraalVM 社区版 25.0.2 在 Fedora 44 的镜像里也一样。
