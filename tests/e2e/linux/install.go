@@ -24,12 +24,16 @@ import (
 )
 
 // installJava installs one JDK and returns the version vfox recorded for it
-// (see common.CheckInstalled).
-func installJava(ctx context.Context, t *testing.T, ctr tc.Container, spec string) string {
+// (see common.CheckInstalled). With verified, vfox must also have verified the
+// download against a checksum of the plugin's (see common.CheckVerified).
+func installJava(ctx context.Context, t *testing.T, ctr tc.Container, spec string, verified bool) string {
 	t.Helper()
 	out := execRetry(ctx, t, ctr, "vfox install java@"+spec, "vfox install java@"+spec)
 	installed := common.CheckInstalled(t, out, spec)
 	t.Logf("PASS java@%s installed as %s", spec, installed)
+	if verified {
+		t.Logf("PASS java@%s was verified against %s", spec, common.CheckVerified(t, out, spec))
+	}
 	return installed
 }
 

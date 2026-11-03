@@ -34,6 +34,14 @@ The request to Foojay failed. After `status_code =>` comes the HTTP status, othe
 
 The download answered 404. Vendors take old builds down while Foojay keeps their records. Early-access builds are the common case (see [versions.md](versions.md#early-access-builds)). Pick a newer build. Red Hat's builds for anything but Linux x64 all end here, see [distributions.md](distributions.md#red-hat-build-of-openjdk-rdht). Through a mirror ([mirror.md](mirror.md)), a 404 from the mirror ends here too: unset `VFOX_JAVA_GITHUB_MIRROR` and try again.
 
+### `Checksum error`
+
+vfox printed `Checksum error, file: <path>`, then `failed to install java` and `checksum error`, and stopped before it unpacked anything, so nothing is installed. The download does not match the checksum that Foojay lists for it, see [foojay.md](foojay.md#checksums). A download cut short or damaged on the way is the usual cause: try again. If it keeps happening through a mirror ([mirror.md](mirror.md)), the mirror may serve another file, so unset `VFOX_JAVA_GITHUB_MIRROR`. If it happens without one, the vendor may have replaced the file after Foojay recorded its checksum: report it to [Foojay](https://github.com/foojayio/discoapi) with the distribution and version. Unreleased: release 0.6.3 gives vfox no checksum, so it never stops here.
+
+### `Cannot verify the download: ...`
+
+Foojay lists a checksum for the package that the plugin could not use, so the install goes on without verifying the download, and vfox prints `WARNING: Checksum is not provided, skip verify...` after it. After the colon comes why: `failed to fetch <address>: ...` when the file that holds the checksum did not answer (see [Network](#network)), `<address> has no digest` when the file holds none (a page that a firewall or a portal answered with, say), `<address> has no digest for <file>` when it lists other packages only, or `vfox cannot verify a sha3_256 checksum` for an algorithm vfox does not know. Trying again fixes the first. Please report the others with the distribution and version, as the plugin or Foojay's record needs a fix. Unreleased: release 0.6.3 never reads checksums.
+
 ### `VFOX_JAVA_GITHUB_MIRROR must start with http:// or https://, such as https://gh-proxy.org/, but is gh-proxy.org`
 
 The value does not start with `http://` or `https://`. vfox downloads from `http://` and `https://` addresses only and takes any other for a file on disk, so a download from GitHub stops here before it starts. Other downloads do not read the variable. Fix the value or unset the variable, see [mirror.md](mirror.md).
@@ -66,7 +74,7 @@ While `proxy.enable` is `false`, the usual `HTTP_PROXY`, `HTTPS_PROXY` and `NO_P
 ## Things that look wrong and are not
 
 - **A release you expect is missing from `vfox search`.** vfox keeps the result for 12 hours. `vfox config cache.availableHookDuration 0` turns the cache off. Foojay itself may not have the release yet either.
-- **`WARNING: Checksum is not provided, skip verify...` on every install.** The plugin does not pass a checksum to vfox, so the download is not verified, see [foojay.md](foojay.md#what-the-plugin-asks).
+- **`WARNING: Checksum is not provided, skip verify...` when a JDK installs.** Foojay lists no checksum for that package (Dragonwell, Bisheng, Trava, AdoptOpenJDK, OpenLogic, Gluon GraalVM, Corretto after 8, and older releases of several others), so vfox has nothing to verify the download against and trusts it. Where Foojay lists one, vfox prints `Verifying checksum <digest>...` instead, see [foojay.md](foojay.md#checksums). Unreleased: release 0.6.3 gives vfox no checksum at all, so every install ends with the warning.
 - **The installed name has a build number you did not type.** `java@21.0.8-tem` installs `21.0.8+9-tem`. The build is part of the name, see [versions.md](versions.md#installed-names).
 - **`vfox install java@21-tem` and `vfox install java tem` do different things.** The second one is two SDKs, `java` and `tem`.
 - **A `GRAALVM_HOME` you set is left alone.** The plugin sets `JAVA_HOME` and `PATH` only.

@@ -259,7 +259,8 @@ func runOne(t *testing.T, ctx context.Context, image, platform, arch string, c c
 		checkOwnNumbers(ctx, t, ctr, box, platform)
 	}
 
-	installed := installJava(ctx, t, ctr, box, common.Spec(c.Distribution, version))
+	installed := installJava(ctx, t, ctr, box, common.Spec(c.Distribution, version),
+		common.ChecksVerifiedDownload(c.Distribution, version))
 	verifySearch(ctx, t, ctr, box, c.Distribution, installed)
 	// Before any `vfox use`, so java can only come from the legacy file.
 	verifyLegacyFile(ctx, t, ctr, box, c.Distribution, version, installed, arch)

@@ -15,12 +15,32 @@
 local http = require("http")
 local json = require("json")
 
+local checksum = require("checksum")
 local foojay = require("foojay")
 local github_mirror = require("github_mirror")
 local loongnix = require("loongnix")
 local distribution_version_parser = require("distribution_version")
 --- @class PreInstallContext
 --- @field version string User-input version
+
+--- Fetches a checksum file for checksum.lookup. It goes through the GitHub
+--- mirror when it is on GitHub, as the download does: a mirror stands in for
+--- github.com, which may be out of reach.
+--- @param uri string
+--- @return string|nil Contents of the file
+--- @return string|nil Why there are none
+local function fetch_checksum(uri)
+    local resp, err = http.get({
+        url = github_mirror.url(uri),
+    })
+    if err ~= nil then
+        return nil, err
+    end
+    if resp.status_code ~= 200 then
+        return nil, "status_code => " .. resp.status_code
+    end
+    return resp.body
+end
 
 --- Returns some pre-installed information, such as version number, download address, local files, etc.
 --- If checksum is provided, vfox will automatically check it for you.
@@ -104,11 +124,9 @@ function PLUGIN:PreInstall(ctx)
         error("Invalid JDK package info: missing download links for " .. ctx.version)
     end
     local info = json.decode(httpGet(jdk.links.pkg_info_uri, "Failed to fetch jdk info")).result[1]
-    -- TODO: checksum
-    -- local checksum = info.checksum
-    -- if checksum == "" and info.checksum_uri ~= "" then
-    --     checksum = httpGet(info.checksum_uri, "Failed to fetch checksum")
-    -- end
+    -- A mirror vfox would not download from stops the install here, before
+    -- anything else is fetched.
+    local url = github_mirror.url(info.direct_download_uri)
 
     -- Build final version string with fx suffix if needed (after distribution name)
     local fx_suffix = ""
@@ -122,12 +140,21 @@ function PLUGIN:PreInstall(ctx)
     else
         finalV = jdk.java_version .. "-" .. distribution_version.distribution.short_name .. fx_suffix
     end
-    return {
-        -- [info.checksum_type] = checksum,
-        url = github_mirror.url(info.direct_download_uri),
+    local package = {
+        url = url,
         version = finalV,
         note = jdk.major_version,
     }
+    -- vfox checks the download against the checksum, which goes under the name
+    -- of its algorithm (sha256 = "..."). Where Foojay has none, or it cannot be
+    -- read, the install goes on without, and vfox warns about that.
+    local found, reason = checksum.lookup(info, fetch_checksum)
+    if found then
+        package[found.type] = found.digest
+    elseif reason then
+        print("Cannot verify the download: " .. reason)
+    end
+    return package
 end
 
 function httpGet(url, errMsg)

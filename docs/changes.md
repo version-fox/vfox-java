@@ -2,7 +2,11 @@
 
 [中文](zh-CN/changes.md) | [English](changes.md)
 
-What changed in each release, as a user notices it. GitHub's release pages list the pull requests.
+What changed in each release, as a user notices it. GitHub's release pages list the pull requests. The newest release at the time of writing is 0.6.3, and `main` is ahead of it by everything under "Unreleased". [install-from-source.md](install-from-source.md) gets you those changes now.
+
+## Unreleased
+
+- vfox verifies a download against the checksum Foojay lists for it. Release 0.6.3 gives vfox no checksum, so every install ends with `WARNING: Checksum is not provided, skip verify...` and trusts the download, though Foojay lists a checksum for most distributions. Now `vfox install java@25.0.2-graalce` prints `Verifying checksum e0be791c...` instead, and a download that does not match stops with `Checksum error` and installs nothing. Foojay lists none for Dragonwell, Bisheng, Trava, AdoptOpenJDK, OpenLogic, Gluon GraalVM, Corretto after 8 and the older releases of several others, and vfox still warns about those. A checksum file on GitHub goes through `VFOX_JAVA_GITHUB_MIRROR` like the download. Where the plugin cannot use a checksum that Foojay lists, it prints why (`Cannot verify the download: ...`) and installs as before. See [foojay.md](foojay.md#checksums).
 
 ## 0.6.3 (2026-10-20)
 

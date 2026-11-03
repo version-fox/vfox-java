@@ -35,7 +35,7 @@ https://api.foojay.io/disco/v3.0/packages/jdks
 
 只写大版本号时和搜索发同一个请求，这样安装时看到的构建和 `vfox search` 列出的才一致。Foojay 的结果按请求分别缓存，不同的请求拿到的结果可能新旧不一：2026-10-20 Oracle GraalVM 25.0.5 上了 Foojay 半小时后，GitHub 的 runner 用 `distribution_version=25` 查已经有它，搜索的结果里却还没有，`vfox install java@25-graal` 装上了 `vfox search java graal` 没有列出的构建（[#113](https://github.com/version-fox/vfox-java/issues/113)）。
 
-返回的是一个包列表。插件用 `java_version` 给版本命名（Mandrel 和 Liberica NIK 用 `distribution_version`，Oracle GraalVM 和 GraalVM 社区版用 GraalVM 自己的版本号）；`javafx_bundled` 为真时加上 `-fx`；`term_of_support` 是 `lts` 时标注 LTS；在 Windows 上，同一版本既有 `zip` 又有 `tar.gz` 时优先用 `zip`。Foojay 混在 OJDKBuild 的 Windows JDK 里的 JRE、installer bundle 包和 RHEL 6 构建，以及 Gluon GraalVM 22.x 的 JDK 11 构建，插件都会略过，见 [distributions.md](distributions.md)。安装时，插件再取这个包的 `links.pkg_info_uri`，并从其中的 `direct_download_uri` 下载，那是厂商自己的服务器（Temurin 是 GitHub Releases）。这条记录里还有 `checksum`，但插件没有把它交给 vfox，所以 vfox 会打印 `WARNING: Checksum is not provided, skip verify...`，下载内容不做校验。从 GitHub 下载时可以经过镜像，见 [mirror.md](mirror.md)。
+返回的是一个包列表。插件用 `java_version` 给版本命名（Mandrel 和 Liberica NIK 用 `distribution_version`，Oracle GraalVM 和 GraalVM 社区版用 GraalVM 自己的版本号）；`javafx_bundled` 为真时加上 `-fx`；`term_of_support` 是 `lts` 时标注 LTS；在 Windows 上，同一版本既有 `zip` 又有 `tar.gz` 时优先用 `zip`。Foojay 混在 OJDKBuild 的 Windows JDK 里的 JRE、installer bundle 包和 RHEL 6 构建，以及 Gluon GraalVM 22.x 的 JDK 11 构建，插件都会略过，见 [distributions.md](distributions.md)。安装时，插件再取这个包的 `links.pkg_info_uri`，并从其中的 `direct_download_uri` 下载，那是厂商自己的服务器（Temurin 是 GitHub Releases）。同一条记录还说明了怎么校验下载的文件，见[校验和](#校验和)。从 GitHub 下载时可以经过镜像，见 [mirror.md](mirror.md)。
 
 `vfox search` 与原始列表有几处不同：Foojay 里同一个名字有两条记录时，它只列一次；不给 GraalVM 的特性版本加 LTS 备注（见 [distributions.md](distributions.md#oracle-graalvm-与-graalvm-社区版的行为)）；只列 GA 版本。
 
@@ -54,6 +54,43 @@ curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=mandrel&dis
 ```
 
 所以插件像 `vfox search` 那样查出这两个发行版的全部包，再按 `distribution_version` 自己挑：写得具体时挑指定的那个版本，只写大版本号时挑这个大版本里最新的。Foojay 自己的匹配两样都做不到：如上所示，查 `distribution_version=23.1.12` 也会返回 23.1.12.1；查 `distribution_version=23` 并加上 `latest=available` 时，返回的是 23.1.8 和 23.0.1.2 的两个构建，而 23.1.12.1 已经发布。同一个版本有几个 Java 版本的构建时，插件取 Java 最新的那个；Liberica NIK 为同一个 Java 构建了两次时，取后一次的，两次构建只能从文件名里区分（`...-25.0.3+2-linux-amd64.tar.gz`）。搜索时按 `distribution_version` 从新到旧排列。
+
+## 校验和
+
+`links.pkg_info_uri` 指向的那条记录还说明了怎么校验下载的文件。`checksum_type` 是算法，摘要要么就在记录里（`checksum`），要么在厂商的一个文件里，由 `checksum_uri` 指向。GraalVM 社区版 25.0.2 只有这个文件（2026-11-02）：
+
+```bash
+curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=graalvm_community&version=25.0.2&architecture=amd64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
+  | jq -r '.result[0].links.pkg_info_uri' | xargs curl -s | jq -c '.result[0] | {checksum_type, checksum, checksum_uri}'
+```
+
+```
+{"checksum_type":"sha256","checksum":"","checksum_uri":"https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-25.0.2/graalvm-community-jdk-25.0.2_linux-x64_bin.tar.gz.sha256"}
+```
+
+Temurin 的记录里直接带着摘要（Linux x64 上的 21.0.8 是 `f2dc5418...9219`），旁边还有厂商那个文件的地址。
+
+插件把摘要以算法的名字交给 vfox（`PreInstall` 返回的表里写成 `sha256 = "..."`）。vfox 在解压任何东西之前，先算出下载文件的摘要，再和它比较：打印 `Verifying checksum e0be791c...` 然后继续，或者以 `Checksum error` 终止，见 [troubleshooting.md](troubleshooting.md#checksum-error)。vfox 校验 `sha256`、`sha512`、`sha1` 和 `md5`，这四种在包里都有。Foojay 还写过别的算法（`sha3_256`），vfox 不能校验它们。
+
+记录里自带的摘要优先。它来自 Foojay，而不是厂商的下载站（那可能是个镜像），也不需要再发请求。只有记录里没有摘要时，插件才去取那个文件，GitHub 上的文件和下载一样经过镜像（[mirror.md](mirror.md)）。这些文件写摘要的格式并不统一，插件能读三种：
+
+- 只有摘要（GraalVM 社区版、OpenJDK、Oracle），
+- `sha256sum` 的 `<摘要>  <文件名>`，二进制文件的文件名前有个 `*`（Microsoft、JetBrains、Semeru、SAP Machine），
+- BSD 的 `MD5 (<文件名>) = <摘要>`（腾讯 Kona）。
+
+文件里列了好几个包时，取正在安装的那个包的那一行。只列了别的包的文件不给出摘要：Microsoft 为 macOS 上 11.0.14 的 EA 构建发布的文件，里面写的是 GA 构建，那个摘要会让本来没问题的安装失败。
+
+哪些包带校验和因版本而异，有些发行版 Foojay 根本没有。各发行版最新的版本（2026-11-02）：
+
+| Foojay 给出的 | 简称 |
+| --- | --- |
+| 记录里的摘要 | `tem`、`zulu`、`librca`、`nik`、`eliya`、`rdht`、25 起的 `mandrel`、最新的 `graal` 和 `graalce` |
+| 厂商的一个文件 | `open`、`oracle`、`ms`、`sapmchn`、`sem`、`semcrt`、`jb`、`kona`、`ojdkbld`、`grl8`、`grl11`、`grl16`、`grl17`、`grl19`、较旧的 `graal` 和 `graalce`，以及 Corretto 8（`amzn`） |
+| 没有校验和 | `albba`、`bsg`、`trava`、`adpt`、`adptj9`、`gln`、`opnlgc`、Corretto 8 以外的 `amzn`，以及其余发行版里较旧的版本 |
+
+没有校验和的包，vfox 会打印 `WARNING: Checksum is not provided, skip verify...`，下载内容照单全收。
+
+Foojay 给出的校验和插件用不上时，安装照常进行，只是不校验，和插件还不读校验和的时候一样，并且会说明原因：`Cannot verify the download: https://example.org/x.tar.gz.sha256 has no digest for x.tar.gz`。可能是文件打不开，可能是里面没有这个包的摘要，也可能是 vfox 不校验的算法。拿不到校验和，不会拦下安装；下载的文件和校验和对不上，则会。链接和校验和都是 Foojay 给的，所以这个检查能发现损坏或被替换的文件，发现不了记录本身有误。
 
 ## 我的平台上有哪些发行版
 

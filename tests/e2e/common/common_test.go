@@ -423,6 +423,80 @@ func TestCheckInstalled(t *testing.T) {
 	}
 }
 
+func TestVerification(t *testing.T) {
+	digest := "e0be791c8fda4d03b6b0a0cb824fef3149736170057b3a515252b44419606af0"
+	// vfox 1.0.13 writes the progress bar to stderr as it goes, so the line
+	// about the checksum follows the last frame of the bar on its line, and the
+	// bar closes after it. The bar is coloured, and so is the warning.
+	bar := "Downloading...  99% [\x1b[32m===================================>\x1b[0m ] (7.5 MB/s) [33s:0s]"
+	closing := "                      Downloading... 100% [======================================] (10 MB/s)\n"
+	for _, c := range []struct {
+		name, output, digest string
+		warned               bool
+	}{
+		{
+			"verified",
+			"Preinstalling java@25.0.2-graalce...\n" + bar + "Verifying checksum " + digest + "...\n" + closing +
+				"Unpacking /root/.vfox/cache/java/graalvm-community-jdk-25.0.2_linux-x64_bin.tar.gz...\n",
+			digest, false,
+		},
+		{
+			"upper case",
+			"Verifying checksum " + strings.ToUpper(digest) + "...\n",
+			strings.ToUpper(digest), false,
+		},
+		{
+			"no checksum",
+			"Preinstalling java@25.0.2-graalce...\n" + bar + "Verifying checksum ...\n" + closing +
+				"\x1b[93mWARNING\x1b[0m: Checksum is not provided, skip verify...\n" +
+				"Unpacking /root/.vfox/cache/java/graalvm-community-jdk-25.0.2_linux-x64_bin.tar.gz...\n",
+			"", true,
+		},
+		// Nothing is downloaded, so nothing is verified.
+		{"already installed", "java@25.0.2-graalce is already installed\n", "", false},
+	} {
+		for _, ending := range lineEndings {
+			t.Run(c.name+"/"+ending.name, func(t *testing.T) {
+				digest, warned := Verification(ending.apply(c.output))
+				if digest != c.digest || warned != c.warned {
+					t.Errorf("Verification = %q, %v, want %q, %v", digest, warned, c.digest, c.warned)
+				}
+			})
+		}
+	}
+}
+
+func TestCheckVerified(t *testing.T) {
+	// A digest of each length vfox supports: MD5 (Tencent Kona), SHA-1
+	// (Liberica), SHA-256 (Temurin) and SHA-512 (JetBrains).
+	for _, length := range ChecksumLengths {
+		digest := strings.Repeat("a1", length/2)
+		out := "Preinstalling java@21.0.8-tem...\nVerifying checksum " + digest + "...\nUnpacking x.tar.gz...\n"
+		if got := CheckVerified(t, out, "21.0.8-tem"); got != digest {
+			t.Errorf("CheckVerified = %q, want %q", got, digest)
+		}
+	}
+}
+
+func TestChecksVerifiedDownload(t *testing.T) {
+	// The release each default distribution pins is verified, and so is nothing
+	// else: Foojay may list no checksum for a release chosen with JAVA_VERSION.
+	for distribution, version := range DefaultVersions {
+		if !ChecksVerifiedDownload(distribution, version) {
+			t.Errorf("ChecksVerifiedDownload(%s, %s) = false, want true", distribution, version)
+		}
+		if ChecksVerifiedDownload(distribution, version+".1") {
+			t.Errorf("ChecksVerifiedDownload(%s, %s.1) = true, want false", distribution, version)
+		}
+	}
+	// A distribution outside the matrix has no pinned release.
+	for _, version := range []string{"", "21.0.8"} {
+		if ChecksVerifiedDownload("albba", version) {
+			t.Errorf("ChecksVerifiedDownload(albba, %q) = true, want false", version)
+		}
+	}
+}
+
 func TestFeatureReleaseEntries(t *testing.T) {
 	output := `Available versions:
  - 25.4.4.1-graalce (LTS)

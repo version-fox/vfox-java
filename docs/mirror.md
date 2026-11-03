@@ -37,7 +37,7 @@ Then install as usual, `vfox install java@21-tem`. To go back to github.com, uns
 
 ## What goes through the mirror
 
-Only downloads from `https://github.com/`. A JDK on any other host downloads from there as before, and the requests to Foojay do not change.
+Only requests for `https://github.com/`: the downloads, and the checksum files on GitHub that the plugin reads for them (see [Notes](#notes)). A JDK on any other host downloads from there as before, and the requests to Foojay do not change.
 
 Where Foojay links each distribution (2026-10-21):
 
@@ -64,5 +64,5 @@ https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.8%2B9/
 
 ## Notes
 
-- The plugin gives vfox no checksum, so vfox does not verify the download (`WARNING: Checksum is not provided, skip verify...`, see [foojay.md](foojay.md#what-the-plugin-asks)). Through a mirror, the archive is whatever the mirror serves. Use one you trust.
+- vfox verifies a download against the checksum Foojay lists for it, see [foojay.md](foojay.md#checksums), so a mirror that serves a damaged or different file fails the install with `Checksum error`. Where the checksum is in Foojay's record (Temurin, Liberica, Zulu and others), the mirror has no say in it. Where it is in a file on GitHub (GraalVM Community's older releases, SAP Machine, Semeru, Tencent Kona and others), the file goes through the mirror like the archive, and a mirror that cannot be trusted could serve a matching pair. A package without a checksum (`WARNING: Checksum is not provided, skip verify...`) is not verified at all, so use a mirror you trust.
 - The variable only changes where `vfox install` downloads a JDK from. `vfox add java` does not use it. For a proxy that covers all of vfox, see [Network](troubleshooting.md#network).
