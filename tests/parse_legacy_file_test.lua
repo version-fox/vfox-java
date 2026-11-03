@@ -188,11 +188,34 @@ local cases = {
     -- Nothing else of the major installed.
     { "java=25-graal\n", { "25.4.4.1.1-graal", "25.3.4.1-graal" }, "25.4.4.1.1-graal" },
     { "java=25.0.3-graal\n", { "25.4.4.1.1-graal" }, "25.4.4.1.1-graal" },
-    -- A file that names a feature release (SDKMAN's identifier is 25.4.4+1-graal)
-    -- takes the newest release of the major, as it did.
+    -- A file that names a feature release by a name no install has (SDKMAN
+    -- spelled Oracle's 25.4.4+1-graal before 25.4.4.1+1-graal) takes the
+    -- newest release of the major, as it did.
     { "java=25.4.4+1-graal\n", { "25.4.4.1.1-graal", "25.0.4.1-graal" }, "25.4.4.1.1-graal" },
     { "java=25.5.5-graal\n", { "25.4.4.1.1-graal", "25.0.4.1-graal" }, "25.4.4.1.1-graal" },
+    { "java=25.5.5.1+1-graal\n", { "25.4.4.1.1-graal", "25.0.4.1-graal" }, "25.4.4.1.1-graal" },
     { "java=25.4.4.1.1-graal\n", { "25.4.4.1.1-graal", "25.0.4.1-graal" }, "25.4.4.1.1-graal" },
+    -- SDKMAN writes the fifth number of GraalVM's own version after the +:
+    -- 25.0.5.0+3-graal is GraalVM 25.0.5.0.3, whose file is
+    -- graalvm-jdk-25.0.5.0.3 and no build of 25.0.5, and 25.4.4.1+1-graal is
+    -- the feature release 25.4.4.1.1. The release a file names is selected
+    -- while it is installed, not 25.0.5 next to it, the .2 build or a newer one.
+    { "java=25.0.5.0+3-graal\n", { "25.0.5.0.3-graal", "25.0.5-graal" }, "25.0.5.0.3-graal" },
+    { "java=25.0.5.0+3-graal\n", { "25.0.5.0.3-graal", "25.0.5.0.2-graal", "25.0.5-graal" }, "25.0.5.0.3-graal" },
+    { "java=25.0.5.0+2-graal\n", { "25.0.5.0.3-graal", "25.0.5.0.2-graal", "25.0.5-graal" }, "25.0.5.0.2-graal" },
+    { "java=25.0.5.0+3-graal\n", { "25.0.5.0.3-graal", "25.0.6-graal" }, "25.0.5.0.3-graal" },
+    { "java=25.4.4.1+1-graal\n", { "25.4.4.1.1-graal", "25.5.5.1.1-graal", "25.0.5.0.3-graal" }, "25.4.4.1.1-graal" },
+    { "java=25.4.4.1+1-graalce\n", { "25.4.4.1.1-graalce", "25.5.5.1.1-graalce" }, "25.4.4.1.1-graalce" },
+    -- Not installed, it takes what any release not installed takes: the
+    -- release without the fifth number, else the newest of the line, or the
+    -- feature releases where they are all there is.
+    { "java=25.0.5.0+3-graal\n", { "25.0.5-graal", "25.0.6-graal" }, "25.0.5-graal" },
+    { "java=25.0.5.0+3-graal\n", { "25.0.5.0.2-graal", "25.4.4.1.1-graal" }, "25.0.5.0.2-graal" },
+    { "java=25.0.5.0+3-graal\n", { "25.4.4.1.1-graal" }, "25.4.4.1.1-graal" },
+    -- Never another distribution. For the others the number after the + is
+    -- the vendor's build, which is looked for in the installed name as before.
+    { "java=25.0.5.0+3-graal\n", { "25.0.5.0.3-graalce" }, nil },
+    { "java=25.0.5.0+8-tem\n", { "25.0.5+8-tem", "25.0.6+7-tem" }, "25.0.5+8-tem" },
     -- Other majors and distributions: GraalVM Community's feature releases are
     -- what it still ships, and a minor above 0 means nothing for Mandrel.
     { "java=21-graal\n", { "21.0.8-graal", "25.4.4.1.1-graal" }, "21.0.8-graal" },

@@ -375,6 +375,7 @@ func checkGraalVMBareMajor(ctx context.Context, t *testing.T, ctr tc.Container, 
 	require.Containsf(t, common.StripANSI(out), "java@"+want+" is already installed",
 		"vfox install java@%s must take %s, the newest build that is no feature release", spec, want)
 	checkBareMajorSelected(ctx, t, ctr, box, activation, spec, want, builds)
+	checkGraalVMIdentifiers(ctx, t, ctr, box, builds)
 	// Without the 25.0 line, the feature releases are all there is to select.
 	line := slices.DeleteFunc(slices.Clone(builds), func(build string) bool { return slices.Contains(features, build) })
 	removeInstalls(ctx, t, ctr, box, line)
@@ -382,6 +383,22 @@ func checkGraalVMBareMajor(ctx context.Context, t *testing.T, ctr tc.Container, 
 	removeInstalls(ctx, t, ctr, box, features)
 	t.Logf("PASS java@%s takes %s out of %s, and %s where only %s are installed", spec, want,
 		strings.Join(builds, ", "), features[0], strings.Join(features, ", "))
+}
+
+// checkGraalVMIdentifiers proves a .sdkmanrc holding SDKMAN's identifier of a
+// build with five numbers (25.0.5.0+3-graal) selects that build among the
+// installed ones, which must be faked (see fakeInstalls), and not the plain
+// 25.0.5 next to it or a newer release (see common.GraalVMIdentifiers).
+func checkGraalVMIdentifiers(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, builds []string) {
+	t.Helper()
+	cases := common.GraalVMIdentifiers(builds)
+	if len(cases) == 0 {
+		t.Logf("SKIP no build with five numbers among %s", strings.Join(builds, ", "))
+		return
+	}
+	for _, c := range cases {
+		common.CheckSelects(t, legacyRun(ctx, t, ctr, box, c.Identifier, printJava), c, builds)
+	}
 }
 
 // checkBareMajorSelected proves `vfox use java@<spec>` and a .sdkmanrc

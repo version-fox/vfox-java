@@ -764,6 +764,29 @@ func FeatureReleases(builds []string) []string {
 	return features
 }
 
+// graalVMFiveNumbers matches a build named after GraalVM's version with five
+// numbers (25.0.5.0.3-graal): the first four, the fifth, and the short name.
+var graalVMFiveNumbers = regexp.MustCompile(`^(\d+(?:\.\d+){3})\.(\d+)(-graal(?:ce)?)$`)
+
+// GraalVMIdentifiers renders SDKMAN's identifier of each of the builds that
+// BareMajorBuilds returned with five numbers (25.0.5.0.3-graal,
+// 25.4.4.1.1-graal), each with the build a .sdkmanrc holding it must select.
+// SDKMAN has four numbers before the + and writes the fifth after it
+// (25.0.5.0+3-graal, 25.4.4.1+1-graal): its download of the first is Oracle's
+// graalvm-jdk-25.0.5.0.3, a different file than 25.0.5 and 25.0.5.0.2.
+// ParseLegacyFile took the number for a build of the release, found no such
+// install, and selected the plain 25.0.5 or the newest release of the major
+// instead.
+func GraalVMIdentifiers(builds []string) []LegacyCase {
+	var cases []LegacyCase
+	for _, build := range builds {
+		if m := graalVMFiveNumbers.FindStringSubmatch(build); m != nil {
+			cases = append(cases, LegacyCase{Identifier: m[1] + "+" + m[2] + m[3], Selects: build})
+		}
+	}
+	return cases
+}
+
 // nameOnly maps the distributions the suite checks by name only, by short
 // name, to the runner platforms Foojay lists packages of them for
 // (2026-10-20). Only Red Hat's Linux x64 builds still download, which the

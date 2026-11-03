@@ -43,8 +43,11 @@ func setupVfox(ctx context.Context, t *testing.T, ctr tc.Container, vfoxVersion 
 			"git clone --depth 1 https://github.com/version-fox/vfox %q/src && (cd %q/src && CGO_ENABLED=0 go build -trimpath -o /usr/local/bin/vfox .)",
 			work, work))
 	} else {
-		execOK(ctx, t, ctr,
-			"curl --fail --silent --show-error --location https://raw.githubusercontent.com/version-fox/vfox/main/install.sh | bash")
+		// A pipeline exits with the status of its last command, so without
+		// pipefail a download that fails leaves bash an empty script and
+		// the install passes without vfox, which the next step then misses.
+		execRetry(ctx, t, ctr, "install vfox",
+			"set -o pipefail; curl --fail --silent --show-error --location https://raw.githubusercontent.com/version-fox/vfox/main/install.sh | bash")
 	}
 	execOK(ctx, t, ctr, fmt.Sprintf(
 		"(cd /e2e && zip -qr %q/java.zip metadata.lua hooks lib) && vfox add java --source %q/java.zip",
@@ -159,6 +162,7 @@ func checkGraalVMBareMajor(ctx context.Context, t *testing.T, ctr tc.Container) 
 	require.Containsf(t, common.StripANSI(out), "java@"+want+" is already installed",
 		"vfox install java@%s must take %s, the newest build that is no feature release", spec, want)
 	checkBareMajorSelected(ctx, t, ctr, spec, want, builds)
+	checkGraalVMIdentifiers(ctx, t, ctr, builds)
 	// Without the 25.0 line, the feature releases are all there is to select.
 	line := slices.DeleteFunc(slices.Clone(builds), func(build string) bool { return slices.Contains(features, build) })
 	removeInstalls(ctx, t, ctr, line)
@@ -166,6 +170,22 @@ func checkGraalVMBareMajor(ctx context.Context, t *testing.T, ctr tc.Container) 
 	removeInstalls(ctx, t, ctr, features)
 	t.Logf("PASS java@%s takes %s out of %s, and %s where only %s are installed", spec, want,
 		strings.Join(builds, ", "), features[0], strings.Join(features, ", "))
+}
+
+// checkGraalVMIdentifiers proves a .sdkmanrc holding SDKMAN's identifier of a
+// build with five numbers (25.0.5.0+3-graal) selects that build among the
+// installed ones, which must be faked (see fakeInstalls), and not the plain
+// 25.0.5 next to it or a newer release (see common.GraalVMIdentifiers).
+func checkGraalVMIdentifiers(ctx context.Context, t *testing.T, ctr tc.Container, builds []string) {
+	t.Helper()
+	cases := common.GraalVMIdentifiers(builds)
+	if len(cases) == 0 {
+		t.Logf("SKIP no build with five numbers among %s", strings.Join(builds, ", "))
+		return
+	}
+	for _, c := range cases {
+		common.CheckSelects(t, legacyRun(ctx, t, ctr, c.Identifier, printJava), c, builds)
+	}
 }
 
 // checkBareMajorSelected proves `vfox use java@<spec>` and a .sdkmanrc

@@ -2,7 +2,11 @@
 
 [中文](zh-CN/changes.md) | [English](changes.md)
 
-What changed in each release, as a user notices it. GitHub's release pages list the pull requests.
+What changed in each release, as a user notices it. GitHub's release pages list the pull requests. The newest release at the time of writing is 0.6.4, and `main` is ahead of it by everything under "Unreleased". [install-from-source.md](install-from-source.md) gets you those changes now.
+
+## Unreleased
+
+- A `.sdkmanrc` takes SDKMAN's identifiers of Oracle GraalVM and GraalVM Community, which write the fifth number of GraalVM's version after the `+`: `java=25.0.5.0+3-graal` selects `25.0.5.0.3-graal`, and `java=25.4.4.1+1-graalce` selects `25.4.4.1.1-graalce`. Release 0.6.4 takes that number for a build of the release 25.0.5 and finds no such name. So it selects `25.0.5-graal` where that is installed next to `25.0.5.0.3-graal`, which is a different download (Oracle ships `25.0.5`, `25.0.5.0.2` and `25.0.5.0.3` as three files), and otherwise the newest installed release of 25: a project pinned to `25.0.5.0+3-graal` moves to a newer GraalVM as soon as one is installed. See [sdkmanrc.md](sdkmanrc.md#sdkmans-spellings) ([#124](https://github.com/version-fox/vfox-java/pull/124)).
 
 ## 0.6.4 (2026-11-03)
 
