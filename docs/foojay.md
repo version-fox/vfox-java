@@ -153,7 +153,7 @@ So the plugin asks for every package of these two, as `vfox search` does, and pi
 
 ## Checksums
 
-The record that `links.pkg_info_uri` points to also says how to check the download. `checksum_type` is the algorithm, and the digest is in the record as `checksum`, or in a file of the vendor that `checksum_uri` points to. GraalVM Community 25.0.2 has the file only (2026-11-02):
+The record that `links.pkg_info_uri` points to also says how to check the download. `checksum_type` is the algorithm, and the digest is in the record as `checksum`, or in a file of the vendor that `checksum_uri` points to. GraalVM Community 25.0.2 has the file only (2026-11-03):
 
 ```bash
 curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=graalvm_community&version=25.0.2&architecture=amd64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
@@ -176,13 +176,13 @@ The digest in Foojay's record goes first. It comes from Foojay and not from the 
 
 A file that lists several packages gives the line of the one being installed. One that lists others only gives none: Microsoft's file for its EA build of 11.0.14 for macOS names the GA build, and that digest would fail an install that is fine.
 
-Which packages come with a checksum varies by release, and Foojay holds none for some distributions. For the newest releases (2026-11-02):
+Which packages come with a checksum varies by release, and Foojay holds none for some distributions. For the newest releases (2026-11-03):
 
 | Foojay lists | Short names |
 | --- | --- |
 | the digest in the record | `tem`, `zulu`, `librca`, `nik`, `eliya`, `rdht`, `mandrel` from 25, the newest `graal` and `graalce` |
-| a file of the vendor | `open`, `oracle`, `ms`, `sapmchn`, `sem`, `semcrt`, `jb`, `kona`, `ojdkbld`, `grl8`, `grl11`, `grl16`, `grl17`, `grl19`, the older `graal` and `graalce`, and Corretto 8 (`amzn`) |
-| no checksum | `albba`, `bsg`, `trava`, `adpt`, `adptj9`, `gln`, `opnlgc`, `amzn` other than Corretto 8, and the older releases of several of the others |
+| a file of the vendor | `open`, `oracle`, `ms`, `sapmchn`, `sem`, `semcrt`, `jb`, `kona`, `ojdkbld`, `grl8`, `grl11`, `grl16`, `grl17`, `grl19`, and the older `graal` and `graalce` |
+| no checksum | `albba`, `bsg`, `trava`, `adpt`, `adptj9`, `gln`, `opnlgc`, `amzn`, and the older releases of several of the others |
 
 For a package with none, vfox prints `WARNING: Checksum is not provided, skip verify...` and trusts the download.
 

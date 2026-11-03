@@ -74,7 +74,7 @@ vfox config proxy.url http://127.0.0.1:7890
 ## 看起来不对，其实没问题
 
 - **`vfox search` 里没有你预期的版本。** vfox 会缓存搜索结果 12 小时。`vfox config cache.availableHookDuration 0` 可以关闭缓存。也可能是 Foojay 那边还没有这个版本。
-- **装某个 JDK 时出现 `WARNING: Checksum is not provided, skip verify...`。** Foojay 没有给这个包列出校验和（Dragonwell、Bisheng、Trava、AdoptOpenJDK、OpenLogic、Gluon GraalVM、8 以后的 Corretto，以及其余发行版里较旧的版本），vfox 没有可以拿来比对的东西，只能信任下载的内容。Foojay 给了校验和的包，vfox 会打印 `Verifying checksum <摘要>...`，见 [foojay.md](foojay.md#校验和)。
+- **装某个 JDK 时出现 `WARNING: Checksum is not provided, skip verify...`。** Foojay 没有给这个包列出校验和（Dragonwell、Bisheng、Trava、AdoptOpenJDK、OpenLogic、Gluon GraalVM、Corretto，以及其余发行版里较旧的版本），vfox 没有可以拿来比对的东西，只能信任下载的内容。Foojay 给了校验和的包，vfox 会打印 `Verifying checksum <摘要>...`，见 [foojay.md](foojay.md#校验和)。
 - **安装后的版本名里多了一个你没写的构建号。** `java@21.0.8-tem` 装出来是 `21.0.8+9-tem`。构建号是版本名的一部分，见 [versions.md](versions.md#安装后的版本名)。
 - **`vfox install java@21-tem` 和 `vfox install java tem` 做的是不同的事。** 后者是两个 SDK，`java` 和 `tem`。
 - **你设置的 `GRAALVM_HOME` 不会被改动。** 插件只设置 `JAVA_HOME` 和 `PATH`。
