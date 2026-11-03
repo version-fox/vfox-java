@@ -19,7 +19,7 @@ PLUGIN = {}
 --- Plugin name
 PLUGIN.name = "java"
 --- Plugin version
-PLUGIN.version = "0.6.3"
+PLUGIN.version = "0.6.4"
 --- Plugin homepage
 PLUGIN.homepage = "https://github.com/version-fox/vfox-java"
 --- Plugin license, please choose a correct license according to your needs.
