@@ -195,13 +195,7 @@ lua-language-server --check . --checklevel=Warning
 
 ```bash
 # 离线的钩子测试（.github/workflows/test.yml）。
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_install_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_use_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/parse_legacy_file_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/loongnix_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/github_mirror_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/checksum_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
+printf '%s\0' tests/*_test.lua | xargs -0 -n1 -t go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1
 ```
 
 ```bash

@@ -34,16 +34,16 @@ jobs:
         with:
           go-version: '1.24.0'
           cache: false
-      - name: Test Java version resolution with vfox's Lua interpreter
+      # glua runs the one script it is given and passes the rest to it as `arg`,
+      # so `glua tests/*_test.lua` would run the first file and pass. xargs -n1
+      # starts a glua for each file instead, which the tests need: they replace
+      # globals (os.getenv, package.preload) that the next file must not see.
+      # -t prints each command, so the log names the file behind every result,
+      # and xargs runs the rest after a failure and exits nonzero at the end.
+      # With no test file the glob stays as written and glua fails on it.
+      - name: Run the offline hook tests with vfox's Lua interpreter
         run: |
-          go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_install_test.lua
-          go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_use_test.lua
-          go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/parse_legacy_file_test.lua
-          go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/loongnix_test.lua
-          go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/github_mirror_test.lua
-          go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/checksum_test.lua
-      - name: Test macOS Java home normalization
-        run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
+          printf '%s\0' tests/*_test.lua | xargs -0 -n1 -t go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1
   macos-layout:
     runs-on: macos-latest
     steps:
