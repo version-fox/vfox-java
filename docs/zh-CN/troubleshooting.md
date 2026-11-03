@@ -80,6 +80,8 @@ vfox config proxy.url http://127.0.0.1:7890
 - **你设置的 `GRAALVM_HOME` 不会被改动。** 插件只设置 `JAVA_HOME` 和 `PATH`。
 - **`vfox use java@21` 选中了 `21.3.1-grl11`，而它运行的是 Java 11。** GraalVM CE 8 到 19、23 以前的 Gluon GraalVM，以及 25 以前的 Mandrel 和 Liberica NIK，用的都是 GraalVM 的版本号；对只写大版本号的写法，vfox 只按版本号匹配，不分发行版，见 [distributions.md](distributions.md#按-graalvm-编号的版本)。请写成 `java@21-tem`。
 - **`java@21-mandrel` 装上的 Mandrel 运行的是 Java 17。** Mandrel 和 Liberica NIK 的大版本号是 GraalVM 的：`21.3.6-mandrel` 是最新的 Mandrel 21.x。它们为 Java 21 发布的是 23.1.x，所以要写 `java@23-mandrel`，见 [distributions.md](distributions.md#mandrel-与-liberica-nik-的行为)。
+- **`native-image` 停在 `Default native-compiler executable 'gcc' not found via environment variable PATH`，或者在最后一步报 `cannot find -lz`。** 插件只安装 JDK，而 `native-image` 需要系统里的 C 工具链和 zlib。Ubuntu 上执行 `sudo apt install --assume-yes build-essential zlib1g-dev` 即可装上，见 [distributions.md](distributions.md#native-image-与-c-工具链)。
+- **GraalVM CE 8 到 19（比如 `22.3.3-grl17`）里 `native-image: command not found`。** 这些版本不带 `native-image`，用 `gu install native-image` 添加。`21.3.1-grl8` 上这条命令会失败，见 [distributions.md](distributions.md#native-image-与-c-工具链)。
 
 ## JDK 在哪里
 

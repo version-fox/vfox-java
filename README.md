@@ -90,6 +90,16 @@ Not every distribution has builds for arm64, Alpine or Windows on ARM. Only Temu
 
 Zulu, Liberica, Liberica NIK and Corretto (Java 8 only) have builds with JavaFX bundled. Add `-fx` after the distribution, as in `java@21-zulu-fx`. See [docs/javafx.md](docs/javafx.md) for details.
 
+## Native Image
+
+A GraalVM installs and runs like any other JDK. Only `native-image`, which builds native executables, needs a C compiler and zlib's headers on top, and a minimal Ubuntu, such as its container image, has neither. Install them once, before the first native build:
+
+```bash
+sudo apt install --assume-yes build-essential zlib1g-dev
+```
+
+GraalVM CE 8 to 19 come without `native-image` and need it added first. See [docs/distributions.md](docs/distributions.md#native-image-and-the-c-toolchain) for what `native-image` prints without these packages, for other systems, and for adding it.
+
 ## `.sdkmanrc`
 
 vfox reads the `java=` line of SDKMAN's `.sdkmanrc` through this plugin and selects a JDK that is already installed. See [docs/sdkmanrc.md](docs/sdkmanrc.md) for details.
@@ -104,7 +114,7 @@ To see which JDKs exist for your platform, ask Foojay yourself. [docs/foojay.md]
 
 ## Troubleshooting
 
-See [docs/troubleshooting.md](docs/troubleshooting.md) for the messages the plugin prints, proxies and where the JDK is.
+See [docs/troubleshooting.md](docs/troubleshooting.md) for the messages the plugin and `native-image` print, proxies and where the JDK is.
 
 ## Install from source
 

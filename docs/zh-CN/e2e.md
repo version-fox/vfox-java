@@ -2,7 +2,7 @@
 
 [中文](e2e.md) | [English](../e2e.md)
 
-离线的 Lua 钩子测试（`tests/*_test.lua`）在 **Test Plugin** 工作流里运行。端到端套件在容器里针对真实的 vfox 运行，覆盖 Linux 和 Windows；每个 `vfox` x `distribution` 组合都有自己的一次性容器。CI 直接在标准 runner 上运行这套测试（Docker 加 `actions/setup-go` 提供的 Go）。本地则由仓库的开发容器在 Linux 上复现这一环境；Windows 上改用 Docker Compose runner 镜像，因为开发容器无法承载 Windows 容器镜像（见下文）。
+离线的 Lua 钩子测试（`tests/*_test.lua` 由 `vfox plugin test` 运行，`tests/post_install_layouts.lua` 由 `glua` 运行）在 **Test Plugin** 工作流里运行。端到端套件在容器里针对真实的 vfox 运行，覆盖 Linux 和 Windows；每个 `vfox` x `distribution` 组合都有自己的一次性容器。CI 直接在标准 runner 上运行这套测试（Docker 加 `actions/setup-go` 提供的 Go）。本地则由仓库的开发容器在 Linux 上复现这一环境；Windows 上改用 Docker Compose runner 镜像，因为开发容器无法承载 Windows 容器镜像（见下文）。
 
 ## 开发容器
 
@@ -195,13 +195,8 @@ lua-language-server --check . --checklevel=Warning
 
 ```bash
 # 离线的钩子测试（.github/workflows/test.yml）。
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_install_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_use_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/parse_legacy_file_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/loongnix_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/github_mirror_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/checksum_test.lua
-go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
+vfox plugin test .
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_layouts.lua
 ```
 
 ```bash

@@ -171,6 +171,26 @@ GraalVM CE 8 to 19, Gluon GraalVM before 23, and Mandrel and Liberica NIK before
 - The plugin sets `JAVA_HOME` and `PATH`, and no `GRAALVM_HOME`. A `GRAALVM_HOME` that points at a GraalVM of your own stays as it is, and the native-image build plugins fall back to `JAVA_HOME` when it is unset.
 - There is no Windows ARM64 and no Alpine build, and Intel Macs get nothing after 25.0.1. See [platforms.md](platforms.md#graalvm).
 
+### Native Image and the C toolchain
+
+A GraalVM installs and runs like any other JDK. After `vfox install java@25.0.2-graalce` and `vfox use`, `java` and `javac` work on a system with no compiler and no zlib headers. `sudo apt install --assume-yes build-essential zlib1g-dev` is for `native-image` alone, the tool that compiles a program into a native executable. It links the executable with the system's `gcc` against the C library and zlib, so it needs them, and so does whatever calls it, such as the Maven and Gradle plugins for Native Image. The plugin installs the JDK and nothing else.
+
+On Ubuntu 26.04, execute in Bash,
+
+```bash
+sudo apt install --assume-yes build-essential zlib1g-dev
+```
+
+- `native-image` is in the `bin` directory of Oracle GraalVM, GraalVM Community, Liberica NIK, Mandrel and Gluon GraalVM. GraalVM CE 8 to 19 are the exception, see below.
+- Without `gcc` the build stops within seconds with `Error: Default native-compiler executable 'gcc' not found via environment variable PATH`, and `zlib1g-dev` alone does not change that.
+- With `gcc` but without `zlib1g-dev`, which is what `build-essential` alone gives, the build goes through the analysis and the compilation first, which took between 20 seconds and two minutes for a hello world, and fails when it links: `There was an error linking the native image: Linker command exited with 1`, GraalVM's hint `It appears as though libz:.a is missing. Please install it.`, and `cannot find -lz: No such file or directory`.
+- `gcc`, `libc6-dev` and `zlib1g-dev` were enough to build a hello world, without `g++` and `make`. `build-essential` brings both, and is what GraalVM's documentation lists.
+- Other systems need other packages. GraalVM's [prerequisites](https://www.graalvm.org/latest/reference-manual/native-image/#prerequisites) list `sudo dnf install gcc glibc-devel zlib-devel libstdc++-static` for Fedora and the other systems that use dnf, `xcode-select --install` for macOS, and the Visual Studio Build Tools with the Windows SDK for Windows. On Fedora 44, `gcc`, `glibc-devel` and `zlib-devel` built a hello world without `libstdc++-static`.
+
+GraalVM CE 8 to 19 (`grl8`, `grl11`, `grl16`, `grl17`, `grl19`) come without `native-image`. Their `bin` directory holds `gu`, the GraalVM Updater, and `native-image` is `command not found` until `gu install native-image` has added it from GitHub. That worked for `22.3.3-grl11`, `21.2-grl16`, `22.3.3-grl17` and `22.3.1-grl19` on 2026-11-02, and the packages above are needed after it as before. It failed for `21.3.1-grl8` with `Internal error occurred: A JSONObject text must begin with '{'`, because the release index that this `gu` downloads, `https://oca.opensource.oracle.com/gds/meta-data.json`, is a web page now. For that release, download `native-image-installable-svm-java8-linux-amd64-21.3.1.jar` from the [`vm-21.3.1` release](https://github.com/graalvm/graalvm-ce-builds/releases/tag/vm-21.3.1) and run `gu -L install` on the file.
+
+Checked on 2026-11-02 with vfox 1.0.13 in Ubuntu 26.04 container images (x64) that had no compiler. GraalVM Community 25.0.2 and 25.4.4.1.1, Oracle GraalVM 25.0.5, Mandrel 25.0.5, Liberica NIK 25.0.4.1 and Gluon GraalVM 22.1.0.1 stopped as described without the packages, and with them built a hello world that ran. So did `22.3.3-grl17` after `gu install native-image`, and GraalVM Community 25.0.2 in a Fedora 44 image.
+
 ## Others
 
 ### JetBrains Runtime (`jb`)
