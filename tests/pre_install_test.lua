@@ -128,6 +128,11 @@ local foojay = {
     -- JetBrains Runtime has nine 21.0.5 builds; abridged.
     ["jetbrains 21.0.5"] = { pkg("21.0.5+79248"), pkg("21.0.5+76240"), pkg("21.0.5+63130"), pkg("21.0.5+6318") },
     ["jetbrains 21.0.5+63130"] = { pkg("21.0.5+63130") },
+    -- The packages of the checksum cases, observed on 2026-11-02: their records
+    -- hold a checksum, see there.
+    ["liberica 25.0.4"] = { pkg("25.0.4+9", true) },
+    ["kona 25.0.4"] = { pkg("25.0.4+1") },
+    ["jetbrains 25.0.4.1"] = { pkg("25.0.4.1+329136") },
     -- Searching asks for no version, and so does a bare major, which takes the
     -- newest release of the major; abridged, newest first as Foojay lists them.
     ["openjdk"] = { pkg("25.0.2+10"), pkg("21.0.2+13") },
@@ -287,10 +292,26 @@ end
 
 local requests = {}
 local responses = {}
+-- What Foojay's record of a package says besides the download, by id: the
+-- fields a case sets override those of the stub, which gives the download only
+-- (see the checksum cases).
+local records = {}
+-- The files that checksum_uri points to, by address: the contents, false for a
+-- file that is not there, or { error = "..." } for a request that fails. Any
+-- other address is not expected.
+local files = {}
 package.preload.http = function()
     return {
         get = function(request)
             table.insert(requests, request.url)
+            local file = files[request.url]
+            if type(file) == "table" then
+                return nil, file.error
+            elseif file == false then
+                return { status_code = 404, body = "Not Found" }, nil
+            elseif file ~= nil then
+                return { status_code = 200, body = file }, nil
+            end
             local body
             if request.url:sub(1, #JDKS) == JDKS then
                 local params = {}
@@ -335,7 +356,11 @@ package.preload.http = function()
                 -- host github are on GitHub, where the id puts the file after
                 -- it. All others are somewhere else.
                 local site = id:sub(1, 7) == "github/" and GITHUB or "https://download.invalid/"
-                body = { result = { { direct_download_uri = site .. id } } }
+                local record = { direct_download_uri = site .. id }
+                for field, value in pairs(records[id] or {}) do
+                    record[field] = value
+                end
+                body = { result = { record } }
             end
             table.insert(responses, body)
             return { status_code = 200, body = tostring(#responses) }, nil
@@ -506,6 +531,212 @@ assert(
 RUNTIME.osType = "linux"
 mirror.value = nil
 cases = cases + 1
+
+-- Checksums. Foojay's record of a package names the algorithm of its checksum
+-- and holds the digest, or the address of a file that does. PreInstall hands
+-- vfox the digest under the name of the algorithm, and vfox verifies the
+-- download against it; without one it prints "Checksum is not provided, skip
+-- verify...". The digests and files are as Foojay and the vendors had them on
+-- 2026-11-02.
+local TEMURIN_DIGEST = "f2dc5418092c43003db8f9005c4a286e1c0104fea96ccdd49e8ebd037cac9219"
+local LIBERICA_DIGEST = "b0c9756cc59a2a0af415387c808cf550b4181471"
+local GRAALCE = "graalvm-community-jdk-25.0.2_linux-x64_bin.tar.gz"
+local GRAALCE_URL = GITHUB .. "jdk-25.0.2/" .. GRAALCE
+local GRAALCE_DIGEST = "e0be791c8fda4d03b6b0a0cb824fef3149736170057b3a515252b44419606af0"
+local JETBRAINS = "jbrsdk_jcef-25.0.4.1-linux-x64-b329.136.tar.gz"
+local JETBRAINS_URL = "https://cache-redirector.jetbrains.com/intellij-jbr/" .. JETBRAINS .. ".checksum"
+local JETBRAINS_DIGEST = "173f2b8b581c914e1bd1de543f4150f54d3b768d539eef4510baf92489e80924"
+    .. "d6e061ccc35089240ae71742adfff8dba4fd9ac581eda209ce396986e91eb526"
+local KONA = "TencentKona-25.0.4.b1-jdk_linux-x86_64.tar.gz"
+local KONA_URL = "https://github.com/Tencent/TencentKona-25/releases/download/TencentKona-25.0.4/" .. KONA .. ".md5"
+local KONA_DIGEST = "78849dd1f67c2159085dcd42e307e76a"
+local OPENJDK = "openjdk-25.0.2_linux-x64_bin.tar.gz"
+local OPENJDK_URL = "https://download.java.net/java/GA/jdk25.0.2/b1e0dfa218384cb9959bdcb897162d4e/10/GPL/" .. OPENJDK
+local OPENJDK_DIGEST = "555ce0821e4fe175ea50d54518cd6fbece9663c1998de529bc6ce429534457df"
+-- Temurin's and Liberica's records hold the digest.
+records["21.0.8+9.tar.gz"] = {
+    filename = "OpenJDK21U-jdk_x64_linux_hotspot_21.0.8_9.tar.gz",
+    checksum_type = "sha256",
+    checksum = TEMURIN_DIGEST,
+    checksum_uri = "",
+}
+records["25.0.4+9-fx.tar.gz"] = {
+    filename = "bellsoft-jdk25.0.4+9-linux-amd64-full.tar.gz",
+    checksum_type = "sha1",
+    checksum = LIBERICA_DIGEST,
+    checksum_uri = "",
+}
+-- GraalVM Community's 25.0.2 has a file on GitHub that holds the digest alone,
+-- and JetBrains' one with its name, a SHA-512. Tencent Kona's is an MD5 in
+-- BSD's form. The newest OpenJDK has a file on jdk.java.net.
+records[GRAALCE] = {
+    direct_download_uri = GRAALCE_URL,
+    filename = GRAALCE,
+    checksum_type = "sha256",
+    checksum = "",
+    checksum_uri = GRAALCE_URL .. ".sha256",
+}
+files[GRAALCE_URL .. ".sha256"] = GRAALCE_DIGEST .. "\n"
+records["25.0.4.1+329136.tar.gz"] = {
+    filename = JETBRAINS,
+    checksum_type = "sha512",
+    checksum = "",
+    checksum_uri = JETBRAINS_URL,
+}
+files[JETBRAINS_URL] = JETBRAINS_DIGEST .. "  " .. JETBRAINS .. "\n"
+records["25.0.4+1.tar.gz"] = {
+    direct_download_uri = "https://github.com/Tencent/TencentKona-25/releases/download/TencentKona-25.0.4/" .. KONA,
+    filename = KONA,
+    checksum_type = "md5",
+    checksum = "",
+    checksum_uri = KONA_URL,
+}
+files[KONA_URL] = "MD5 (" .. KONA .. ") = " .. KONA_DIGEST .. "\n"
+records["25.0.2+10.tar.gz"] = {
+    direct_download_uri = OPENJDK_URL,
+    filename = OPENJDK,
+    checksum_type = "sha256",
+    checksum = "",
+    checksum_uri = OPENJDK_URL .. ".sha256",
+}
+files[OPENJDK_URL .. ".sha256"] = OPENJDK_DIGEST .. "\n"
+
+-- Installs version, returning what PreInstall returns. What it prints is kept in
+-- printed, and the addresses it fetches besides Foojay's in fetched.
+local printed, fetched
+local function install(version)
+    requests = {}
+    printed = {}
+    local real_print = print
+    print = function(...)
+        table.insert(printed, table.concat({ ... }, " "))
+    end
+    local result = PLUGIN:PreInstall({ version = version })
+    print = real_print
+    fetched = {}
+    for _, url in ipairs(requests) do
+        if url:sub(1, #JDKS) ~= JDKS and url:sub(1, #IDS) ~= IDS then
+            table.insert(fetched, url)
+        end
+    end
+    return result
+end
+
+local ALGORITHMS = { "sha256", "sha512", "sha1", "md5" }
+
+-- Installs version and checks that the result carries digest under the name of
+-- algorithm and under no other (nil for no checksum), that nothing is printed,
+-- and that the files fetched are the ones given.
+local function check_checksum(version, algorithm, digest, asked)
+    local result = install(version)
+    for _, key in ipairs(ALGORITHMS) do
+        local want = key == algorithm and digest or nil
+        assert(
+            result[key] == want,
+            ("%s: %s expected %s, got %s"):format(version, key, tostring(want), tostring(result[key]))
+        )
+    end
+    assert(#printed == 0, version .. ": printed " .. table.concat(printed, "; "))
+    assert(
+        table.concat(fetched, " ") == table.concat(asked, " "),
+        version .. ": fetched " .. table.concat(fetched, " ") .. ", expected " .. table.concat(asked, " ")
+    )
+    cases = cases + 1
+    return result
+end
+
+-- The digest of the record is taken as it is, and nothing is fetched for it.
+check_checksum("21.0.8-tem", "sha256", TEMURIN_DIGEST, {})
+check_checksum("25.0.4-librca-fx", "sha1", LIBERICA_DIGEST, {})
+-- Where the record holds the address of a file, the file is fetched once and
+-- the digest taken from it, whichever way it is written: GraalVM Community's
+-- 25.0.2, which vfox warned about, JetBrains', Tencent Kona's and OpenJDK's.
+check_checksum("25.0.2-graalce", "sha256", GRAALCE_DIGEST, { GRAALCE_URL .. ".sha256" })
+check_checksum("25.0.4.1-jb", "sha512", JETBRAINS_DIGEST, { JETBRAINS_URL })
+check_checksum("25.0.4-kona", "md5", KONA_DIGEST, { KONA_URL })
+check_checksum("25.0.2-open", "sha256", OPENJDK_DIGEST, { OPENJDK_URL .. ".sha256" })
+-- A package Foojay has no checksum for gets none, and nothing is fetched.
+check_checksum("21-tem", nil, nil, {})
+check_checksum("21.0.5-jb", nil, nil, {})
+
+-- The file on GitHub comes through the mirror, as the download does. The files
+-- of other hosts are fetched from where they are, and the mirror serves
+-- nothing but what the address says.
+mirror.value = "https://gh-proxy.org/"
+files["https://gh-proxy.org/" .. GRAALCE_URL .. ".sha256"] = files[GRAALCE_URL .. ".sha256"]
+files[GRAALCE_URL .. ".sha256"] = nil
+files["https://gh-proxy.org/" .. KONA_URL] = files[KONA_URL]
+files[KONA_URL] = nil
+local mirrored =
+    check_checksum("25.0.2-graalce", "sha256", GRAALCE_DIGEST, { "https://gh-proxy.org/" .. GRAALCE_URL .. ".sha256" })
+assert(mirrored.url == "https://gh-proxy.org/" .. GRAALCE_URL, "mirror: the download of " .. mirrored.url)
+check_checksum("25.0.4-kona", "md5", KONA_DIGEST, { "https://gh-proxy.org/" .. KONA_URL })
+check_checksum("25.0.4.1-jb", "sha512", JETBRAINS_DIGEST, { JETBRAINS_URL })
+check_checksum("25.0.2-open", "sha256", OPENJDK_DIGEST, { OPENJDK_URL .. ".sha256" })
+check_checksum("21.0.8-tem", "sha256", TEMURIN_DIGEST, {})
+files[GRAALCE_URL .. ".sha256"] = files["https://gh-proxy.org/" .. GRAALCE_URL .. ".sha256"]
+files["https://gh-proxy.org/" .. GRAALCE_URL .. ".sha256"] = nil
+files[KONA_URL] = files["https://gh-proxy.org/" .. KONA_URL]
+files["https://gh-proxy.org/" .. KONA_URL] = nil
+mirror.value = nil
+cases = cases + 1
+
+-- Windows asks for the same checksums of the zips.
+RUNTIME.osType = "windows"
+local GRAALCE_ZIP = "graalvm-community-jdk-25.0.2_windows-x64_bin.zip"
+records[GRAALCE_ZIP] = {
+    direct_download_uri = GITHUB .. "jdk-25.0.2/" .. GRAALCE_ZIP,
+    filename = GRAALCE_ZIP,
+    checksum_type = "sha256",
+    checksum = "",
+    checksum_uri = GITHUB .. "jdk-25.0.2/" .. GRAALCE_ZIP .. ".sha256",
+}
+files[GITHUB .. "jdk-25.0.2/" .. GRAALCE_ZIP .. ".sha256"] = GRAALCE_DIGEST .. "\n"
+check_checksum("25.0.2-graalce", "sha256", GRAALCE_DIGEST, { GITHUB .. "jdk-25.0.2/" .. GRAALCE_ZIP .. ".sha256" })
+RUNTIME.osType = "linux"
+
+-- Where Foojay has a checksum that cannot be used, the install goes on as it
+-- did without checksums, so vfox warns, and says why first. Of OpenJDK 25.0.2,
+-- whose file is not fetched, cannot be fetched, holds no digest, or one of
+-- another algorithm, and whose algorithm vfox does not verify.
+local OPENJDK_SHA = OPENJDK_URL .. ".sha256"
+local function check_unverified(version, reason, asked)
+    local result = install(version)
+    for _, key in ipairs(ALGORITHMS) do
+        assert(result[key] == nil, ("%s: %s expected none, got %s"):format(version, key, tostring(result[key])))
+    end
+    assert(result.version == "25.0.2+10" and result.url == OPENJDK_URL, version .. ": the install changed")
+    assert(
+        #printed == 1 and printed[1] == "Cannot verify the download: " .. reason,
+        version .. ": printed " .. table.concat(printed, "; ")
+    )
+    assert(
+        table.concat(fetched, " ") == table.concat(asked, " "),
+        version .. ": fetched " .. table.concat(fetched, " ") .. ", expected " .. table.concat(asked, " ")
+    )
+    cases = cases + 1
+end
+files[OPENJDK_SHA] = false
+check_unverified("25.0.2-open", "failed to fetch " .. OPENJDK_SHA .. ": status_code => 404", { OPENJDK_SHA })
+files[OPENJDK_SHA] = { error = 'Get "' .. OPENJDK_SHA .. '": context deadline exceeded' }
+check_unverified(
+    "25.0.2-open",
+    "failed to fetch " .. OPENJDK_SHA .. ': Get "' .. OPENJDK_SHA .. '": context deadline exceeded',
+    { OPENJDK_SHA }
+)
+files[OPENJDK_SHA] = "<html><body>Blocked by the firewall</body></html>"
+check_unverified("25.0.2-open", OPENJDK_SHA .. " has no digest", { OPENJDK_SHA })
+files[OPENJDK_SHA] = KONA_DIGEST .. "\n"
+check_unverified("25.0.2-open", OPENJDK_SHA .. " has a digest of 32 digits, where sha256 has 64", { OPENJDK_SHA })
+files[OPENJDK_SHA] =
+    "9dd0198ecddb04d9d04a58dd40d4499918300538a81a7504496848abb601a9c7  openjdk-25.0.2_macos-aarch64_bin.tar.gz\n"
+check_unverified("25.0.2-open", OPENJDK_SHA .. " has no digest for " .. OPENJDK, { OPENJDK_SHA })
+records["25.0.2+10.tar.gz"].checksum_type = "sha3_256"
+check_unverified("25.0.2-open", "vfox cannot verify a sha3_256 checksum", {})
+-- Once the file can be read, the install is verified again.
+records["25.0.2+10.tar.gz"].checksum_type = "sha256"
+files[OPENJDK_SHA] = OPENJDK_DIGEST .. "\n"
+check_checksum("25.0.2-open", "sha256", OPENJDK_DIGEST, { OPENJDK_SHA })
 
 -- Early-access builds go by their Java version.
 check("26.ea.13-graal", "26-ea+13-graal", false)

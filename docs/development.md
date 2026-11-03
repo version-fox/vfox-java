@@ -12,6 +12,7 @@ hooks/post_install.lua          macOS: move the Java home to the install root
 hooks/env_keys.lua              JAVA_HOME and PATH
 hooks/pre_use.lua               vfox use: map what was typed to an installed name
 hooks/parse_legacy_file.lua     .sdkmanrc
+lib/checksum.lua                the checksum of a download, from Foojay's record of the package
 lib/distribution_version.lua    distribution names, parsing of specs, GraalVM feature releases
 lib/foojay.lua                  the Foojay request, and fixes to what it answers
 lib/github_mirror.lua           the mirror of the downloads from GitHub
@@ -37,7 +38,8 @@ vfox loads `metadata.lua`, calls a hook when a command needs it, and puts `PLUGI
 
 A few contracts that cost time to find:
 
-- `PreInstall` returns `url`, `version` and `note`. `version` becomes the name of the install, which is why it carries the build number. The package's checksum is not passed on yet (`TODO: checksum` in `hooks/pre_install.lua`), and vfox prints a warning for that.
+- `PreInstall` returns `url`, `version` and `note`, and the package's checksum where Foojay lists one, under the name of its algorithm: `sha256`, `sha512`, `sha1` or `md5` ([foojay.md](foojay.md#checksums)). `version` becomes the name of the install, which is why it carries the build number.
+- vfox hashes the download with the algorithm of that key and compares the hex digest with the value as it stands: lower case, with nothing around it, or the install fails with `Checksum error`. So `lib/checksum.lua` takes the digest out of the vendor's file (`<digest>  <name>`, `MD5 (<name>) = <digest>`) and lower-cases it, and it returns nothing rather than a digest it is not sure of. Without a checksum vfox prints `WARNING: Checksum is not provided, skip verify...` and goes on. That is also what happens when Foojay lists a checksum that cannot be used, such as a file that does not answer: it must not stop an install that worked before, so the plugin prints why (`Cannot verify the download: ...`) and leaves the rest to vfox.
 - For a package from Foojay, `url` is its `direct_download_uri`, behind `$VFOX_JAVA_GITHUB_MIRROR` when it is on GitHub (`lib/github_mirror.lua`, [mirror.md](mirror.md)). vfox downloads from `http://` and `https://` addresses and takes anything else for a file on disk. It names the download after the last part of the URL's path and unpacks it by the extension of that name, which a prefix in front of the URL does not change.
 - `PreUse` returns a table or `nil`. For a bare major it returns `nil` so that vfox matches it itself. vfox 1.0.13 and later reject a bare string such as `""`.
 - `ParseLegacyFile` calls `ctx.getInstalledVersions()` with no argument. vfox 1.x binds it as a Go `func() []string` and rejects the extra argument that `ctx:getInstalledVersions()` adds. vfox ignores errors from this hook, so the failure is silent.
@@ -59,6 +61,7 @@ SDKMAN spells some things differently (`jbr`, `21.0.12.fx-zulu`, `21.0.12-fx+1.1
 - `own_numbers` in `lib/foojay.lua` holds Mandrel and Liberica NIK, which carry the GraalVM version they are built from. Foojay gives it as `distribution_version` and the Java version as `java_version`, for Mandrel the major only, so every package of these two is asked for, as for a search, and picked by `distribution_version`: a longer version keeps only its own release, and a bare major takes the newest of the major, as `latest=available` picks an older one for them. The answer is sorted newest first, then by the newest Java for a release that comes for several, then by BellSoft's later build for the same Java, which only the file name carries. `distribution_version` then goes into `java_version`, so the hooks name and list them like the rest.
 - Oracle GraalVM and GraalVM Community go by GraalVM's own version, which Foojay has given as `distribution_version` since October 2026, with the JDK's as `java_version`. `graalvm_packages` in `lib/foojay.lua` asks for every package, the question `vfox search` asks, so that installing sees the builds a search lists ([foojay.md](foojay.md#what-the-plugin-asks)). It renames each package after GraalVM's version (`graalvm_version`: the newer of `java_version` and `distribution_version`, as GraalVM Community's feature releases are also listed the old way round), sorts them newest first, and keeps those of a bare major, or the release a longer version names, without its zero padding. For `vfox search` it keeps a download once, under the newer of its two names (`25.4.4.1.1`, not `25.4.4.1`). `latest=available` would miss releases there too: on 2026-10-20 its answer for 25 on Windows had GraalVM `25.0.4.1` but not `25.0.4.1.1`, both Java 25.0.4.1. Early-access builds still go by `version`.
 - `fixes` in `lib/foojay.lua` drops packages before the hooks see them: the JREs, installer bundles and RHEL 6 builds that Foojay lists among OJDKBuild's Windows JDKs, and the JDK 11 builds of Gluon GraalVM's 22.x releases, which share their version with the JDK 17 ones. A bare major picks its release from what they keep.
+- The package's record (`links.pkg_info_uri`) holds `checksum_type` and either `checksum` or `checksum_uri`. `checksum.lookup` in `lib/checksum.lua` takes the digest of the record first, which also costs no request, and fetches the file only where the record has none. `PreInstall` hands it the function that fetches, which sends a GitHub address through `$VFOX_JAVA_GITHUB_MIRROR`, so the library needs no `http` and the tests need no stub for it. A file that lists other packages only gives none, because the digest of another file would fail an install that is fine: Microsoft's file for its EA build of 11.0.14 for macOS names the GA build.
 - `Available` lists a name once where Foojay has two records for it.
 - Foojay marks GraalVM Community's monthly feature releases (`25.1.3` and on) as LTS where it lists them the old way round, as it did Oracle GraalVM's. `is_feature_release` in `lib/distribution_version.lua` recognises them, by the minor number, and `Available` drops the note. It is for `graal` and `graalce` only: Mandrel and Liberica NIK carry GraalVM's older numbers up to 24, whose minor is no feature release (`mandrel` `23.1.12` is LTS), and the JDK's from 25 on.
 - For a bare major of Oracle GraalVM (`graal`) only, `PreInstall` skips the feature releases, so the 25.0 line is installed. A major that has nothing but feature releases keeps them. GraalVM Community is not filtered, because its feature releases are what it still ships. `bare_major_skips` in `lib/distribution_version.lua` holds that rule. `PreUse` and `ParseLegacyFile` apply it to the installed versions as well, so that `vfox use` and a `.sdkmanrc` select the build `PreInstall` installs: the newest installed release of the major that is no feature release, else the newest feature release. `ParseLegacyFile` applies it to the fallback for a release that is not installed too, except when the file names a feature release (`25.4.4+1-graal`, as SDKMAN spells one), which takes the newest release of the major as before.
@@ -74,10 +77,11 @@ go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_use_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/parse_legacy_file_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/loongnix_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/github_mirror_test.lua
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/checksum_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
 ```
 
-Run them from the repository root. All six load `tests/support.lua`, which stubs `vfox.strings`, and `tests/pre_install_test.lua` and `tests/loongnix_test.lua` stub `http` and `json` themselves. `tests/pre_install_test.lua` keeps Foojay's answers in a table at the top, keyed by `<distribution> [<version>]`, with `windows` or `macos` in front for those systems. Add the answer a new case needs there, and note the day you observed it. Lint, license headers and the container tests are in [e2e.md](e2e.md#local-checks).
+Run them from the repository root. All seven load `tests/support.lua`, which stubs `vfox.strings`, and `tests/pre_install_test.lua` and `tests/loongnix_test.lua` stub `http` and `json` themselves. `tests/pre_install_test.lua` keeps Foojay's answers in a table at the top, keyed by `<distribution> [<version>]`, with `windows` or `macos` in front for those systems. Add the answer a new case needs there, and note the day you observed it. Lint, license headers and the container tests are in [e2e.md](e2e.md#local-checks).
 
 To call a single hook against the real Foojay, vfox 1.0.13 and later has `vfox plugin run`. It does not register the plugin, and `--os` and `--arch` answer for another platform:
 
@@ -129,7 +133,7 @@ The ids are Foojay's (`oracle_open_jdk` is `open`). It prints `redhat` for Linux
 
 ## Known gaps
 
-- Downloads are not verified, see above.
+- A download is verified only where Foojay lists a checksum for the package, see [foojay.md](foojay.md#checksums). Loongnix's archive has an `.md5sum` file next to each tarball, which the plugin does not read yet.
 - `vfox search` lists GA releases only. Early-access builds install by name.
 - JRE packages are not offered, and neither are the JDK 11 builds of Gluon GraalVM's 22.x releases. Of a Mandrel or Liberica NIK release only the build for its newest Java installs, so Mandrel 21.3.6 for Java 11 does not.
 - Only Linux loong64 has a source besides Foojay.

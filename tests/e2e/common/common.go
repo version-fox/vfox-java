@@ -578,6 +578,60 @@ func CheckInstalled(t *testing.T, output, spec string) string {
 	return installed
 }
 
+// NoChecksumWarning is what vfox prints for a download that comes with no
+// checksum: it skips the verification and trusts the download. The plugin used
+// to give it none, so every install ended with it.
+const NoChecksumWarning = "Checksum is not provided, skip verify..."
+
+// verifyingChecksum matches the line vfox prints before it hashes a download,
+// with the digest the plugin gave it in hex. The digest is empty where the
+// plugin gave none: "Verifying checksum ...".
+var verifyingChecksum = regexp.MustCompile(`Verifying checksum ([0-9a-fA-F]*)\.\.\.`)
+
+// ChecksumLengths are the lengths of the hex digests vfox verifies a download
+// with: MD5, SHA-1, SHA-256 and SHA-512.
+var ChecksumLengths = []int{32, 40, 64, 128}
+
+// Verification reads from the output of `vfox install` what vfox did about the
+// checksum of the download: the digest it verified the download against,
+// empty where the plugin gave none, and whether it warned about that.
+func Verification(output string) (digest string, warned bool) {
+	output = StripANSI(output)
+	if m := verifyingChecksum.FindStringSubmatch(output); m != nil {
+		digest = m[1]
+	}
+	return digest, strings.Contains(output, NoChecksumWarning)
+}
+
+// ChecksVerifiedDownload reports whether a combo checks that vfox verified the
+// download against a checksum, which it does for the release the matrix pins
+// (DefaultVersions) only. Foojay lists a checksum for each of those on every
+// platform it runs on (2026-11-02): in its record for Temurin (SHA-256) and
+// Liberica (SHA-1), in a file of the vendor for OpenJDK and GraalVM Community
+// (SHA-256) and JetBrains (SHA-512). A release set with JAVA_VERSION may have
+// none, as Dragonwell's and Bisheng's never do, and vfox then warns.
+func ChecksVerifiedDownload(distribution, version string) bool {
+	pinned, ok := DefaultVersions[distribution]
+	return ok && pinned == version
+}
+
+// CheckVerified asserts that `vfox install` verified the download against a
+// checksum of the plugin's: vfox printed no warning, and the digest it
+// verified against has the length of one it supports. vfox compares it with
+// the digest of the file it downloaded, and fails the install if they differ,
+// so the install succeeding proves the digest is the file's. It returns the
+// digest.
+func CheckVerified(t *testing.T, output, spec string) string {
+	t.Helper()
+	digest, warned := Verification(output)
+	require.Falsef(t, warned, "vfox install java@%s printed %q: the plugin gave vfox no checksum\n--- output ---\n%s",
+		spec, NoChecksumWarning, output)
+	require.Containsf(t, ChecksumLengths, len(digest),
+		"vfox install java@%s did not verify the download against an MD5, SHA-1, SHA-256 or SHA-512 digest, but %q\n--- output ---\n%s",
+		spec, digest, output)
+	return digest
+}
+
 // featureReleaseEntry matches the `vfox search` entry of a GraalVM feature
 // release. GraalVM ships one every month since 25.1, numbered with the
 // feature release train as the minor version (25.4.4.1.1-graalce), which its

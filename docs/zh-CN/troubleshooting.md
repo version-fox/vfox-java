@@ -34,6 +34,14 @@ Foojay 在这个平台上没有对应的包：版本、发行版、带不带 Jav
 
 下载时服务器返回 404。厂商会下线旧的构建，而 Foojay 仍保留它们的记录。最常见的是 EA 构建（见 [versions.md](versions.md#早期访问ea构建)）。换一个较新的构建。Red Hat 除了 Linux x64 以外的构建都会报这个错，见 [distributions.md](distributions.md#red-hat-build-of-openjdkrdht)。经过镜像（[mirror.md](mirror.md)）下载时，镜像返回的 404 也会走到这里：取消设置 `VFOX_JAVA_GITHUB_MIRROR` 再试一次。
 
+### `Checksum error`
+
+vfox 打印了 `Checksum error, file: <路径>`，接着是 `failed to install java` 和 `checksum error`，并在解压任何东西之前就停了下来，所以什么也没有装上。下载的文件和 Foojay 给它的校验和对不上，见 [foojay.md](foojay.md#校验和)。最常见的原因是下载中途被截断或损坏：再试一次。如果经过镜像（[mirror.md](mirror.md)）总是出现，可能是镜像给了别的文件，取消设置 `VFOX_JAVA_GITHUB_MIRROR`。没有镜像也出现，则可能是 Foojay 记下校验和之后，厂商换掉了文件：带上发行版和版本，向 [Foojay](https://github.com/foojayio/discoapi) 报告。未发布：0.6.3 不给 vfox 任何校验和，所以不会停在这里。
+
+### `Cannot verify the download: ...`
+
+Foojay 给这个包列出了校验和，但插件用不上，所以安装照常进行、下载的文件没有校验，下载完成后 vfox 会打印 `WARNING: Checksum is not provided, skip verify...`。冒号后面是原因：存放校验和的文件打不开时是 `failed to fetch <地址>: ...`（见[网络](#网络)），文件里根本没有摘要时是 `<地址> has no digest`（比如防火墙或认证页面返回了一个网页），文件里只列了别的包时是 `<地址> has no digest for <文件>`，算法是 vfox 不认识的则是 `vfox cannot verify a sha3_256 checksum`。第一种再试一次就行。其余两种请带上发行版和版本报告，因为需要修插件，或者 Foojay 的记录有误。未发布：0.6.3 从不读校验和。
+
 ### `VFOX_JAVA_GITHUB_MIRROR must start with http:// or https://, such as https://gh-proxy.org/, but is gh-proxy.org`
 
 这个值不是以 `http://` 或 `https://` 开头。vfox 只从 `http://` 和 `https://` 开头的地址下载，别的写法它会当成磁盘上的文件，所以从 GitHub 下载时，插件在下载开始之前就停在这里；其他下载不读这个变量。改正这个值，或者取消设置这个变量，见 [mirror.md](mirror.md)。
@@ -66,7 +74,7 @@ vfox config proxy.url http://127.0.0.1:7890
 ## 看起来不对，其实没问题
 
 - **`vfox search` 里没有你预期的版本。** vfox 会缓存搜索结果 12 小时。`vfox config cache.availableHookDuration 0` 可以关闭缓存。也可能是 Foojay 那边还没有这个版本。
-- **每次安装都有 `WARNING: Checksum is not provided, skip verify...`。** 插件没有把校验和交给 vfox，所以下载内容没有校验，见 [foojay.md](foojay.md#插件发出的请求)。
+- **装某个 JDK 时出现 `WARNING: Checksum is not provided, skip verify...`。** Foojay 没有给这个包列出校验和（Dragonwell、Bisheng、Trava、AdoptOpenJDK、OpenLogic、Gluon GraalVM、8 以后的 Corretto，以及其余发行版里较旧的版本），vfox 没有可以拿来比对的东西，只能信任下载的内容。Foojay 给了校验和的包，vfox 会打印 `Verifying checksum <摘要>...`，见 [foojay.md](foojay.md#校验和)。未发布：0.6.3 根本不给 vfox 校验和，所以每次安装最后都有这条警告。
 - **安装后的版本名里多了一个你没写的构建号。** `java@21.0.8-tem` 装出来是 `21.0.8+9-tem`。构建号是版本名的一部分，见 [versions.md](versions.md#安装后的版本名)。
 - **`vfox install java@21-tem` 和 `vfox install java tem` 做的是不同的事。** 后者是两个 SDK，`java` 和 `tem`。
 - **你设置的 `GRAALVM_HOME` 不会被改动。** 插件只设置 `JAVA_HOME` 和 `PATH`。

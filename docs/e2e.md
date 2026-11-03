@@ -156,6 +156,20 @@ JDK, so `java` can only come from what vfox installs:
    without the LTS note `25.0.2-graalce` has.
    On Windows the list includes JetBrains Runtime 21.0.5, which ships only as
    tar.gz there.
+
+   The install itself must also have verified the download. Foojay lists a
+   checksum for the pinned release of every default distribution on every
+   runner (2026-11-02), and `vfox install` must print `Verifying checksum
+   <digest>...` with a digest of a length vfox supports, not `WARNING:
+   Checksum is not provided, skip verify...`, which every install ended with
+   until the plugin passed Foojay's checksums on. The digests come in four
+   forms, so each way the plugin reads them runs: SHA-256 and SHA-1 in
+   Foojay's record (Temurin, Liberica), SHA-256 in a file that holds the
+   digest alone (OpenJDK, GraalVM Community) and SHA-512 in a file that adds
+   the name (JetBrains). vfox compares the digest with the hash of the file it
+   downloaded and fails the install if they differ, so the install succeeding
+   proves the digest is the file's. A release chosen with `JAVA_VERSION` is
+   not checked, as Foojay may list no checksum for it.
 6. Before any `vfox use`, a `.sdkmanrc` holding the SDKMAN identifier
    without the build number selects the JDK through `ParseLegacyFile`:
    `java=21.0.8-tem`, `java=21.0.5-jbr` (SDKMAN's name for JetBrains) or
@@ -397,6 +411,7 @@ go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_use_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/parse_legacy_file_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/loongnix_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/github_mirror_test.lua
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/checksum_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
 ```
 

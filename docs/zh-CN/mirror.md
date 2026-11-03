@@ -37,7 +37,7 @@ $env:VFOX_JAVA_GITHUB_MIRROR = "https://gh-proxy.org/"
 
 ## 哪些下载会经过镜像
 
-只有以 `https://github.com/` 开头的地址。其他主机上的 JDK 照旧从那里下载，向 Foojay 发的请求也不变。
+只有以 `https://github.com/` 开头的请求：下载，以及插件为这些下载去读的 GitHub 上的校验和文件（见[补充说明](#补充说明)）。其他主机上的 JDK 照旧从那里下载，向 Foojay 发的请求也不变。
 
 Foojay 给各发行版的链接（2026-10-21）：
 
@@ -64,5 +64,5 @@ https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.8%2B9/
 
 ## 补充说明
 
-- 插件没有把校验和交给 vfox，所以 vfox 不会校验下载的文件（`WARNING: Checksum is not provided, skip verify...`，见 [foojay.md](foojay.md#插件发出的请求)）。经过镜像时，拿到的压缩包就是镜像给的那个，请用你信得过的镜像。
+- vfox 会按 Foojay 给出的校验和校验下载的文件，见 [foojay.md](foojay.md#校验和)，所以镜像给了损坏的或者别的文件，安装会以 `Checksum error` 失败。校验和在 Foojay 的记录里时（Temurin、Liberica、Zulu 等），镜像对它没有发言权。校验和在 GitHub 上的一个文件里时（GraalVM 社区版较旧的版本、SAP Machine、Semeru、腾讯 Kona 等），这个文件和压缩包一样经过镜像，不可信的镜像可以把文件和与之匹配的校验和一起给出来。没有校验和的包（`WARNING: Checksum is not provided, skip verify...`）完全不校验，所以请用你信得过的镜像。
 - 这个变量只改变 `vfox install` 下载 JDK 的地址，`vfox add java` 不会用到它。想让 vfox 的所有请求都走代理，见[网络](troubleshooting.md#网络)。

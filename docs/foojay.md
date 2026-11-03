@@ -35,7 +35,7 @@ For a bare major such as `21` the answer lists every release, and the plugin tak
 
 A bare major asks what searching asks so that installing sees the builds `vfox search` lists. Foojay's answers are cached per question, and two questions can get answers of different ages: half an hour after Oracle GraalVM 25.0.5 reached Foojay on 2026-10-20, GitHub's runners got it from a lookup with `distribution_version=25` but not from a search, and `vfox install java@25-graal` took a build that `vfox search java graal` did not list ([#113](https://github.com/version-fox/vfox-java/issues/113)).
 
-The answer is a list of packages. The plugin names a release after `java_version` (Mandrel and Liberica NIK after `distribution_version`, Oracle GraalVM and GraalVM Community after GraalVM's own version), adds `-fx` where `javafx_bundled` is true, marks it LTS where `term_of_support` is `lts`, and prefers a `zip` over a `tar.gz` of the same version on Windows. It leaves out the JREs, installer bundles and RHEL 6 builds that Foojay lists among OJDKBuild's Windows JDKs, and the JDK 11 builds of Gluon GraalVM's 22.x releases, see [distributions.md](distributions.md). For the install it then fetches the package's `links.pkg_info_uri` and downloads its `direct_download_uri`, which is a vendor's own server (GitHub Releases for Temurin). That record also holds a `checksum`. The plugin does not pass it on, so vfox prints `WARNING: Checksum is not provided, skip verify...` and does not verify the download. A download from GitHub can go through a mirror, see [mirror.md](mirror.md).
+The answer is a list of packages. The plugin names a release after `java_version` (Mandrel and Liberica NIK after `distribution_version`, Oracle GraalVM and GraalVM Community after GraalVM's own version), adds `-fx` where `javafx_bundled` is true, marks it LTS where `term_of_support` is `lts`, and prefers a `zip` over a `tar.gz` of the same version on Windows. It leaves out the JREs, installer bundles and RHEL 6 builds that Foojay lists among OJDKBuild's Windows JDKs, and the JDK 11 builds of Gluon GraalVM's 22.x releases, see [distributions.md](distributions.md). For the install it then fetches the package's `links.pkg_info_uri` and downloads its `direct_download_uri`, which is a vendor's own server (GitHub Releases for Temurin). The same record says how to check the download, see [Checksums](#checksums). A download from GitHub can go through a mirror, see [mirror.md](mirror.md).
 
 `vfox search` differs from the raw list in a few ways. It lists a name once where Foojay has two records for it, and it leaves the LTS note off GraalVM's feature releases (see [distributions.md](distributions.md#behavior-of-oracle-graalvm-and-graalvm-community)). It only lists GA releases.
 
@@ -54,6 +54,43 @@ curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=mandrel&dis
 ```
 
 So the plugin asks for every package of these two, as `vfox search` does, and picks the release by `distribution_version` itself: the one named, or for a bare major the newest of the major. Foojay's own matching does neither: `distribution_version=23.1.12` lists 23.1.12.1 as well, as above, and with `distribution_version=23`, `latest=available` answered with 23.1.8 and two builds of 23.0.1.2, although 23.1.12.1 was out. Where a release comes for several Java versions the plugin takes the build for the newest, and of two Liberica NIK builds for the same Java the later one, which only the file name tells apart (`...-25.0.3+2-linux-amd64.tar.gz`). Searching sorts them by `distribution_version`, newest first.
+
+## Checksums
+
+The record that `links.pkg_info_uri` points to also says how to check the download. `checksum_type` is the algorithm, and the digest is in the record as `checksum`, or in a file of the vendor that `checksum_uri` points to. GraalVM Community 25.0.2 has the file only (2026-11-02):
+
+```bash
+curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=graalvm_community&version=25.0.2&architecture=amd64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
+  | jq -r '.result[0].links.pkg_info_uri' | xargs curl -s | jq -c '.result[0] | {checksum_type, checksum, checksum_uri}'
+```
+
+```
+{"checksum_type":"sha256","checksum":"","checksum_uri":"https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-25.0.2/graalvm-community-jdk-25.0.2_linux-x64_bin.tar.gz.sha256"}
+```
+
+Temurin's record holds the digest itself (`f2dc5418...9219` for 21.0.8 on Linux x64), next to the address of the vendor's file.
+
+The plugin hands vfox the digest under the name of its algorithm (`sha256 = "..."` in what `PreInstall` returns). vfox hashes the file it downloaded and compares the two before it unpacks anything. It prints `Verifying checksum e0be791c...` and goes on, or stops with `Checksum error`, see [troubleshooting.md](troubleshooting.md#checksum-error). vfox verifies `sha256`, `sha512`, `sha1` and `md5`, and the packages use all four. Foojay names others too (`sha3_256`), which vfox cannot verify.
+
+The digest in Foojay's record goes first. It comes from Foojay and not from the vendor's download site, which may be a mirror, and it costs no request. The plugin fetches the file only where the record has no digest, from GitHub through the mirror ([mirror.md](mirror.md)) like the download. These files do not all write a digest the same way, and the plugin reads three forms:
+
+- the digest alone (GraalVM Community, OpenJDK, Oracle),
+- `sha256sum`'s `<digest>  <name>`, with a `*` before the name for a binary file (Microsoft, JetBrains, Semeru, SAP Machine),
+- BSD's `MD5 (<name>) = <digest>` (Tencent Kona).
+
+A file that lists several packages gives the line of the one being installed. One that lists others only gives none: Microsoft's file for its EA build of 11.0.14 for macOS names the GA build, and that digest would fail an install that is fine.
+
+Which packages come with a checksum varies by release, and Foojay holds none for some distributions. For the newest releases (2026-11-02):
+
+| Foojay lists | Short names |
+| --- | --- |
+| the digest in the record | `tem`, `zulu`, `librca`, `nik`, `eliya`, `rdht`, `mandrel` from 25, the newest `graal` and `graalce` |
+| a file of the vendor | `open`, `oracle`, `ms`, `sapmchn`, `sem`, `semcrt`, `jb`, `kona`, `ojdkbld`, `grl8`, `grl11`, `grl16`, `grl17`, `grl19`, the older `graal` and `graalce`, and Corretto 8 (`amzn`) |
+| no checksum | `albba`, `bsg`, `trava`, `adpt`, `adptj9`, `gln`, `opnlgc`, `amzn` other than Corretto 8, and the older releases of several of the others |
+
+For a package with none, vfox prints `WARNING: Checksum is not provided, skip verify...` and trusts the download.
+
+Where Foojay lists a checksum that the plugin cannot use, the install goes on without it, as it did before the plugin read checksums, and the plugin says why: `Cannot verify the download: https://example.org/x.tar.gz.sha256 has no digest for x.tar.gz`. The file may not answer, it may hold no digest for the package, or the algorithm may be one vfox does not verify. A checksum that cannot be had stops nothing. A download that does not match one does. Foojay gives the link and the checksum alike, so the check catches a damaged or substituted file, not a wrong record.
 
 ## Which distributions have a build for my platform
 

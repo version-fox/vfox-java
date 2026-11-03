@@ -12,6 +12,7 @@ hooks/post_install.lua          macOS：把 Java home 移到安装根目录
 hooks/env_keys.lua              JAVA_HOME 和 PATH
 hooks/pre_use.lua               vfox use：把输入映射到已安装的版本名
 hooks/parse_legacy_file.lua     .sdkmanrc
+lib/checksum.lua                下载文件的校验和，取自 Foojay 里这个包的记录
 lib/distribution_version.lua    发行版名称、版本写法的解析、GraalVM 特性版本的识别
 lib/foojay.lua                  向 Foojay 发出的请求，以及对返回结果的修正
 lib/github_mirror.lua           从 GitHub 下载时用的镜像
@@ -37,7 +38,8 @@ vfox 加载 `metadata.lua`，命令需要时调用相应的钩子，并向钩子
 
 几条容易踩坑的约定：
 
-- `PreInstall` 返回 `url`、`version` 和 `note`。`version` 会成为安装后的版本名，所以它带着构建号。包的校验和目前没有传给 vfox（`hooks/pre_install.lua` 里的 `TODO: checksum`），vfox 为此会打印警告。
+- `PreInstall` 返回 `url`、`version` 和 `note`；Foojay 给了校验和时再加上它，键是算法的名字：`sha256`、`sha512`、`sha1` 或 `md5`（见 [foojay.md](foojay.md#校验和)）。`version` 会成为安装后的版本名，所以它带着构建号。
+- vfox 用这个键对应的算法计算下载文件的摘要，再把十六进制的结果和这个值原样比较：必须是小写，前后不能有别的东西，否则安装会以 `Checksum error` 失败。所以 `lib/checksum.lua` 会把摘要从厂商的文件里取出来（`<摘要>  <文件名>`、`MD5 (<文件名>) = <摘要>`）并转成小写，拿不准的摘要宁可不返回。没有校验和时，vfox 打印 `WARNING: Checksum is not provided, skip verify...` 后继续。Foojay 给了校验和却用不上时（比如存放它的文件打不开）也是这样：它不该拦下本来能成功的安装，所以插件只打印原因（`Cannot verify the download: ...`），其余交给 vfox。
 - Foojay 的包，`url` 就是它的 `direct_download_uri`；它在 GitHub 上时，前面会加上 `$VFOX_JAVA_GITHUB_MIRROR`（`lib/github_mirror.lua`，见 [mirror.md](mirror.md)）。vfox 只从 `http://` 和 `https://` 开头的地址下载，别的写法它会当成磁盘上的文件。它用 URL 路径的最后一段给下载的文件命名，再按这个名字的扩展名解压，在 URL 前面加个前缀不会影响这一点。
 - `PreUse` 返回 Lua 表或 `nil`。只写大版本号时返回 `nil`，让 vfox 自己去匹配。vfox 1.0.13 及以后会拒绝裸字符串，比如 `""`。
 - `ParseLegacyFile` 调用 `ctx.getInstalledVersions()` 时不能带参数。vfox 1.x 把它绑定成 Go 的 `func() []string`，会拒绝 `ctx:getInstalledVersions()` 多传的那个参数。vfox 会忽略这个钩子的错误，所以出错时没有任何提示。
@@ -59,6 +61,7 @@ SDKMAN 有些写法不同（`jbr`、`21.0.12.fx-zulu`、`21.0.12-fx+1.1-librca`�
 - `lib/foojay.lua` 里的 `own_numbers` 列的是 Mandrel 和 Liberica NIK，它们沿用所基于的 GraalVM 的版本号。Foojay 把这个版本号放在 `distribution_version` 里，把 Java 的版本号放在 `java_version` 里（Mandrel 的 `java_version` 只有大版本号），所以查这两个发行版时和搜索一样查出全部的包，再按 `distribution_version` 挑：写得更具体的版本，只保留与它完全相同的那个；只写大版本号时挑这个大版本里最新的，因为 `latest=available` 对它们会挑出旧版本。结果按版本从新到旧排；同一版本有几个 Java 版本的构建时，Java 最新的在前；为同一个 Java 构建了两次时，BellSoft 后一次的构建在前，两次构建只能从文件名区分。之后 `distribution_version` 写进 `java_version`，钩子就能像对其他发行版一样给它们命名、列出它们。
 - Oracle GraalVM 和 GraalVM 社区版按 GraalVM 自己的版本号命名和查找。从 2026 年 10 月起，Foojay 把它放在 `distribution_version` 里，`java_version` 则是 JDK 的版本号。`lib/foojay.lua` 里的 `graalvm_packages` 和 `vfox search` 发同一个请求，查出全部的包，这样安装时看到的构建和搜索列出的一致（见 [foojay.md](foojay.md#插件发出的请求)）。它把每个包改用 GraalVM 的版本号命名（`graalvm_version`：取 `java_version` 和 `distribution_version` 中较新的那个，因为 GraalVM 社区版的特性版本还有一份按老办法列的记录），按从新到旧排序；只写大版本号时留下这个大版本的全部包，更具体的版本则只留下它指的那一个，补的零不算。给 `vfox search` 用时，同一个下载只留一条，用两个名字中较新的那个（`25.4.4.1.1`，不是 `25.4.4.1`）。`latest=available` 在这里也会漏掉版本：2026-10-20 在 Windows 上查 25，结果里有 GraalVM `25.0.4.1`，却没有 `25.0.4.1.1`，两者的 Java 版本都是 25.0.4.1。EA 构建仍按 `version` 查。
 - `lib/foojay.lua` 里的 `fixes` 会在钩子拿到结果之前去掉一些包：Foojay 列在 OJDKBuild 的 Windows JDK 里的 JRE、installer bundle 包和 RHEL 6 构建，以及 Gluon GraalVM 22.x 的 JDK 11 构建，它们和 JDK 17 构建共用一个版本号。只写大版本号时，从去掉之后剩下的包里挑。
+- 包的记录（`links.pkg_info_uri`）里有 `checksum_type`，以及 `checksum` 或 `checksum_uri`。`lib/checksum.lua` 里的 `checksum.lookup` 优先取记录自带的摘要，这也不用再发请求，只有记录里没有摘要时才去取那个文件。取文件的函数由 `PreInstall` 传给它，GitHub 上的地址会经过 `$VFOX_JAVA_GITHUB_MIRROR`，所以这个库不需要 `http`，测试也不用为它模拟 `http`。只列了别的包的文件不给出摘要，因为别的文件的摘要会让本来没问题的安装失败：Microsoft 为 macOS 上 11.0.14 的 EA 构建发布的文件，里面写的是 GA 构建。
 - Foojay 里同一个名字有两条记录时，`Available` 只列一次。
 - GraalVM 社区版每月发布的特性版本（`25.1.3` 起），Foojay 按老办法列的那些标成了 LTS，以前 Oracle GraalVM 的也是这样。`lib/distribution_version.lua` 里的 `is_feature_release` 按次版本号识别它们，`Available` 去掉它们的备注。它只适用于 `graal` 和 `graalce`：Mandrel 和 Liberica NIK 在 24 及以前沿用 GraalVM 的旧版本号，次版本号并不表示特性版本（`mandrel` 的 `23.1.12` 就是 LTS），从 25 起和 JDK 的版本号一致。
 - 只有 Oracle GraalVM（`graal`）在只写大版本号时，`PreInstall` 才会跳过特性版本，所以装的是 25.0 系列。一个大版本里只有特性版本时，则保留它们。GraalVM 社区版不做这个过滤，因为特性版本就是它现在发布的全部。这条规则放在 `lib/distribution_version.lua` 的 `bare_major_skips` 里。`PreUse` 和 `ParseLegacyFile` 也用它过滤已安装的版本，这样 `vfox use` 和 `.sdkmanrc` 选中的就是 `PreInstall` 装的那个构建：这个大版本里已安装的、不是特性版本的最新版本，没有的话才取最新的特性版本。没装的版本在 `ParseLegacyFile` 里退到同一大版本的最新版本时，也适用这条规则，除非文件里写的本来就是特性版本（SDKMAN 写作 `25.4.4+1-graal`），这时仍然像以前一样取这个大版本里已安装的最新版本。
@@ -74,10 +77,11 @@ go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/pre_use_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/parse_legacy_file_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/loongnix_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/github_mirror_test.lua
+go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/checksum_test.lua
 go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_test.lua
 ```
 
-请在仓库根目录运行。六个文件都会加载 `tests/support.lua`，它模拟 `vfox.strings`；`tests/pre_install_test.lua` 和 `tests/loongnix_test.lua` 还自己模拟了 `http` 和 `json`。`tests/pre_install_test.lua` 把 Foojay 的返回结果放在文件开头的一张表里，键是 `<发行版> [<版本>]`，Windows 和 macOS 的前面再分别加 `windows` 和 `macos`。新增用例需要的返回结果就加在那里，并注明观察到的日期。Lint、许可证头和容器测试见 [e2e.md](e2e.md#本地检查)。
+请在仓库根目录运行。七个文件都会加载 `tests/support.lua`，它模拟 `vfox.strings`；`tests/pre_install_test.lua` 和 `tests/loongnix_test.lua` 还自己模拟了 `http` 和 `json`。`tests/pre_install_test.lua` 把 Foojay 的返回结果放在文件开头的一张表里，键是 `<发行版> [<版本>]`，Windows 和 macOS 的前面再分别加 `windows` 和 `macos`。新增用例需要的返回结果就加在那里，并注明观察到的日期。Lint、许可证头和容器测试见 [e2e.md](e2e.md#本地检查)。
 
 想对着真实的 Foojay 调用单个钩子，可以用 vfox 1.0.13 及以后版本的 `vfox plugin run`。它不会注册插件，`--os` 和 `--arch` 可以模拟其他平台：
 
@@ -129,7 +133,7 @@ id 是 Foojay 的（`oracle_open_jdk` 对应 `open`）。这段命令在 Linux a
 
 ## 已知限制
 
-- 下载内容没有校验，见上文。
+- 只有 Foojay 给了校验和的包才会校验下载的文件，见 [foojay.md](foojay.md#校验和)。Loongnix 的归档里，每个 tar 包旁边都有一个 `.md5sum` 文件，插件还没有读它。
 - `vfox search` 只列 GA 版本。EA 构建要自己写出名字来安装。
 - 插件不提供 JRE 包，也不提供 Gluon GraalVM 22.x 的 JDK 11 构建。Mandrel 和 Liberica NIK 的一个版本只能装 Java 最新的那个构建，所以基于 Java 11 的 Mandrel 21.3.6 装不了。
 - 只有 Linux loong64 有 Foojay 以外的来源。

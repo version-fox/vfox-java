@@ -25,9 +25,10 @@ import (
 
 // installJava installs one JDK and returns the version vfox recorded for it
 // (see common.CheckInstalled), logging whether it came from a zip or a
-// tar.gz. Install runs plain: vfox.exe resolves through the slot PATH
-// override.
-func installJava(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, spec string) string {
+// tar.gz. With verified, vfox must also have verified the download against a
+// checksum of the plugin's (see common.CheckVerified). Install runs plain:
+// vfox.exe resolves through the slot PATH override.
+func installJava(ctx context.Context, t *testing.T, ctr tc.Container, box slotBox, spec string, verified bool) string {
 	t.Helper()
 	out := execRetry(ctx, t, ctr, "vfox install java@"+spec,
 		"vfox install "+pwshQuote("java@"+spec), box.vars...)
@@ -37,6 +38,9 @@ func installJava(ctx context.Context, t *testing.T, ctr tc.Container, box slotBo
 		archive = "tar.gz"
 	}
 	t.Logf("PASS java@%s installed as %s (%s)", spec, installed, archive)
+	if verified {
+		t.Logf("PASS java@%s was verified against %s", spec, common.CheckVerified(t, out, spec))
+	}
 	return installed
 }
 
