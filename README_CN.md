@@ -6,6 +6,18 @@
 
 它通过 [Foojay](https://foojay.io/) 查找并安装 31 个发行版的 JDK，包括 Temurin、Zulu、Liberica、Corretto、Microsoft、GraalVM 等。在 Linux loong64 上，则改从 Loongnix 归档安装。
 
+## 适用场景
+
+这个插件可以同时装好几个 JDK，并按单个 Shell、按项目，或为之后新开的所有 Shell 切换，[SDKMAN](https://sdkman.io/) 做的就是这件事。它还能用在 SDKMAN 用不了的地方：SDKMAN 是一组 bash 脚本，在 Windows 上要借助 WSL 或 Git Bash，不能在 PowerShell 里使用，Windows 自带的 Windows PowerShell 5.1 也不行；vfox 是原生的 Windows 程序，能挂载到 PowerShell，在那里这个插件就取代了 SDKMAN。插件沿用 SDKMAN 的简称，也读取 `.sdkmanrc`，所以 SDKMAN 用户和 vfox 用户可以共用同一个项目。两边的命令对照如下：
+
+| | SDKMAN | vfox |
+| --- | --- | --- |
+| 安装 | `sdk install java 21.0.8-tem` | `vfox install java@21.0.8-tem` |
+| 只在当前 Shell 里使用 | `sdk use java 21.0.8-tem` | `vfox use java@21.0.8-tem` |
+| 在之后新开的所有 Shell 里使用 | `sdk default java 21.0.8-tem` | `vfox use --global java@21.0.8-tem` |
+
+什么时候该用这个插件、其余的命令以及它们的差别，见 [docs/zh-CN/sdkman.md](docs/zh-CN/sdkman.md)。
+
 ## 安装
 
 先安装 [vfox](https://github.com/version-fox/vfox)，然后执行下面的命令安装插件：

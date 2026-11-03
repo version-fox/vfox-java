@@ -6,6 +6,18 @@ Java plugin for [vfox](https://vfox.dev/).
 
 It installs JDKs from 31 distributions, among them Temurin, Zulu, Liberica, Corretto, Microsoft and GraalVM, looked up through [Foojay](https://foojay.io/). On Linux loong64 it installs from the Loongnix archive instead.
 
+## Use cases
+
+The plugin installs several JDKs side by side and switches between them for one shell, for a project or for every new shell, which is what [SDKMAN](https://sdkman.io/) does. It also works where SDKMAN does not. SDKMAN is a set of bash scripts, so on Windows it needs WSL or Git Bash and cannot be used in PowerShell, not even in the Windows PowerShell 5.1 that comes with Windows, while vfox is a native program with a hook for PowerShell. There the plugin takes SDKMAN's place. It follows SDKMAN's short names and reads `.sdkmanrc`, so SDKMAN users and vfox users can share a project. The commands side by side:
+
+| | SDKMAN | vfox |
+| --- | --- | --- |
+| Install | `sdk install java 21.0.8-tem` | `vfox install java@21.0.8-tem` |
+| Use in the current shell only | `sdk use java 21.0.8-tem` | `vfox use java@21.0.8-tem` |
+| Use in every new shell | `sdk default java 21.0.8-tem` | `vfox use --global java@21.0.8-tem` |
+
+See [docs/sdkman.md](docs/sdkman.md) for when to use the plugin, the other commands and what differs.
+
 ## Install
 
 After installing [vfox](https://github.com/version-fox/vfox), install the plugin by running:

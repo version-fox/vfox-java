@@ -81,4 +81,4 @@ If the JDK does not switch:
 
 ## Differences from SDKMAN
 
-`sdk env install` installs the JDKs a `.sdkmanrc` names. vfox only selects among what is installed, and you install with `vfox install java@<version>`. An identifier copied from the file is not always a spec that `vfox install` takes: `21.0.8-tem` is, `21.0.12.fx-zulu` is not, and `21.0.12-zulu-fx` is.
+`sdk env install` installs the JDKs a `.sdkmanrc` names. vfox only selects among what is installed, and you install with `vfox install java@<version>`. An identifier copied from the file is not always a spec that `vfox install` takes: `21.0.8-tem` is, `21.0.12.fx-zulu` is not, and `21.0.12-zulu-fx` is. [sdkman.md](sdkman.md) puts the other commands of the two tools side by side.
