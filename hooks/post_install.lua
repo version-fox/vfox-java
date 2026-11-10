@@ -16,8 +16,25 @@ local function shellQuote(value)
     return "'" .. value:gsub("'", "'\\''") .. "'"
 end
 
+local idea_links = require("idea_links")
+
+--- Links the installed JDK into the folder IntelliJ IDEA and Gradle look
+--- in, when VFOX_JAVA_JDKS_LINKS asks for it. A link that fails prints a
+--- warning and never fails the install.
+local function link_idea_jdk(sdk)
+    if not sdk or not idea_links.enabled() then
+        return
+    end
+    local ok, err = idea_links.ensure_link(sdk.version, sdk.path)
+    if not ok then
+        print("warning: could not link the JDK into " .. idea_links.dir() .. ": " .. tostring(err))
+    end
+end
+
 function PLUGIN:PostInstall(ctx)
+    local sdk = ctx.sdkInfo.java
     if RUNTIME.osType ~= "darwin" then
+        link_idea_jdk(sdk)
         return
     end
     local path = ctx.sdkInfo.java.path
@@ -71,4 +88,5 @@ done
     if os.execute("sh -c " .. shellQuote(script) .. " sh " .. shellQuote(path)) ~= 0 then
         error("Failed to normalize Java home: " .. path)
     end
+    link_idea_jdk(ctx.sdkInfo.java)
 end

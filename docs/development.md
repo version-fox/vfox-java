@@ -12,12 +12,16 @@ hooks/post_install.lua          macOS: move the Java home to the install root
 hooks/env_keys.lua              JAVA_HOME and PATH
 hooks/pre_use.lua               vfox use: map what was typed to an installed name
 hooks/parse_legacy_file.lua     .sdkmanrc
+hooks/detect.lua                vfox link --detect: find JDKs already on the machine
+hooks/pre_uninstall.lua         vfox uninstall: remove the IDEA link the install created
 lib/checksum.lua                the checksum of a download, from Foojay's record of the package
 lib/distribution_version.lua    distribution names, parsing of specs, GraalVM feature releases
 lib/foojay.lua                  the Foojay request, and fixes to what it answers
 lib/github_mirror.lua           the mirror of the downloads from GitHub
 lib/installed_version.lua       matching against installed names
 lib/loongnix.lua                the Loongnix archive
+lib/detect_jdk.lua              finding installed JDKs by their release file
+lib/idea_links.lua              opt-in links in IDEA's folder for the installed JDKs
 tests/*_test.lua                offline hook tests, run by vfox plugin test
 tests/post_install_layouts.lua  the macOS layouts PostInstall handles, with its real shell script
 tests/fixtures/loongnix/        a saved copy of the Loongnix archive listing
@@ -37,7 +41,8 @@ vfox loads `metadata.lua`, calls a hook when a command needs it, and puts `PLUGI
 | `vfox install java@21-tem` | `PreInstall` returns the URL and the name. vfox downloads and unpacks, then calls `PostInstall` |
 | `vfox use java@21-tem` | `PreUse` returns the installed name to select. `EnvKeys` provides the variables |
 | a shell hook, `cd` into a directory with `.sdkmanrc` | `ParseLegacyFile` |
-| `vfox uninstall java@21.0.8+9-tem` | none, the name has to be exact |
+| `vfox link --detect java` | `Detect` returns the JDKs already on the machine (`lib/detect_jdk.lua`) |
+| `vfox uninstall java@21.0.8+9-tem` | `PreUninstall` removes the IDEA link the install created; the name has to be exact |
 
 A few contracts that cost time to find:
 
@@ -102,6 +107,14 @@ vfox plugin run . ParseLegacyFile --input '{"filename":".sdkmanrc","filepath":"/
 ```
 
 `vfox --debug <command>` shows what vfox does with a hook, which is how to find an error it swallows.
+
+## Detecting installed JDKs
+
+`hooks/detect.lua` implements `Detect` for `vfox link --detect java`: it scans Gradle's provisioning folder (`$GRADLE_USER_HOME/jdks`), IntelliJ IDEA's folder (`~/.jdks`, `~/Library/Java/JavaVirtualMachines` on macOS), the system directories (`/usr/lib/jvm`, `/Library/Java/JavaVirtualMachines` on macOS, `C:\Program Files\*` on Windows), the version managers SDKMAN, asdf, mise and jabba, Homebrew kegs (`/opt/homebrew/opt`, `/usr/local/opt`, Linuxbrew), Scoop apps (`~/scoop/apps`), the CI runner tool cache and `JAVA_HOME`, and reports every JDK home it finds as `{ version, path, note }`. winget, Chocolatey and the vendor installers all land in `Program Files`, so the same Windows roots cover them; nvm manages Node.js only, so there is nothing Java-related to find in it.
+
+`lib/detect_jdk.lua` reads each candidate's `release` file. The version is the runtime version (`SEMANTIC_VERSION`, else the leading `release+build` of `JAVA_RUNTIME_VERSION`), GraalVM's own version (`GRAALVM_VERSION`) for that family, then `-<short name>` from `IMPLEMENTOR` and `-fx` where `MODULES` mentions JavaFX, with no suffix for OpenJDK. System OpenJDKs (Ubuntu, Debian, `N/A`) map to no suffix; Oracle Corporation without `oracle` in the path stays OpenJDK, otherwise it is `oracle`. Mandrel's release file is the Temurin JDK it was built from, with no Mandrel version of its own, so it reports as Temurin (`tem`), and Liberica NIK without its own `GRAALVM_VERSION` reports as Liberica (`librca`); both stay usable JDKs under those names. Unknown vendors report with no suffix instead of a made-up one.
+
+`tests/detect_test.lua` (plus `detect_env_test.lua`, `detect_darwin_test.lua` and `detect_windows_test.lua` for the environment, macOS and Windows roots) takes the platform and the environment through `test.load` (`os`, `arch`, `env`), fakes the directory listings and `release` files (`io.popen`, `io.open`) instead of touching real JDKs, and covers the naming, the macOS bundles and Homebrew kegs (`Contents/Home`, `libexec/openjdk.jdk/Contents/Home`), asdf/mise/jabba/Linuxbrew homes, Scoop's nested apps and mise on Windows, duplicate versions (the first path wins) and the `.vfox`-managed homes that must never be reported.
 
 ## Adding a distribution
 

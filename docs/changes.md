@@ -4,6 +4,12 @@
 
 What changed in each release, as a user notices it. GitHub's release pages list the pull requests.
 
+## Unreleased
+
+- `vfox link --detect java` adopts the JDKs that are already on the machine instead of downloading another copy: Gradle's, IntelliJ IDEA's, the system directories, SDKMAN, asdf, mise, jabba, Homebrew, Scoop, the CI runner tool cache and `JAVA_HOME`. It needs vfox 1.1.0 or later. See [link.md](link.md).
+
+- With `VFOX_JAVA_JDKS_LINKS=1` set, each install leaves a link named after the version in IDEA's folder (`~/.jdks`, `~/Library/Java/JavaVirtualMachines` on macOS, `%USERPROFILE%\.jdks` on Windows), so Gradle and IntelliJ IDEA find every JDK vfox installed; `vfox uninstall` removes the link it created. See [link.md](link.md).
+
 ## 0.6.5 (2026-11-03)
 
 - A `.sdkmanrc` takes SDKMAN's identifiers of Oracle GraalVM and GraalVM Community, which write the fifth number of GraalVM's version after the `+`: `java=25.0.5.0+3-graal` selects `25.0.5.0.3-graal`, and `java=25.4.4.1+1-graalce` selects `25.4.4.1.1-graalce`. Release 0.6.4 takes that number for a build of the release 25.0.5 and finds no such name. So it selects `25.0.5-graal` where that is installed next to `25.0.5.0.3-graal`, which is a different download (Oracle ships `25.0.5`, `25.0.5.0.2` and `25.0.5.0.3` as three files), and otherwise the newest installed release of 25: a project pinned to `25.0.5.0+3-graal` moves to a newer GraalVM as soon as one is installed. See [sdkmanrc.md](sdkmanrc.md#sdkmans-spellings) ([#124](https://github.com/version-fox/vfox-java/pull/124)).

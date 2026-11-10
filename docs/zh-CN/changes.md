@@ -4,6 +4,12 @@
 
 按发布版本列出用户能感受到的变化。GitHub 的 Release 页面列出了对应的 PR。
 
+## 未发布
+
+- `vfox link --detect java` 会直接采用本机上已有的 JDK，而不用再下载一份：Gradle 的、IntelliJ IDEA 的、系统目录里的，以及 SDKMAN、asdf、mise、jabba、Homebrew、Scoop、CI runner 工具缓存和 `JAVA_HOME` 指向的。需要 vfox 1.1.0 或更高版本。见 [link.md](link.md)。
+
+- 设置 `VFOX_JAVA_JDKS_LINKS=1` 后，每次安装都会在 IDEA 的目录里留一个以版本号命名的链接（`~/.jdks`，macOS 上是 `~/Library/Java/JavaVirtualMachines`，Windows 上是 `%USERPROFILE%\.jdks`），Gradle 和 IntelliJ IDEA 就能找到 vfox 装好的每一个 JDK；`vfox uninstall` 会把当初建的那个链接删掉。见 [link.md](link.md)。
+
 ## 0.6.5（2026-11-03）
 
 - `.sdkmanrc` 里写 SDKMAN 给 Oracle GraalVM 和 GraalVM 社区版的标识符时，会选中它指明的版本。SDKMAN 把这两个发行版版本号的第五位写在 `+` 后面：`java=25.0.5.0+3-graal` 选中 `25.0.5.0.3-graal`，`java=25.4.4.1+1-graalce` 选中 `25.4.4.1.1-graalce`。0.6.4 把这个数字当作 25.0.5 的构建号，找不到这样的名字，于是 `25.0.5-graal` 和 `25.0.5.0.3-graal` 都装着时选中前者，而它们是不同的下载（Oracle 把 `25.0.5`、`25.0.5.0.2` 和 `25.0.5.0.3` 发布成了三个文件）；没装 `25.0.5-graal` 时则选 25 里已安装的最新版本：钉在 `25.0.5.0+3-graal` 上的项目，一装了更新的 GraalVM 就会换过去。见 [sdkmanrc.md](sdkmanrc.md#sdkman-的写法)（[#124](https://github.com/version-fox/vfox-java/pull/124)）。
