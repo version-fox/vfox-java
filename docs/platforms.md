@@ -8,7 +8,7 @@ The plugin asks Foojay for packages of the platform it runs on: the operating sy
 No JDK found for 21-bsg on darwin/arm64. Please check available versions with 'vfox search java'
 ```
 
-The table shows which platforms each distribution has packages for, as Foojay lists them on 2026-11-03. ✅ means Foojay lists at least one package the plugin can install there, ❌ means none.
+The table shows which platforms each distribution has packages for, as Foojay lists them on 2026-11-10. ✅ means Foojay lists at least one package the plugin can install there, ❌ means none.
 
 | Distribution | Linux x64 | Linux arm64 | Alpine x64 | Alpine arm64 | macOS Intel | macOS Apple silicon | Windows x64 | Windows arm64 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -50,7 +50,7 @@ Foojay changes, and the table with it. To get the current one, ask Foojay the wa
 
 ## Only some releases
 
-A ✅ does not mean every release is there. As of 2026-11-03:
+A ✅ does not mean every release is there. As of 2026-11-10:
 
 - Windows on ARM64 has no Java 8 from anyone. Temurin has 21 and 23 there, Zulu 16 to 19, 21, 25 and 27, Liberica 11 and 16 to 27, Microsoft 11, 16, 17, 21 and 25, and JetBrains Runtime 17, 21 and 25.
 - On Apple silicon Java 8 comes from Zulu, Liberica, Corretto and Kona. Temurin and Semeru have 11 and 17 to 27 there, and OpenJDK 17 to 27. Mandrel has releases 23.1 to 25, for Java 21 to 25, and Liberica NIK 22.2 to 25, for Java 11, 17 and 20 to 25 (see [their numbers](distributions.md#behavior-of-mandrel-and-liberica-nik)). Gluon GraalVM has 22.1.0.1 and 23+25, GraalVM CE 11 and 17 have GraalVM 22.1 to 22.3.1, and GraalVM CE 19 has 22.3 and 22.3.1.

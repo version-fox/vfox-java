@@ -39,7 +39,7 @@ Then install as usual, `vfox install java@21-tem`. To go back to github.com, uns
 
 Only requests for `https://github.com/`: the downloads, and the checksum files on GitHub that the plugin reads for them (see [Notes](#notes)). A JDK on any other host downloads from there as before, and the requests to Foojay do not change.
 
-Where Foojay links each distribution (2026-11-03):
+Where Foojay links each distribution (2026-11-10):
 
 | Short names | Download from |
 | --- | --- |

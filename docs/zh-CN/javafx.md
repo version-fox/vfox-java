@@ -33,7 +33,7 @@ java --list-modules | grep javafx
 
 ## 哪些平台有 JavaFX 构建
 
-截至 2026-11-03，提供 JavaFX 构建的发行版有四个，而且并非每个平台都有。下表列出有 JavaFX 构建的 LTS 版本，中间的非 LTS 版本也有一些，但有缺口。Liberica NIK 一行写的是 Java 版本，不是它名字里的 GraalVM 版本号（见 [distributions.md](distributions.md#mandrel-与-liberica-nik-的行为)）：它为 Java 21 提供的 JavaFX 构建是 `23.1.x-nik-fx`。
+截至 2026-11-10，提供 JavaFX 构建的发行版有四个，而且并非每个平台都有。下表列出有 JavaFX 构建的 LTS 版本，中间的非 LTS 版本也有一些，但有缺口。Liberica NIK 一行写的是 Java 版本，不是它名字里的 GraalVM 版本号（见 [distributions.md](distributions.md#mandrel-与-liberica-nik-的行为)）：它为 Java 21 提供的 JavaFX 构建是 `23.1.x-nik-fx`。
 
 | 发行版 | Linux x64 | Linux arm64 | Alpine x64 | macOS Intel | macOS Apple Silicon | Windows x64 | Windows arm64 |
 | --- | --- | --- | --- | --- | --- | --- | --- |

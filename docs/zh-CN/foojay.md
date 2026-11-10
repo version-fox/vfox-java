@@ -46,7 +46,7 @@ curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?version=27&latest=availa
   | jq -r '.result[].distribution' | sort -u
 ```
 
-2026-11-03 运行这条命令，打印的是 `corretto liberica oracle semeru zulu`。Temurin 和 OpenJDK 不在其中：它们在 Intel Mac 上停在了 26。只写大版本号时像插件一样加上 `latest=available`，写更具体的版本时就不要加。
+2026-11-10 运行这条命令，打印的是 `corretto liberica oracle semeru zulu`。Temurin 和 OpenJDK 不在其中：它们在 Intel Mac 上停在了 26。只写大版本号时像插件一样加上 `latest=available`，写更具体的版本时就不要加。
 
 ## 某个发行版的所有版本
 
@@ -153,7 +153,7 @@ curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=mandrel&dis
 
 ## 校验和
 
-`links.pkg_info_uri` 指向的那条记录还说明了怎么校验下载的文件。`checksum_type` 是算法，摘要要么就在记录里（`checksum`），要么在厂商的一个文件里，由 `checksum_uri` 指向。GraalVM 社区版 25.0.2 只有这个文件（2026-11-03）：
+`links.pkg_info_uri` 指向的那条记录还说明了怎么校验下载的文件。`checksum_type` 是算法，摘要要么就在记录里（`checksum`），要么在厂商的一个文件里，由 `checksum_uri` 指向。GraalVM 社区版 25.0.2 只有这个文件（2026-11-10）：
 
 ```bash
 curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=graalvm_community&version=25.0.2&architecture=amd64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
@@ -176,7 +176,7 @@ Temurin 的记录里直接带着摘要（Linux x64 上的 21.0.8 是 `f2dc5418..
 
 文件里列了好几个包时，取正在安装的那个包的那一行。只列了别的包的文件不给出摘要：Microsoft 为 macOS 上 11.0.14 的 EA 构建发布的文件，里面写的是 GA 构建，那个摘要会让本来没问题的安装失败。
 
-哪些包带校验和因版本而异，有些发行版 Foojay 根本没有。各发行版最新的版本（2026-11-03）：
+哪些包带校验和因版本而异，有些发行版 Foojay 根本没有。各发行版最新的版本（2026-11-10）：
 
 | Foojay 给出的 | 简称 |
 | --- | --- |

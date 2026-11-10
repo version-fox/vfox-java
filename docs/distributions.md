@@ -2,7 +2,7 @@
 
 [中文](zh-CN/distributions.md) | [English](distributions.md)
 
-The plugin gets the releases and download links of these 31 distributions from [Foojay](foojay.md), all that Foojay lists on 2026-11-03. The short name or the long name goes wherever a distribution does: `21-tem`, `21-temurin`, `temurin-21`, `vfox search java tem`.
+The plugin gets the releases and download links of these 31 distributions from [Foojay](foojay.md), all that Foojay lists on 2026-11-10. The short name or the long name goes wherever a distribution does: `21-tem`, `21-temurin`, `temurin-21`, `vfox search java tem`.
 
 | Short name | Long name | Distribution | Maintained by |
 | --- | --- | --- | --- |
@@ -44,7 +44,7 @@ Which operating systems and CPUs each distribution covers is in [platforms.md](p
 
 ## Short names and SDKMAN
 
-The short names follow the identifiers of [SDKMAN](https://sdkman.io/), where Temurin 21.0.8 is `21.0.8-tem` too. These are the differences, against SDKMAN's list of 2026-11-03:
+The short names follow the identifiers of [SDKMAN](https://sdkman.io/), where Temurin 21.0.8 is `21.0.8-tem` too. These are the differences, against SDKMAN's list of 2026-11-10:
 
 - JetBrains Runtime is `jb`, which SDKMAN calls `jbr`, and BiSheng is `bsg`, which SDKMAN calls `bisheng`, the plugin's long name for it. A `.sdkmanrc` takes SDKMAN's spellings, see [sdkmanrc.md](sdkmanrc.md).
 - SDKMAN no longer lists Dragonwell, TravaOpenJDK, AdoptOpenJDK, Gluon GraalVM or the GraalVM CE builds numbered after GraalVM. It called the last three `adpt`, `gln` and `grl`, and wrote the virtual machine or the JDK into the version: `11.0.10.hs-adpt` with HotSpot, `11.0.10.j9-adpt` with OpenJ9, `22.3.3.r17-grl` on JDK 17. Here each Foojay distribution has a name of its own, so that part moved into the name: `11.0.10-adpt`, `11.0.10-adptj9`, `22.3.3-grl17`. A `.sdkmanrc` with SDKMAN's spelling selects them.
@@ -154,11 +154,11 @@ GraalVM Community Edition up to 22.3, from before it numbered its releases after
 
 ### Behavior of Oracle GraalVM and GraalVM Community
 
-- Since 25.1 (June 2026) GraalVM puts out a feature release every month next to its 25.0 line: `25.1.3`, `25.2.4`, `25.3.4.1`, `25.4.4.1.1`. Each is replaced within about a month. Foojay marks Oracle GraalVM's STS, but GraalVM Community's LTS where it lists them the old way round (see below), as the JDK they build on is LTS. `vfox search` leaves the LTS note off them all.
+- Since 25.1 (June 2026) GraalVM puts out a feature release every month next to its 25.0 line: `25.1.3`, `25.2.4`, `25.3.4.1`, `25.4.4.1.1`, `25.5.5.0.3`. Each is replaced within about a month. Foojay marks Oracle GraalVM's STS, but GraalVM Community's LTS where it lists them the old way round (see below), as the JDK they build on is LTS. `vfox search` leaves the LTS note off them all.
 - Releases are named after GraalVM's own version, which Foojay gives as `distribution_version`. Foojay's `java_version` is the JDK's version, which a feature release shares with the 25.0 line: `25.4.4.1.1-graal`, `25.3.4.1-graal`, `25.0.4.1.1-graal` and `25.0.4.1-graal` all have the `java_version` 25.0.4.1.
 - Foojay lists GraalVM Community's feature releases under GraalVM's version too, as it did before October 2026, with downloads from GitHub. So `java@25.4.4.1-graalce`, the name release 0.6.2 gives the 25.4.4.1.1 build, still installs it from GitHub, while `java@25.4.4.1.1-graalce` gets the same file from Oracle's GraalVM Download Service.
-- `java@25-graal` installs the newest build of the 25.0 line (`25.0.5.0.3-graal` on 2026-11-03), the line Oracle's own `25/latest` download follows. A feature release needs its full version: `java@25.4.4.1.1-graal`. `vfox use java@25-graal` and `java=25-graal` in a `.sdkmanrc` select the newest installed build of that line too, and a feature release only where nothing else of 25 is installed.
-- GraalVM Community's 25.0 line ended with `25.0.2`, and the feature releases are all it still ships. `java@25-graalce` installs the newest of them, `25.4.4.1.1-graalce` on 2026-11-03.
+- `java@25-graal` installs the newest build of the 25.0 line (`25.0.5.0.3-graal` on 2026-11-10), the line Oracle's own `25/latest` download follows. A feature release needs its full version: `java@25.5.5.0.3-graal`. `vfox use java@25-graal` and `java=25-graal` in a `.sdkmanrc` select the newest installed build of that line too, and a feature release only where nothing else of 25 is installed.
+- GraalVM Community's 25.0 line ended with `25.0.2`, and the feature releases are all it still ships. `java@25-graalce` installs the newest of them, `25.5.5.0.3-graalce` on 2026-11-10.
 - The plugin sets `JAVA_HOME` and `PATH`, and no `GRAALVM_HOME`. A `GRAALVM_HOME` that points at a GraalVM of your own stays as it is, and the native-image build plugins fall back to `JAVA_HOME` when it is unset.
 - There is no Windows ARM64 and no Alpine build, and Intel Macs get nothing after 25.0.1. See [platforms.md](platforms.md#graalvm).
 

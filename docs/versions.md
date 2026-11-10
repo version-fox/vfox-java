@@ -23,11 +23,11 @@ The distribution is a short name (`tem`) or a long name (`temurin`). Both lists 
 
 `vfox install` asks the plugin which package matches, then vfox downloads and unpacks it.
 
-- A bare major (`21`, `21-tem`) installs the newest release of that major the distribution lists, for example `21.0.13+9-tem` on 2026-11-03.
+- A bare major (`21`, `21-tem`) installs the newest release of that major the distribution lists, for example `21.0.13+9-tem` on 2026-11-10.
 - A longer version must match a release the distribution lists. `21.0.8-tem` installs `21.0.8+9-tem`, the newest build of 21.0.8. A release nobody published fails with `No JDK found for 21.0.99-tem on linux/amd64`.
 - A build number selects that build: `21.0.5+63130-jb`.
 - A release padded with zeros, as SDKMAN writes it, is accepted: `27.0.0-librca` installs `27+36-librca`.
-- Oracle GraalVM's bare major installs the newest build of its 25.0 line, not one of the monthly feature releases, which have to be named in full (`25.4.4.1.1-graal`). See [GraalVM](distributions.md#graalvm-family).
+- Oracle GraalVM's bare major installs the newest build of its 25.0 line, not one of the monthly feature releases, which have to be named in full (`25.5.5.0.3-graal`). See [GraalVM](distributions.md#graalvm-family).
 - With `-fx` only JavaFX builds are considered, without it only builds without JavaFX. The two are never mixed.
 - Mandrel and Liberica NIK go by the GraalVM version they carry, for a bare major too: `java@23-mandrel` installs `23.1.12.1-mandrel`, which runs Java 21. See [Mandrel and Liberica NIK](distributions.md#behavior-of-mandrel-and-liberica-nik).
 - On Windows a release shipped as zip and as tar.gz installs from the zip.
@@ -49,7 +49,7 @@ The plugin names an install after the `java_version` that Foojay reports, or the
 | `25.0.4+9-librca-fx` | Liberica with JavaFX |
 | `25.0.2+10` | OpenJDK, no suffix |
 | `17.0.12-graal` | GraalVM, which has no build number |
-| `25.4.4.1.1-graal` | GraalVM's version, not `java_version`, for Oracle GraalVM and GraalVM Community, here a monthly feature release, see [GraalVM](distributions.md#behavior-of-oracle-graalvm-and-graalvm-community) |
+| `25.5.5.0.3-graal` | GraalVM's version, not `java_version`, for Oracle GraalVM and GraalVM Community, here a monthly feature release, see [GraalVM](distributions.md#behavior-of-oracle-graalvm-and-graalvm-community) |
 | `8.0.482+8-zulu` | Java 8 is `8.0.<update>+<build>` |
 | `23.1.12.1-mandrel` | Mandrel, numbered after GraalVM: it runs Java 21 |
 | `28-ea+19` | early-access build, see below |
@@ -76,7 +76,7 @@ vfox uninstall java@21.0.8+9-tem
 
 If you name a build or a release, it does not cross over to another one (`21.0.12-tem` does not select `21.0.12.1+1-tem`). It does not cross to another distribution, between JavaFX and plain, or between early-access and GA either. A name that matches nothing is reported as `java@99-tem is not installed`.
 
-With Oracle GraalVM, `vfox use` of a bare major selects the build that installing it installs: `25-graal` selects the newest installed build of the 25.0 line (`25.0.5-graal`), not a monthly feature release such as `25.4.4.1.1-graal`, which it takes only where nothing else of 25 is installed. A feature release is selected by its full version. If `25-graal` itself is installed, the GA release 25 that release 0.6.1 installed, that one is selected, as for any installed name.
+With Oracle GraalVM, `vfox use` of a bare major selects the build that installing it installs: `25-graal` selects the newest installed build of the 25.0 line (`25.0.5-graal`), not a monthly feature release such as `25.5.5.0.3-graal`, which it takes only where nothing else of 25 is installed. A feature release is selected by its full version. If `25-graal` itself is installed, the GA release 25 that release 0.6.1 installed, that one is selected, as for any installed name.
 
 vfox's own match for `21` goes by the version alone, so it also takes GraalVM CE 8 to 19, Gluon GraalVM, Mandrel and Liberica NIK, whose versions are GraalVM's: `21.3.1-grl11` runs Java 11, and `vfox use java@21` selects it over `21.0.12.1+1-tem`. See [distributions.md](distributions.md#versions-numbered-after-graalvm).
 
@@ -87,7 +87,7 @@ Pick the scope with `vfox use`'s flags: `--global`, `--project` or `--session`, 
 Spell the build as `<major>.ea[.<build>]`:
 
 ```bash
-vfox install java@28.ea-open       # newest early-access build, 28-ea+21 on 2026-11-03
+vfox install java@28.ea-open       # newest early-access build, 28-ea+23 on 2026-11-10
 vfox install java@28.ea.15-open    # 28-ea+15
 ```
 
@@ -106,6 +106,7 @@ Each line is a name that can follow `java@`, newest first, with notes for LTS an
 ```
 $ vfox search java tem
 Available versions:
+ - 27.0.1-tem
  - 27+35-tem
  - 26.0.2.1+1-tem
  ...
@@ -118,4 +119,4 @@ The list holds what exists for the machine you run it on, see [platforms.md](pla
 
 `vfox install java tem` does not select Temurin: arguments separated by spaces are several SDKs. Write `java@21-tem`.
 
-The LTS note is Foojay's, except that GraalVM's monthly feature releases (`25.4.4.1.1-graal`) carry none, though Foojay marks some of them LTS.
+The LTS note is Foojay's, except that GraalVM's monthly feature releases (`25.5.5.0.3-graal`) carry none, though Foojay marks some of them LTS.

@@ -39,8 +39,8 @@
 ## 差别
 
 - **标识符。** SDKMAN 的 `21.0.8-tem` 原样写在 `java@` 后面，简称也沿用 SDKMAN 的，只有少数例外，比如 JetBrains Runtime 在 SDKMAN 里叫 `jbr`，这里是 `jb`，见 [distributions.md](distributions.md#简称与-sdkman-的不同)。SDKMAN 现在的标识符会给版本补一个零（`25.0.5.0+8-tem`），这样的写法也能识别。JavaFX 是放在最后的 `-fx`，即 `21.0.12-zulu-fx`。SDKMAN 的 `21.0.12.fx-zulu` 不是 `vfox install` 接受的写法，不过 `.sdkmanrc` 里可以写，见 [sdkmanrc.md](sdkmanrc.md#sdkman-的写法)。
-- **只写大版本号。** `vfox install java@21-tem` 装的是最新的 Temurin 21，2026-11-03 是 `21.0.13+9-tem`。SDKMAN 的 `21-tem` 只是一个版本，即 GA 构建 `21+35`。
-- **没有默认 JDK。** `sdk install java` 装的是 SDKMAN 的默认版本，一个 Temurin 的 LTS 版本（2026-11-03 是 `25.0.5.0+8-tem`）。`vfox install java` 没有默认值：在终端里它会让你选一个版本，在脚本里则直接失败。只写版本不写发行版（`java@21`）指的是 jdk.java.net 上的 OpenJDK，它的 21 只到 21.0.2。请写 `java@21-tem`，见 [versions.md](versions.md#不写发行版)。
+- **只写大版本号。** `vfox install java@21-tem` 装的是最新的 Temurin 21，2026-11-10 是 `21.0.13+9-tem`。SDKMAN 的 `21-tem` 只是一个版本，即 GA 构建 `21+35`。
+- **没有默认 JDK。** `sdk install java` 装的是 SDKMAN 的默认版本，一个 Temurin 的 LTS 版本（2026-11-10 是 `25.0.5.0+8-tem`）。`vfox install java` 没有默认值：在终端里它会让你选一个版本，在脚本里则直接失败。只写版本不写发行版（`java@21`）指的是 jdk.java.net 上的 OpenJDK，它的 21 只到 21.0.2。请写 `java@21-tem`，见 [versions.md](versions.md#不写发行版)。
 - **安装不等于选中。** `sdk install` 之后，SDKMAN 会问要不要把这个 JDK 设为默认。`vfox install` 只负责安装，选中要用 `vfox use`。
 - **两份列表。** `sdk list java` 列出所有厂商的 JDK。`vfox search java` 只列 OpenJDK，所以要写上发行版（`vfox search java tem`）或 `all`。已安装的看 `vfox list java`。版本数据来自 [Foojay](foojay.md)。
 - **安装后的版本名带构建号。** `vfox list java` 显示 `21.0.8+9-tem`，`vfox uninstall` 和 `vfox info` 都要写全，而 `vfox use java@21.0.8-tem` 不写构建号也能找到它，见 [versions.md](versions.md#安装后的版本名)。

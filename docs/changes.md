@@ -4,7 +4,7 @@
 
 What changed in each release, as a user notices it. GitHub's release pages list the pull requests.
 
-## Unreleased
+## 0.6.6 (2026-11-10)
 
 - `vfox link --detect java` adopts the JDKs that are already on the machine instead of downloading another copy: Gradle's, IntelliJ IDEA's, the system directories, SDKMAN, asdf, mise, jabba, Homebrew, Scoop, the CI runner tool cache and `JAVA_HOME`. It needs vfox 1.1.0 or later. See [link.md](link.md).
 
