@@ -33,7 +33,7 @@ A build with JavaFX lists `javafx.base` and the others, one without lists none.
 
 ## Where JavaFX builds exist
 
-As of 2026-11-03 four distributions have them, and not for every platform. The table lists the LTS releases that have a JavaFX build. The releases in between have some too, with gaps. For Liberica NIK it gives the Java version, not the GraalVM version in its names (see [distributions.md](distributions.md#behavior-of-mandrel-and-liberica-nik)): its JavaFX builds for Java 21 are `23.1.x-nik-fx`.
+As of 2026-11-10 four distributions have them, and not for every platform. The table lists the LTS releases that have a JavaFX build. The releases in between have some too, with gaps. For Liberica NIK it gives the Java version, not the GraalVM version in its names (see [distributions.md](distributions.md#behavior-of-mandrel-and-liberica-nik)): its JavaFX builds for Java 21 are `23.1.x-nik-fx`.
 
 | Distribution | Linux x64 | Linux arm64 | Alpine x64 | macOS Intel | macOS Apple silicon | Windows x64 | Windows arm64 |
 | --- | --- | --- | --- | --- | --- | --- | --- |

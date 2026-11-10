@@ -286,7 +286,7 @@ JDK, so `java` can only come from what vfox installs:
    and no mirror that works is run.
 3. On the GraalVM Community rows, Oracle GraalVM's bare major `25-graal`
    installs the newest build of its 25.0 line (`25.0.5.0.3-graal` on
-   2026-11-03), the line Oracle's own `25/latest` download follows, not one
+   2026-11-10), the line Oracle's own `25/latest` download follows, not one
    of the monthly feature releases listed before it (`25.4.4.1.1-graal`).
    `vfox search java graal` must list those under GraalVM's own version,
    and mark the other releases of 25 alike, as in item 5. The plugin used to
@@ -360,7 +360,7 @@ JDK, so `java` can only come from what vfox installs:
 
    The install itself must also have verified the download. Foojay lists a
    checksum for the pinned release of every default distribution on every
-   runner (2026-11-03), and `vfox install` must print `Verifying checksum
+   runner (2026-11-10), and `vfox install` must print `Verifying checksum
    <digest>...` with a digest of a length vfox supports, not `WARNING:
    Checksum is not provided, skip verify...`, which every install ended with
    until the plugin passed Foojay's checksums on. The digests come in four

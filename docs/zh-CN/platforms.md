@@ -8,7 +8,7 @@
 No JDK found for 21-bsg on darwin/arm64. Please check available versions with 'vfox search java'
 ```
 
-下表列出各发行版有哪些平台的包，数据取自 2026-11-03 的 Foojay。✅ 表示 Foojay 在这个平台上至少列有一个插件能安装的包，❌ 表示一个也没有。
+下表列出各发行版有哪些平台的包，数据取自 2026-11-10 的 Foojay。✅ 表示 Foojay 在这个平台上至少列有一个插件能安装的包，❌ 表示一个也没有。
 
 | 发行版 | Linux x64 | Linux arm64 | Alpine x64 | Alpine arm64 | macOS Intel | macOS Apple Silicon | Windows x64 | Windows arm64 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -50,7 +50,7 @@ Foojay 的数据会变，这张表也会过时。想看当前的情况，按 [fo
 
 ## 只有部分版本
 
-标了 ✅ 也不代表所有版本都有。以下截至 2026-11-03：
+标了 ✅ 也不代表所有版本都有。以下截至 2026-11-10：
 
 - Windows ARM64 上，没有任何发行版提供 Java 8。Temurin 有 21 和 23，Zulu 有 16 到 19、21、25 和 27，Liberica 有 11 和 16 到 27，Microsoft 有 11、16、17、21 和 25，JetBrains Runtime 有 17、21 和 25。
 - Apple Silicon 上，Java 8 来自 Zulu、Liberica、Corretto 和 Kona。Temurin 和 Semeru 在那里有 11 和 17 到 27，OpenJDK 有 17 到 27。Mandrel 有 23.1 到 25 的版本，运行 Java 21 到 25；Liberica NIK 有 22.2 到 25 的版本，运行 Java 11、17 和 20 到 25（见[它们的版本号](distributions.md#mandrel-与-liberica-nik-的行为)）。Gluon GraalVM 有 22.1.0.1 和 23+25，GraalVM CE 11 和 17 有 GraalVM 22.1 到 22.3.1，GraalVM CE 19 有 22.3 和 22.3.1。

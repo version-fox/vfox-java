@@ -23,11 +23,11 @@ vfox install java@21                # 不写发行版：jdk.java.net 上的 Open
 
 `vfox install` 先问插件该装哪个包，再由 vfox 下载并解压。
 
-- 只写大版本号（`21`、`21-tem`）时，安装这个发行版列出的、这个大版本下最新的版本，例如截至 2026-11-03 是 `21.0.13+9-tem`。
+- 只写大版本号（`21`、`21-tem`）时，安装这个发行版列出的、这个大版本下最新的版本，例如截至 2026-11-10 是 `21.0.13+9-tem`。
 - 写得更具体时，必须是这个发行版列出的版本。`21.0.8-tem` 装的是 21.0.8 的最新构建 `21.0.8+9-tem`。根本不存在的版本会失败，报 `No JDK found for 21.0.99-tem on linux/amd64`。
 - 写了构建号就装那个构建：`21.0.5+63130-jb`。
 - SDKMAN 写法里补了零的版本也能识别：`27.0.0-librca` 装的是 `27+36-librca`。
-- Oracle GraalVM 只写大版本号时，装 25.0 系列的最新构建，不装每月发布的特性版本（feature release）。特性版本要写全版本号（`25.4.4.1.1-graal`）。见 [GraalVM](distributions.md#graalvm-系列)。
+- Oracle GraalVM 只写大版本号时，装 25.0 系列的最新构建，不装每月发布的特性版本（feature release）。特性版本要写全版本号（`25.5.5.0.3-graal`）。见 [GraalVM](distributions.md#graalvm-系列)。
 - 写了 `-fx` 就只考虑带 JavaFX 的构建，没写就只考虑不带的，两者不会混用。
 - Mandrel 和 Liberica NIK 按它们沿用的 GraalVM 版本号来，只写大版本号时也一样：`java@23-mandrel` 装的是 `23.1.12.1-mandrel`，运行的是 Java 21。见 [Mandrel 与 Liberica NIK](distributions.md#mandrel-与-liberica-nik-的行为)。
 - 在 Windows 上，同一版本既有 zip 又有 tar.gz 时，装 zip。
@@ -49,7 +49,7 @@ vfox install java@21                # 不写发行版：jdk.java.net 上的 Open
 | `25.0.4+9-librca-fx` | 带 JavaFX 的 Liberica |
 | `25.0.2+10` | OpenJDK，没有后缀 |
 | `17.0.12-graal` | GraalVM，没有构建号 |
-| `25.4.4.1.1-graal` | Oracle GraalVM 和 GraalVM 社区版用的是 GraalVM 自己的版本号，不是 `java_version`，这里是一个每月发布的特性版本，见 [GraalVM](distributions.md#oracle-graalvm-与-graalvm-社区版的行为) |
+| `25.5.5.0.3-graal` | Oracle GraalVM 和 GraalVM 社区版用的是 GraalVM 自己的版本号，不是 `java_version`，这里是一个每月发布的特性版本，见 [GraalVM](distributions.md#oracle-graalvm-与-graalvm-社区版的行为) |
 | `8.0.482+8-zulu` | Java 8 写成 `8.0.<更新号>+<构建号>` |
 | `23.1.12.1-mandrel` | Mandrel，按 GraalVM 编号，运行的是 Java 21 |
 | `28-ea+19` | EA 构建，见下文 |
@@ -76,7 +76,7 @@ vfox uninstall java@21.0.8+9-tem
 
 写明了构建或版本时，不会跳到别的构建或版本（`21.0.12-tem` 不会选中 `21.0.12.1+1-tem`）。也不会跨发行版，不会在带 JavaFX 和不带 JavaFX 的构建之间串用，不会在 EA 和 GA 之间串用。什么都匹配不上时，报 `java@99-tem is not installed`。
 
-Oracle GraalVM 只写大版本号时，`vfox use` 选的和 `vfox install` 装的是同一个构建：`vfox use java@25-graal` 选中 25.0 系列里已安装的最新构建（`25.0.5-graal`），而不是每月发布的特性版本（比如 `25.4.4.1.1-graal`）；只有 25 里没有装别的版本时，才会选特性版本。特性版本要写全版本号。如果 `25-graal` 本身已经安装（0.6.1 装的 GA 版本 25），选中的就是它，和任何已安装的版本名一样。
+Oracle GraalVM 只写大版本号时，`vfox use` 选的和 `vfox install` 装的是同一个构建：`vfox use java@25-graal` 选中 25.0 系列里已安装的最新构建（`25.0.5-graal`），而不是每月发布的特性版本（比如 `25.5.5.0.3-graal`）；只有 25 里没有装别的版本时，才会选特性版本。特性版本要写全版本号。如果 `25-graal` 本身已经安装（0.6.1 装的 GA 版本 25），选中的就是它，和任何已安装的版本名一样。
 
 vfox 自己匹配 `21` 时只看版本号，所以 GraalVM CE 8 到 19、Gluon GraalVM、Mandrel 和 Liberica NIK 也会被它选中，它们的版本号是 GraalVM 的：`21.3.1-grl11` 运行的是 Java 11，`vfox use java@21` 却会选中它，而不是 `21.0.12.1+1-tem`。见 [distributions.md](distributions.md#按-graalvm-编号的版本)。
 
@@ -87,7 +87,7 @@ vfox 自己匹配 `21` 时只看版本号，所以 GraalVM CE 8 到 19、Gluon G
 写成 `<大版本>.ea[.<构建号>]`：
 
 ```bash
-vfox install java@28.ea-open       # 最新的 EA 构建，截至 2026-11-03 是 28-ea+21
+vfox install java@28.ea-open       # 最新的 EA 构建，截至 2026-11-10 是 28-ea+23
 vfox install java@28.ea.15-open    # 28-ea+15
 ```
 
@@ -106,6 +106,7 @@ vfox search java all        # 所有发行版，在 Linux x64 上约 2600 行
 ```
 $ vfox search java tem
 Available versions:
+ - 27.0.1-tem
  - 27+35-tem
  - 26.0.2.1+1-tem
  ...
@@ -118,4 +119,4 @@ Available versions:
 
 `vfox install java tem` 选的不是 Temurin：用空格分隔的参数表示多个 SDK。请写 `java@21-tem`。
 
-LTS 备注来自 Foojay，唯独 GraalVM 每月发布的特性版本（`25.4.4.1.1-graal`）不带这个备注，尽管 Foojay 把其中一些标成了 LTS。
+LTS 备注来自 Foojay，唯独 GraalVM 每月发布的特性版本（`25.5.5.0.3-graal`）不带这个备注，尽管 Foojay 把其中一些标成了 LTS。

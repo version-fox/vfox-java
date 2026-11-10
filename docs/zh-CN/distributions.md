@@ -2,7 +2,7 @@
 
 [中文](distributions.md) | [English](../distributions.md)
 
-插件从 [Foojay](foojay.md) 获取下面 31 个发行版的版本列表和下载链接，2026-11-03 时 Foojay 列出的发行版全在这里。凡是要写发行版的地方，简称和长名都可以：`21-tem`、`21-temurin`、`temurin-21`、`vfox search java tem`。
+插件从 [Foojay](foojay.md) 获取下面 31 个发行版的版本列表和下载链接，2026-11-10 时 Foojay 列出的发行版全在这里。凡是要写发行版的地方，简称和长名都可以：`21-tem`、`21-temurin`、`temurin-21`、`vfox search java tem`。
 
 | 简称 | 长名 | 发行版 | 维护方 |
 | --- | --- | --- | --- |
@@ -44,7 +44,7 @@
 
 ## 简称与 SDKMAN 的不同
 
-简称沿用 [SDKMAN](https://sdkman.io/) 的标识符，Temurin 21.0.8 在两边都写作 `21.0.8-tem`。下面是与 SDKMAN 不同的地方，对照的是 2026-11-03 的 SDKMAN 列表：
+简称沿用 [SDKMAN](https://sdkman.io/) 的标识符，Temurin 21.0.8 在两边都写作 `21.0.8-tem`。下面是与 SDKMAN 不同的地方，对照的是 2026-11-10 的 SDKMAN 列表：
 
 - JetBrains Runtime 叫 `jb`，SDKMAN 里叫 `jbr`；毕昇 JDK 叫 `bsg`，SDKMAN 里叫 `bisheng`，也就是插件给它的长名。`.sdkmanrc` 里写 SDKMAN 的叫法也认，见 [sdkmanrc.md](sdkmanrc.md)。
 - Dragonwell、TravaOpenJDK、AdoptOpenJDK、Gluon GraalVM 和按 GraalVM 自身编号的 GraalVM CE，SDKMAN 都已经不再提供。后三个在 SDKMAN 里曾叫 `adpt`、`gln` 和 `grl`，当时把虚拟机或 JDK 版本写进版本号：HotSpot 版是 `11.0.10.hs-adpt`，OpenJ9 版是 `11.0.10.j9-adpt`，基于 JDK 17 的是 `22.3.3.r17-grl`。插件给 Foojay 的每个发行版各起一个名字，所以这部分挪进了简称：`11.0.10-adpt`、`11.0.10-adptj9`、`22.3.3-grl17`。`.sdkmanrc` 里用 SDKMAN 的旧写法也能选中它们。
@@ -154,11 +154,11 @@ GraalVM 的开源版本，基于 OpenJDK。
 
 ### Oracle GraalVM 与 GraalVM 社区版的行为
 
-- 从 25.1（2026 年 6 月）起，GraalVM 在 25.0 系列之外每月发布一个特性版本（feature release）：`25.1.3`、`25.2.4`、`25.3.4.1`、`25.4.4.1.1`，每个大约一个月后就被下一个取代。Foojay 把 Oracle GraalVM 的特性版本标成 STS；GraalVM 社区版按老办法列的那些（见下文），则因为基于的 JDK 是 LTS，也被标成了 LTS。`vfox search` 一律不给它们加 LTS 备注。
+- 从 25.1（2026 年 6 月）起，GraalVM 在 25.0 系列之外每月发布一个特性版本（feature release）：`25.1.3`、`25.2.4`、`25.3.4.1`、`25.4.4.1.1`、`25.5.5.0.3`，每个大约一个月后就被下一个取代。Foojay 把 Oracle GraalVM 的特性版本标成 STS；GraalVM 社区版按老办法列的那些（见下文），则因为基于的 JDK 是 LTS，也被标成了 LTS。`vfox search` 一律不给它们加 LTS 备注。
 - 版本名用的是 GraalVM 自己的版本号，也就是 Foojay 的 `distribution_version`。Foojay 的 `java_version` 是 JDK 的版本号，特性版本会和 25.0 系列的某个构建共用同一个值：`25.4.4.1.1-graal`、`25.3.4.1-graal`、`25.0.4.1.1-graal` 和 `25.0.4.1-graal` 的 `java_version` 都是 25.0.4.1。
 - GraalVM 社区版的特性版本，Foojay 还像 2026 年 10 月以前那样，按 GraalVM 的版本号另列了一份，下载地址在 GitHub。所以 0.6.2 给 25.4.4.1.1 构建起的名字 `java@25.4.4.1-graalce` 仍然能从 GitHub 装上这个构建，而 `java@25.4.4.1.1-graalce` 是从 Oracle 的 GraalVM Download Service 下载同一个文件。
-- `java@25-graal` 装的是 25.0 系列的最新构建（2026-11-03 是 `25.0.5.0.3-graal`），Oracle 官方的 `25/latest` 下载链接跟的也是这个系列。特性版本要写全版本号：`java@25.4.4.1.1-graal`。`vfox use java@25-graal` 和 `.sdkmanrc` 里的 `java=25-graal` 选中的也是这个系列里已安装的最新构建，只有 25 里没有装别的版本时才会选特性版本。
-- GraalVM 社区版的 25.0 系列到 `25.0.2` 为止，现在只发布特性版本。`java@25-graalce` 装其中最新的一个，截至 2026-11-03 是 `25.4.4.1.1-graalce`。
+- `java@25-graal` 装的是 25.0 系列的最新构建（2026-11-10 是 `25.0.5.0.3-graal`），Oracle 官方的 `25/latest` 下载链接跟的也是这个系列。特性版本要写全版本号：`java@25.5.5.0.3-graal`。`vfox use java@25-graal` 和 `.sdkmanrc` 里的 `java=25-graal` 选中的也是这个系列里已安装的最新构建，只有 25 里没有装别的版本时才会选特性版本。
+- GraalVM 社区版的 25.0 系列到 `25.0.2` 为止，现在只发布特性版本。`java@25-graalce` 装其中最新的一个，截至 2026-11-10 是 `25.5.5.0.3-graalce`。
 - 插件只设置 `JAVA_HOME` 和 `PATH`，不设置 `GRAALVM_HOME`。你设置的、指向自己的 GraalVM 的 `GRAALVM_HOME` 保持原样；没有设置时，native-image 的构建插件会回退到 `JAVA_HOME`。
 - 没有 Windows ARM64 和 Alpine 的构建，Intel Mac 上 25.0.1 之后的版本也没有。见 [platforms.md](platforms.md#graalvm)。
 

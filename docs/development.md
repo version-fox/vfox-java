@@ -173,7 +173,7 @@ The documentation marks what is newer than the last release with "Unreleased" ("
 
 1. Move those entries in [changes.md](changes.md) under the new version, with the date of the release, and take the remarks out, in both languages: `grep -rn -i -e unreleased -e 未发布 docs README*`.
 2. Search for the number of the previous release: a few sentences compare against it without saying "Unreleased".
-3. Pages that quote Foojay give the day the data was taken. Bring up to date the quotes that name the newest release of something (`21.0.13+9-tem` on 2026-11-03), and check the tables against Foojay again, see [Refreshing the platform table](#refreshing-the-platform-table).
+3. Pages that quote Foojay give the day the data was taken. Bring up to date the quotes that name the newest release of something (`21.0.13+9-tem` on 2026-11-10), and check the tables against Foojay again, see [Refreshing the platform table](#refreshing-the-platform-table).
 
 ## Writing the docs
 

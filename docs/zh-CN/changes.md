@@ -4,7 +4,7 @@
 
 按发布版本列出用户能感受到的变化。GitHub 的 Release 页面列出了对应的 PR。
 
-## 未发布
+## 0.6.6（2026-11-10）
 
 - `vfox link --detect java` 会直接采用本机上已有的 JDK，而不用再下载一份：Gradle 的、IntelliJ IDEA 的、系统目录里的，以及 SDKMAN、asdf、mise、jabba、Homebrew、Scoop、CI runner 工具缓存和 `JAVA_HOME` 指向的。需要 vfox 1.1.0 或更高版本。见 [link.md](link.md)。
 

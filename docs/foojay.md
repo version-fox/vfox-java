@@ -46,7 +46,7 @@ curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?version=27&latest=availa
   | jq -r '.result[].distribution' | sort -u
 ```
 
-On 2026-11-03 this printed `corretto liberica oracle semeru zulu`. Temurin and OpenJDK were not among them: they stopped at 26 there. Use `latest=available` for a bare major, as the plugin does, and leave it out for a longer version.
+On 2026-11-10 this printed `corretto liberica oracle semeru zulu`. Temurin and OpenJDK were not among them: they stopped at 26 there. Use `latest=available` for a bare major, as the plugin does, and leave it out for a longer version.
 
 ## The versions of one distribution
 
@@ -153,7 +153,7 @@ So the plugin asks for every package of these two, as `vfox search` does, and pi
 
 ## Checksums
 
-The record that `links.pkg_info_uri` points to also says how to check the download. `checksum_type` is the algorithm, and the digest is in the record as `checksum`, or in a file of the vendor that `checksum_uri` points to. GraalVM Community 25.0.2 has the file only (2026-11-03):
+The record that `links.pkg_info_uri` points to also says how to check the download. `checksum_type` is the algorithm, and the digest is in the record as `checksum`, or in a file of the vendor that `checksum_uri` points to. GraalVM Community 25.0.2 has the file only (2026-11-10):
 
 ```bash
 curl -s 'https://api.foojay.io/disco/v3.0/packages/jdks?distribution=graalvm_community&version=25.0.2&architecture=amd64&operating_system=linux&lib_c_type=glibc&archive_type=tar.gz&directly_downloadable=true' \
@@ -176,7 +176,7 @@ The digest in Foojay's record goes first. It comes from Foojay and not from the 
 
 A file that lists several packages gives the line of the one being installed. One that lists others only gives none: Microsoft's file for its EA build of 11.0.14 for macOS names the GA build, and that digest would fail an install that is fine.
 
-Which packages come with a checksum varies by release, and Foojay holds none for some distributions. For the newest releases (2026-11-03):
+Which packages come with a checksum varies by release, and Foojay holds none for some distributions. For the newest releases (2026-11-10):
 
 | Foojay lists | Short names |
 | --- | --- |
