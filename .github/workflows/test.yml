@@ -34,13 +34,14 @@ jobs:
         with:
           go-version: '1.24.0'
           cache: false
-      # vfox plugin test came with vfox 1.0.13. The release is pinned and its
-      # checksum checked, as the actions are pinned by their commits; change the
-      # two together to move to another release.
+      # vfox plugin test came with vfox 1.0.13; 1.1.0 brings the Detect
+      # hook, which tests/detect_test.lua exercises. The release is pinned
+      # and its checksum checked, as the actions are pinned by their commits;
+      # change the two together to move to another release.
       - name: Install vfox
         env:
-          VFOX_VERSION: 1.0.13
-          VFOX_SHA256: 7ad0a4c82c8173f09393e09abecc3e27468253bab5fe53ffbf58f2b12b3fc768
+          VFOX_VERSION: 1.1.0
+          VFOX_SHA256: 3b33c3c468b27bc17aecf0d6d3af24fe49fe204972984904a136a47b402a0ee4
         run: |
           archive="$RUNNER_TEMP/vfox.tar.gz"
           curl --fail --silent --show-error --location --output "$archive" \
@@ -60,6 +61,8 @@ jobs:
       # *_test.lua, and it runs under glua, as it does on macOS below.
       - name: Test the macOS Java home layouts with vfox's Lua interpreter
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_layouts.lua
+      - name: Test the opt-in IDEA links with vfox's Lua interpreter
+        run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/idea_links_layouts.lua
   macos-layout:
     runs-on: macos-latest
     steps:
@@ -72,3 +75,5 @@ jobs:
           cache: false
       - name: Test actual macOS filesystem layouts
         run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_layouts.lua
+      - name: Test the opt-in IDEA links with vfox's Lua interpreter
+        run: go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/idea_links_layouts.lua

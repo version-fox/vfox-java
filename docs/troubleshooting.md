@@ -96,6 +96,8 @@ for d in ~/.vfox/cache/java/v-*/java-*; do ln -sfn "$d" ~/.jdks/"$(basename "$d"
 
 Run it again after installing a JDK, and delete the links of JDKs you uninstalled. On Windows the folder is `%USERPROFILE%\.jdks` and `mklink /J` makes the links. For IDEA to find the JDKs without this, JetBrains has to add vfox's directory, `~/.vfox/cache/java/v-<version>/java-<version>`, to its list. [IDEA-341256](https://youtrack.jetbrains.com/issue/IDEA-341256) asked for that for RTX, now called mise, and was fixed. A request for vfox can be filed the same way in the [IDEA project](https://youtrack.jetbrains.com/newIssue?project=IDEA).
 
+The other direction — a JDK that is already on the machine but was not installed by vfox — is `vfox link --detect java`, which adopts it instead of downloading another copy. And with `VFOX_JAVA_JDKS_LINKS=1` set, each install leaves a link in IDEA's folder in the first place, so there is nothing to add by hand. See [link.md](link.md).
+
 ## Reporting a problem
 
 Open an issue at [version-fox/vfox-java](https://github.com/version-fox/vfox-java/issues) with the output of `vfox --version` and `vfox info java`, the operating system and CPU, the command, and everything it printed. `vfox --debug <command>` prints more. Data that Foojay gets wrong belongs with [Foojay](https://github.com/foojayio/discoapi).

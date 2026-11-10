@@ -19,6 +19,7 @@
 --   go run github.com/yuin/gopher-lua/cmd/glua@v1.1.1 tests/post_install_layouts.lua
 PLUGIN = {}
 RUNTIME = { osType = "darwin" }
+package.path = "./lib/?.lua;" .. package.path
 dofile("hooks/post_install.lua")
 
 local function quote(value)

@@ -95,6 +95,10 @@ GraalVM CE 8 to 19 come without `native-image` and need it added first. See [doc
 
 vfox reads the `java=` line of SDKMAN's `.sdkmanrc` through this plugin and selects a JDK that is already installed. See [docs/sdkmanrc.md](docs/sdkmanrc.md) for details.
 
+## Already installed JDKs
+
+If a JDK is already on the machine — from the system package manager, an IDE, Gradle, another version manager, Homebrew, or winget — `vfox link --detect java` adopts it instead of downloading another copy (needs vfox 1.1.0 or later). The other direction works too: with `VFOX_JAVA_JDKS_LINKS=1` set, each install leaves a link in IDEA's folder so Gradle and IntelliJ IDEA find it. See [docs/link.md](docs/link.md) for where it looks, what names it gives them, and the opt-in links.
+
 ## GitHub mirror
 
 Most distributions download from GitHub. If that is slow where you are, `export VFOX_JAVA_GITHUB_MIRROR=https://gh-proxy.org/` sends these downloads through a mirror. See [docs/mirror.md](docs/mirror.md) for details.
@@ -124,6 +128,7 @@ See [docs/sdkman.md](docs/sdkman.md) for when to use the plugin, the other comma
 - [JavaFX](docs/javafx.md): the `-fx` builds and where they exist
 - [Native Image](docs/native-image.md): the C compiler and zlib that `native-image` needs
 - [`.sdkmanrc`](docs/sdkmanrc.md): which JDK a SDKMAN project file selects
+- [Already installed JDKs](docs/link.md): adopting the JDKs on the machine with `vfox link --detect java`
 - [SDKMAN and vfox](docs/sdkman.md): when to use the plugin, the commands side by side, what differs
 - [GitHub mirror](docs/mirror.md): downloading through a mirror when github.com is slow
 - [Loongnix](docs/loongnix.md): JDKs for Linux loong64

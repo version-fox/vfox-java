@@ -12,12 +12,16 @@ hooks/post_install.lua          macOS：把 Java home 移到安装根目录
 hooks/env_keys.lua              JAVA_HOME 和 PATH
 hooks/pre_use.lua               vfox use：把输入映射到已安装的版本名
 hooks/parse_legacy_file.lua     .sdkmanrc
+hooks/detect.lua                vfox link --detect：找出本机已有的 JDK
+hooks/pre_uninstall.lua         vfox uninstall：删掉安装时建的 IDEA 链接
 lib/checksum.lua                下载文件的校验和，取自 Foojay 里这个包的记录
 lib/distribution_version.lua    发行版名称、版本写法的解析、GraalVM 特性版本的识别
 lib/foojay.lua                  向 Foojay 发出的请求，以及对返回结果的修正
 lib/github_mirror.lua           从 GitHub 下载时用的镜像
 lib/installed_version.lua       与已安装的版本名做匹配
 lib/loongnix.lua                Loongnix 归档
+lib/detect_jdk.lua              按 release 文件找出已安装的 JDK
+lib/idea_links.lua              安装时在 IDEA 目录里建链接（可选）
 tests/*_test.lua                离线的钩子测试，由 vfox plugin test 运行
 tests/post_install_layouts.lua  PostInstall 处理的 macOS 目录结构，会真实执行它的 shell 脚本
 tests/fixtures/loongnix/        Loongnix 归档目录页的一份快照
@@ -37,7 +41,8 @@ vfox 加载 `metadata.lua`，命令需要时调用相应的钩子，并向钩子
 | `vfox install java@21-tem` | `PreInstall` 返回 URL 和版本名。vfox 下载并解压，然后调用 `PostInstall` |
 | `vfox use java@21-tem` | `PreUse` 返回要选中的已安装版本名，`EnvKeys` 提供环境变量 |
 | 已挂载到 Shell，`cd` 进有 `.sdkmanrc` 的目录 | `ParseLegacyFile` |
-| `vfox uninstall java@21.0.8+9-tem` | 无，名字必须精确 |
+| `vfox link --detect java` | `Detect` 返回本机已有的 JDK（`lib/detect_jdk.lua`） |
+| `vfox uninstall java@21.0.8+9-tem` | `PreUninstall` 删掉安装时建的 IDEA 链接；名字必须精确 |
 
 几条容易踩坑的约定：
 
@@ -102,6 +107,14 @@ vfox plugin run . ParseLegacyFile --input '{"filename":".sdkmanrc","filepath":"/
 ```
 
 `vfox --debug <命令>` 会显示 vfox 对钩子做了什么，vfox 吞掉的错误可以靠它找出来。
+
+## 检测已安装的 JDK
+
+`hooks/detect.lua` 为 `vfox link --detect java` 实现 `Detect`：扫描 Gradle 的目录、IntelliJ IDEA 的目录、系统目录（`/usr/lib/jvm`、macOS 上是 `/Library/Java/JavaVirtualMachines`、Windows 上是 `C:\Program Files\*`）、版本管理器 SDKMAN、asdf、mise 和 jabba、Homebrew keg（`/opt/homebrew/opt`、`/usr/local/opt`、Linuxbrew）、Scoop 应用（`~/scoop/apps`）、CI runner 的工具缓存和 `JAVA_HOME`，把找到的每个 JDK 目录以版本、路径和说明返回。winget、Chocolatey 和厂商安装包最终都装到 `Program Files`，所以同一组 Windows 目录就能覆盖；nvm 只管 Node.js，里面没有 Java 可找。
+
+`lib/detect_jdk.lua` 读每个候选目录的 `release` 文件。版本号取运行时的版本，没有则取 `JAVA_RUNTIME_VERSION` 开头的版本加构建号，GraalVM 系取自己的版本号，再加上 `IMPLEMENTOR` 对应的简称，有 JavaFX 的再加 `-fx`，OpenJDK 不加后缀。系统自带的 OpenJDK 映射到无后缀；路径里没有 oracle 的 Oracle Corporation 仍视为 OpenJDK，否则为 `oracle`。Mandrel 的文件就是它基于的 Temurin JDK，没有 Mandrel 自己的版本号，所以会报成 Temurin；没有自己版本号的 Liberica NIK 会报成 Liberica；两种情况下 JDK 本身都能正常使用。认不出的厂商不编造后缀，直接用无后缀的版本号。
+
+`tests/detect_test.lua`（另有 `detect_env_test.lua`、`detect_darwin_test.lua` 和 `detect_windows_test.lua` 分别覆盖环境变量、macOS 和 Windows 的目录）通过 `test.load` 传入平台和环境（`os`、`arch`、`env`），伪造目录列表和 `release` 文件（`io.popen`、`io.open`）而不碰真实的 JDK，覆盖命名规则、macOS 的 bundle 和 Homebrew keg、asdf/mise/jabba/Linuxbrew、Windows 上的 Scoop 嵌套目录和 mise、重复版本和绝不能上报的 `.vfox` 目录。
 
 ## 添加发行版
 

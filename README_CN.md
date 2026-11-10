@@ -95,6 +95,10 @@ GraalVM CE 8 到 19 不带 `native-image`，要先添加。没有这些包时 `n
 
 vfox 通过这个插件读取 SDKMAN 的 `.sdkmanrc` 里的 `java=` 一行，并选中已经安装的 JDK。详见 [docs/zh-CN/sdkmanrc.md](docs/zh-CN/sdkmanrc.md)。
 
+## 本机已有的 JDK
+
+如果本机已经有 JDK——系统包管理器、IDE、Gradle、别的版本管理工具、Homebrew 或 winget 装的——`vfox link --detect java` 会直接采用它，而不用再下载一份（需要 vfox 1.1.0 或更高版本）。反方向也行：设置 `VFOX_JAVA_JDKS_LINKS=1` 后，每次安装都会在 IDEA 的目录里留一个链接，Gradle 和 IntelliJ IDEA 就能找到。它会扫哪些地方、起什么版本名，以及这个可选的链接，详见 [docs/zh-CN/link.md](docs/zh-CN/link.md)。
+
 ## GitHub 镜像
 
 大多数发行版从 GitHub 下载。如果你那里下载很慢，执行 `export VFOX_JAVA_GITHUB_MIRROR=https://gh-proxy.org/`，这些下载就会经过镜像。详见 [docs/zh-CN/mirror.md](docs/zh-CN/mirror.md)。
@@ -124,6 +128,7 @@ vfox 通过这个插件读取 SDKMAN 的 `.sdkmanrc` 里的 `java=` 一行，并
 - [JavaFX](docs/zh-CN/javafx.md)：`-fx` 构建以及哪些平台有
 - [Native Image](docs/zh-CN/native-image.md)：`native-image` 需要的 C 编译器和 zlib
 - [`.sdkmanrc`](docs/zh-CN/sdkmanrc.md)：SDKMAN 的项目文件会选中哪个 JDK
+- [本机已有的 JDK](docs/zh-CN/link.md)：用 `vfox link --detect java` 采用本机上的 JDK
 - [SDKMAN 与 vfox](docs/zh-CN/sdkman.md)：什么时候该用这个插件、命令对照以及差别
 - [GitHub 镜像](docs/zh-CN/mirror.md)：github.com 很慢时让下载经过镜像
 - [Loongnix](docs/zh-CN/loongnix.md)：Linux loong64 上的 JDK

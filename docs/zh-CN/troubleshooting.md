@@ -96,6 +96,8 @@ for d in ~/.vfox/cache/java/v-*/java-*; do ln -sfn "$d" ~/.jdks/"$(basename "$d"
 
 装了新的 JDK 后再执行一遍，卸载了的 JDK 留下的链接删掉即可。Windows 上的目录是 `%USERPROFILE%\.jdks`，链接用 `mklink /J` 建立。想让 IDEA 不用这些步骤就能找到 JDK，得由 JetBrains 把 vfox 的目录（`~/.vfox/cache/java/v-<版本>/java-<版本>`）加进它的扫描清单。[IDEA-341256](https://youtrack.jetbrains.com/issue/IDEA-341256) 为 RTX（现在叫 mise）提过同样的需求，已经修复；vfox 的需求可以照样到 [IDEA 项目](https://youtrack.jetbrains.com/newIssue?project=IDEA)里提。
 
+反过来，本机上已有、但不是 vfox 装的 JDK，可以用 `vfox link --detect java` 直接采用，而不用再下载一份。如果事先设置了 `VFOX_JAVA_JDKS_LINKS=1`，每次安装本来就会在 IDEA 的目录里留链接，也就不用手工加了。详见 [link.md](link.md)。
+
 ## 报告问题
 
 请到 [version-fox/vfox-java](https://github.com/version-fox/vfox-java/issues) 提 issue，附上 `vfox --version` 和 `vfox info java` 的输出、操作系统和 CPU、你执行的命令以及它打印的全部内容。`vfox --debug <命令>` 会打印更多信息。Foojay 数据本身的错误请向 [Foojay](https://github.com/foojayio/discoapi) 反馈。
